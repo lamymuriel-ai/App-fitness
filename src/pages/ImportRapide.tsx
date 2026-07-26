@@ -12,12 +12,32 @@ interface ResumeImport {
   sommeil_h?: number
 }
 
+/**
+ * Les Raccourcis iOS inserent souvent les nombres au format local (ex. "67,8" avec
+ * une virgule decimale, "8 342" avec une espace comme separateur de milliers, ou
+ * "67,8 kg" si la variable magique inseree est la mesure complete plutot que son
+ * seul nombre). On normalise et on ignore une eventuelle unite de fin plutot que
+ * de perdre silencieusement la valeur.
+ */
+function parserNombre(brut: string): number {
+  // \s couvre l'espace normale et insecable (U+00A0) ; on ajoute l'espace fine insecable (U+202F).
+  let s = brut.trim().replace(/[\s\u00A0\u202F]/g, '')
+  if (s.includes(',') && !s.includes('.')) {
+    s = s.replace(',', '.')
+  } else if (s.includes(',') && s.includes('.')) {
+    s = s.replace(/,/g, '')
+  }
+  const correspondance = /^-?\d+(\.\d+)?/.exec(s)
+  return correspondance ? Number(correspondance[0]) : Number(s)
+}
+
 export default function ImportRapide() {
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const { profil, enregistrerSuiviJour, mettreAJourProfil } = useAppData()
   const [statut, setStatut] = useState<Statut>('en_cours')
   const [resume, setResume] = useState<ResumeImport>({ date: dateDuJourISO() })
+  const [diagnostic, setDiagnostic] = useState<{ cle: string; valeur: string }[]>([])
 
   const paramsCle = searchParams.toString()
 
@@ -34,19 +54,20 @@ export default function ImportRapide() {
       const valeurs: { pas?: number; poids_kg?: number; sommeil_h?: number } = {}
 
       if (pasRaw !== null) {
-        const pas = Number(pasRaw)
+        const pas = parserNombre(pasRaw)
         if (Number.isFinite(pas) && pas >= 0 && pas < 200000) valeurs.pas = Math.round(pas)
       }
       if (poidsRaw !== null) {
-        const poids = Number(poidsRaw)
+        const poids = parserNombre(poidsRaw)
         if (Number.isFinite(poids) && poids > 20 && poids < 400) valeurs.poids_kg = Math.round(poids * 10) / 10
       }
       if (sommeilRaw !== null) {
-        const sommeil = Number(sommeilRaw)
+        const sommeil = parserNombre(sommeilRaw)
         if (Number.isFinite(sommeil) && sommeil >= 0 && sommeil < 24) valeurs.sommeil_h = Math.round(sommeil * 10) / 10
       }
 
       if (Object.keys(valeurs).length === 0) {
+        setDiagnostic(Array.from(searchParams.entries()).map(([cle, valeur]) => ({ cle, valeur })))
         setStatut('vide')
         return
       }
@@ -93,9 +114,17 @@ export default function ImportRapide() {
           <div style={{ fontSize: '2.5rem' }}>🤔</div>
           <h2>Rien à enregistrer</h2>
           <p className="muted">
-            Ce lien ne contenait aucune donnée valide (pas, poids ou sommeil). Vérifie la
-            configuration de ton Raccourci.
+            {diagnostic.length === 0
+              ? "Ce lien ne contenait aucun paramètre. Vérifie la configuration de ton Raccourci."
+              : "Ce lien contenait des paramètres, mais aucun n'a pu être lu comme un nombre valide :"}
           </p>
+          {diagnostic.length > 0 && (
+            <div style={{ background: '#f7f3f5', borderRadius: 12, padding: 12, marginBottom: 16, fontFamily: 'monospace', fontSize: '0.85rem', textAlign: 'left' }}>
+              {diagnostic.map((d) => (
+                <div key={d.cle}>{d.cle} = "{d.valeur}"</div>
+              ))}
+            </div>
+          )}
           <button className="btn btn-primary mt-8" onClick={() => navigate('/plus/raccourci-ios')}>
             Voir le guide du Raccourci
           </button>
