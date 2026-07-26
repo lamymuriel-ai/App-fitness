@@ -142,6 +142,13 @@ export async function sauvegarderSuiviJournalier(entree: SuiviJournalier) {
   await db.put('suiviJournalier', entree)
 }
 
+/** Écrit plusieurs entrées en une seule transaction (utilisé pour l'import en masse). */
+export async function sauvegarderSuiviJournalierEnMasse(entrees: SuiviJournalier[]) {
+  const db = await getDb()
+  const tx = db.transaction('suiviJournalier', 'readwrite')
+  await Promise.all([...entrees.map((entree) => tx.store.put(entree)), tx.done])
+}
+
 export async function chargerSuiviHebdomadaire(): Promise<SuiviHebdomadaire[]> {
   const db = await getDb()
   return db.getAll('suiviHebdomadaire')

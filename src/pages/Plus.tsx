@@ -30,6 +30,16 @@ export default function Plus() {
           </div>
         </button>
 
+        <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/importer-sante')}>
+          <div className="row gap-12">
+            <span style={{ fontSize: '2rem' }}>🍏</span>
+            <div>
+              <h3 className="mb-0">Importer depuis Santé</h3>
+              <p className="small muted mb-0">Récupère ton historique de pas depuis l'app Santé d'Apple</p>
+            </div>
+          </div>
+        </button>
+
         <div className="card">
           <div className="alert-banner info" style={{ margin: 0 }}>
             <span className="icon">ℹ️</span>

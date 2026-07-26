@@ -27,6 +27,7 @@ interface AppDataContextValue {
   enregistrerSeanceLog: (seance: SeanceLog) => Promise<void>
   definirPoidsExercice: (nom: string, poids_kg: number) => Promise<void>
   enregistrerSuiviJour: (entree: SuiviJournalier) => Promise<void>
+  enregistrerSuiviJourEnMasse: (entrees: SuiviJournalier[]) => Promise<void>
   enregistrerSuiviHebdo: (entree: SuiviHebdomadaire) => Promise<void>
   enregistrerAlerteStagnation: (alerte: AlerteStagnation) => Promise<void>
 }
@@ -128,6 +129,17 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           return [...prev, entree]
         })
         await db.sauvegarderSuiviJournalier(entree)
+      },
+
+      async enregistrerSuiviJourEnMasse(entrees) {
+        const parDate = new Map(suiviJournalier.map((e) => [e.date, e]))
+        for (const entree of entrees) {
+          const existante = parDate.get(entree.date)
+          parDate.set(entree.date, existante ? { ...existante, ...entree } : entree)
+        }
+        const fusionnees = entrees.map((e) => parDate.get(e.date)!)
+        setSuiviJournalier(Array.from(parDate.values()))
+        await db.sauvegarderSuiviJournalierEnMasse(fusionnees)
       },
 
       async enregistrerSuiviHebdo(entree) {

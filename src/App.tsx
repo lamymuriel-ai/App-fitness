@@ -18,6 +18,7 @@ import Suivi from './pages/Suivi'
 import Plus from './pages/Plus'
 import AideMemoire from './pages/AideMemoire'
 import Profil from './pages/Profil'
+import ImporterSante from './pages/ImporterSante'
 
 function Chargement() {
   return (
@@ -59,6 +60,7 @@ function RoutesApp() {
         <Route path="/plus" element={<Plus />} />
         <Route path="/plus/aide-memoire" element={<AideMemoire />} />
         <Route path="/plus/profil" element={<Profil />} />
+        <Route path="/plus/importer-sante" element={<ImporterSante />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
       {!masquerNav && <BottomNav />}
