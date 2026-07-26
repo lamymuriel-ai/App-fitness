@@ -23,6 +23,7 @@ interface AppDataContextValue {
 
   mettreAJourProfil: (profil: ProfilUtilisatrice) => Promise<void>
   ajouterRepas: (repas: Repas) => Promise<void>
+  ajouterRepasEnMasse: (repasArray: Repas[]) => Promise<void>
   supprimerRepasParId: (id: string) => Promise<void>
   enregistrerSeanceLog: (seance: SeanceLog) => Promise<void>
   definirPoidsExercice: (nom: string, poids_kg: number) => Promise<void>
@@ -93,6 +94,15 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       async ajouterRepas(nouveauRepas) {
         setRepas((prev) => [...prev, nouveauRepas])
         await db.sauvegarderRepas(nouveauRepas)
+      },
+
+      async ajouterRepasEnMasse(repasArray) {
+        setRepas((prev) => {
+          const parId = new Map(prev.map((r) => [r.id, r]))
+          for (const r of repasArray) parId.set(r.id, r)
+          return Array.from(parId.values())
+        })
+        await db.sauvegarderRepasEnMasse(repasArray)
       },
 
       async supprimerRepasParId(id) {

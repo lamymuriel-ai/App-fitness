@@ -19,6 +19,7 @@ const EMOJI_METHODE: Record<Repas['methode'], string> = {
   photo: '📷',
   code_barres: '📦',
   manuel: '✍️',
+  import_sante: '🍏',
 }
 
 export default function Journal() {

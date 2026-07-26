@@ -107,6 +107,13 @@ export async function supprimerRepas(id: string) {
   await db.delete('repas', id)
 }
 
+/** Écrit plusieurs repas en une seule transaction (utilisé pour l'import en masse). */
+export async function sauvegarderRepasEnMasse(repasArray: Repas[]) {
+  const db = await getDb()
+  const tx = db.transaction('repas', 'readwrite')
+  await Promise.all([...repasArray.map((r) => tx.store.put(r)), tx.done])
+}
+
 export async function chargerSeancesLog(): Promise<SeanceLog[]> {
   const db = await getDb()
   return db.getAll('seancesLog')

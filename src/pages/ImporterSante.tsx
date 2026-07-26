@@ -1,20 +1,46 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
-import { analyserExportSante, type ResultatImportSante } from '../utils/appleHealthImport'
+import { analyserExportSante, type ResultatImportSante, type NutritionJour } from '../utils/appleHealthImport'
 import { formatDateCourt } from '../utils/date'
+import type { Repas, SuiviJournalier } from '../types'
 
 type Etat = 'attente' | 'analyse' | 'apercu' | 'import' | 'termine' | 'erreur'
 
+function construireRepasImport(nutrition: Map<string, NutritionJour>): Repas[] {
+  return Array.from(nutrition.entries()).map(([jour, valeurs]) => ({
+    id: `sante-import-${jour}`,
+    dateHeure: `${jour}T12:00:00.000Z`,
+    type: 'dejeuner',
+    nom: 'Alimentation importée (Santé)',
+    methode: 'import_sante',
+    calories: Math.round(valeurs.calories),
+    proteines_g: Math.round(valeurs.proteines_g * 10) / 10,
+    lipides_g: Math.round(valeurs.lipides_g * 10) / 10,
+    glucides_g: Math.round(valeurs.glucides_g * 10) / 10,
+    micros: valeurs.micros,
+  }))
+}
+
+function construireSuiviJours(resultat: ResultatImportSante): SuiviJournalier[] {
+  const jours = new Set<string>([...resultat.pas.keys(), ...resultat.poids.keys(), ...resultat.sommeil.keys()])
+  return Array.from(jours).map((jour) => ({
+    date: jour,
+    ...(resultat.pas.has(jour) ? { pas: Math.round(resultat.pas.get(jour)!) } : {}),
+    ...(resultat.poids.has(jour) ? { poids_kg: resultat.poids.get(jour)! } : {}),
+    ...(resultat.sommeil.has(jour) ? { sommeil_h: Math.round(resultat.sommeil.get(jour)! * 10) / 10 } : {}),
+  }))
+}
+
 export default function ImporterSante() {
   const navigate = useNavigate()
-  const { enregistrerSuiviJourEnMasse } = useAppData()
+  const { enregistrerSuiviJourEnMasse, ajouterRepasEnMasse } = useAppData()
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [etat, setEtat] = useState<Etat>('attente')
   const [resultat, setResultat] = useState<ResultatImportSante | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
-  const [nbImportes, setNbImportes] = useState(0)
+  const [resume, setResume] = useState({ jours: 0, repas: 0 })
 
   async function surSelectionFichier(e: React.ChangeEvent<HTMLInputElement>) {
     const fichier = e.target.files?.[0]
@@ -23,8 +49,14 @@ export default function ImporterSante() {
     setErreur(null)
     try {
       const res = await analyserExportSante(fichier)
-      if (res.parJour.size === 0) {
-        setErreur("Aucune donnée de pas n'a été trouvée dans ce fichier.")
+      const totalJours = new Set([
+        ...res.pas.keys(),
+        ...res.poids.keys(),
+        ...res.sommeil.keys(),
+        ...res.nutrition.keys(),
+      ]).size
+      if (totalJours === 0) {
+        setErreur("Aucune donnée exploitable (pas, poids, sommeil ou alimentation) n'a été trouvée dans ce fichier.")
         setEtat('erreur')
         return
       }
@@ -39,12 +71,11 @@ export default function ImporterSante() {
   async function confirmerImport() {
     if (!resultat) return
     setEtat('import')
-    const entrees = Array.from(resultat.parJour.entries()).map(([date, pas]) => ({
-      date,
-      pas: Math.round(pas),
-    }))
-    await enregistrerSuiviJourEnMasse(entrees)
-    setNbImportes(entrees.length)
+    const suivi = construireSuiviJours(resultat)
+    const repasImportes = construireRepasImport(resultat.nutrition)
+    if (suivi.length > 0) await enregistrerSuiviJourEnMasse(suivi)
+    if (repasImportes.length > 0) await ajouterRepasEnMasse(repasImportes)
+    setResume({ jours: suivi.length, repas: repasImportes.length })
     setEtat('termine')
   }
 
@@ -66,6 +97,17 @@ export default function ImporterSante() {
             </ol>
           </div>
 
+          <div className="card">
+            <h3>Ce qui sera importé</h3>
+            <p className="small muted mb-0">
+              👣 Pas · ⚖️ Poids · 😴 Sommeil · 🍽️ Alimentation (calories, macros et certains
+              micronutriments) — uniquement si ces données existent dans Santé (ex. l'alimentation
+              n'y est présente que si une autre app y écrivait déjà tes repas). Les autres
+              catégories (fréquence cardiaque, distance, entraînements…) ne sont pas importées, ce
+              ne sont pas des données suivies par cette appli.
+            </p>
+          </div>
+
           <div className="card center">
             <input
               ref={inputRef}
@@ -79,7 +121,7 @@ export default function ImporterSante() {
             </button>
             <p className="small muted mt-8 mb-0">
               Le fichier peut être volumineux (plusieurs dizaines de Mo) — l'analyse se fait entièrement sur ton
-              appareil, rien n'est envoyé sur internet.
+              appareil, rien n'est envoyé sur internet. Ça peut prendre jusqu'à une minute pour un gros fichier.
             </p>
           </div>
 
@@ -95,17 +137,24 @@ export default function ImporterSante() {
       {etat === 'apercu' && resultat && (
         <div className="card">
           <h3>✨ Données trouvées</h3>
-          <p>
-            <strong>{resultat.parJour.size}</strong> jours avec un nombre de pas — période du{' '}
-            {resultat.premiereDate && formatDateCourt(resultat.premiereDate)} au{' '}
+          <p className="muted small mb-0">
+            Période du {resultat.premiereDate && formatDateCourt(resultat.premiereDate)} au{' '}
             {resultat.derniereDate && formatDateCourt(resultat.derniereDate)}
           </p>
-          <p className="small muted">
-            Si un jour a déjà un nombre de pas enregistré manuellement dans l'appli, il sera remplacé par la
-            valeur venant de Santé.
+          <div className="mt-16" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            <StatApercu emoji="👣" label="Pas" nb={resultat.pas.size} />
+            <StatApercu emoji="⚖️" label="Poids" nb={resultat.poids.size} />
+            <StatApercu emoji="😴" label="Sommeil" nb={resultat.sommeil.size} />
+            <StatApercu emoji="🍽️" label="Alimentation" nb={resultat.nutrition.size} />
+          </div>
+          <p className="small muted mt-16">
+            Pour un jour donné, une valeur déjà enregistrée dans l'appli (poids, pas, sommeil) sera
+            remplacée par celle venant de Santé. L'alimentation importée est ajoutée sous forme
+            d'un repas récapitulatif par jour, modifiable ensuite comme n'importe quel repas —
+            un nouvel import remplace le précédent plutôt que de le dupliquer.
           </p>
           <button className="btn btn-primary" onClick={confirmerImport}>
-            Importer {resultat.parJour.size} jours
+            Importer
           </button>
         </div>
       )}
@@ -119,12 +168,31 @@ export default function ImporterSante() {
       {etat === 'termine' && (
         <div className="card">
           <h3>✅ Import terminé</h3>
-          <p>{nbImportes} jours ont été mis à jour avec tes données de pas.</p>
-          <button className="btn btn-primary" onClick={() => navigate('/suivi')}>
-            Voir le suivi
-          </button>
+          <p>
+            {resume.jours} jour{resume.jours !== 1 ? 's' : ''} de suivi (pas/poids/sommeil) mis à jour
+            {resume.repas > 0 && (
+              <> et {resume.repas} jour{resume.repas !== 1 ? 's' : ''} d'alimentation ajouté{resume.repas !== 1 ? 's' : ''}</>
+            )}.
+          </p>
+          <div className="btn-row">
+            <button className="btn btn-outline" onClick={() => navigate('/journal')}>
+              Voir le journal
+            </button>
+            <button className="btn btn-primary" onClick={() => navigate('/suivi')}>
+              Voir le suivi
+            </button>
+          </div>
         </div>
       )}
+    </div>
+  )
+}
+
+function StatApercu({ emoji, label, nb }: { emoji: string; label: string; nb: number }) {
+  return (
+    <div style={{ background: '#f7f3f5', borderRadius: 14, padding: '10px 12px' }}>
+      <div style={{ fontWeight: 800 }}>{emoji} {label}</div>
+      <div className="muted small">{nb} jour{nb !== 1 ? 's' : ''}</div>
     </div>
   )
 }

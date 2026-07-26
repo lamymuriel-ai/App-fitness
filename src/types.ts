@@ -68,7 +68,7 @@ export interface ProfilUtilisatrice {
   onboardingTermine: boolean
 }
 
-export type MethodeSaisie = 'photo' | 'code_barres' | 'manuel'
+export type MethodeSaisie = 'photo' | 'code_barres' | 'manuel' | 'import_sante'
 export type TypeRepas = 'petit_dejeuner' | 'dejeuner' | 'diner' | 'collation'
 
 export interface Repas {
@@ -132,6 +132,7 @@ export interface SuiviJournalier {
   date: string // ISO YYYY-MM-DD, clé unique
   poids_kg?: number
   pas?: number
+  sommeil_h?: number
 }
 
 export interface SuiviHebdomadaire {

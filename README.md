@@ -27,7 +27,7 @@ npm run preview
 - **Entraînement** : 3 séances préremplies (2 en salle, 1 à la maison), poids mémorisé par exercice, cases à cocher par série, historique des séances.
 - **Suivi hebdomadaire** : pesée, moyenne mobile sur 7 jours, tour de taille, ressenti, sommeil, graphiques d'évolution.
 - **Alerte de stagnation** : si la moyenne de poids ne baisse pas sur 2 semaines, l'appli propose un seul ajustement (calories ou pas) à la fois.
-- **Import Apple Santé** : import ponctuel de l'historique de pas depuis le fichier d'export de l'app Santé d'Apple (`export.zip`/`export.xml`), analysé entièrement dans le navigateur. Une synchronisation automatique n'est pas possible : HealthKit n'est accessible qu'aux applications natives iOS, pas aux PWA.
+- **Import Apple Santé** : import ponctuel du fichier d'export de l'app Santé d'Apple (`export.zip`/`export.xml`), analysé entièrement dans le navigateur — pas, poids, sommeil, et alimentation (calories/macros/certains micronutriments, si une autre app avait déjà écrit ces données dans Santé). Une synchronisation automatique en continu n'est pas possible : HealthKit n'est accessible qu'aux applications natives iOS, pas aux PWA. Les ré-imports remplacent les données du même jour plutôt que de les dupliquer.
 - **Aide-mémoire** : rappels de méthode et erreurs fréquentes à éviter.
 
 L'application ne pose aucun diagnostic médical et ne remplace pas un avis professionnel de santé — elle se limite à du suivi factuel.
