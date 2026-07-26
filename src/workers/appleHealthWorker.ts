@@ -1,5 +1,6 @@
-import { Unzip, UnzipInflate } from 'fflate'
+import { Inflate } from 'fflate'
 import { AnalyseurSanteIncremental, type ResultatImportSante } from '../utils/appleHealthParser'
+import { localiserEntreeZip } from '../utils/zipLocalisateur'
 
 export interface MessageEntree {
   file: File
@@ -24,88 +25,116 @@ const TAILLE_MAX_VERIF_ENTETE = 4096
 // quel que soit le navigateur.
 const TAILLE_MORCEAU_LECTURE = 32 * 1024
 
-async function* lireParMorceaux(file: File): AsyncGenerator<{ chunk: Uint8Array; estDernier: boolean }> {
-  const total = file.size
-  let position = 0
-  if (total === 0) {
+async function* lireParMorceaux(
+  file: File,
+  debut = 0,
+  fin = file.size
+): AsyncGenerator<{ chunk: Uint8Array; estDernier: boolean }> {
+  let position = debut
+  if (fin <= debut) {
     yield { chunk: new Uint8Array(0), estDernier: true }
     return
   }
-  while (position < total) {
-    const fin = Math.min(position + TAILLE_MORCEAU_LECTURE, total)
-    const buffer = await file.slice(position, fin).arrayBuffer()
-    position = fin
-    yield { chunk: new Uint8Array(buffer), estDernier: position >= total }
+  while (position < fin) {
+    const finMorceau = Math.min(position + TAILLE_MORCEAU_LECTURE, fin)
+    const buffer = await file.slice(position, finMorceau).arrayBuffer()
+    position = finMorceau
+    yield { chunk: new Uint8Array(buffer), estDernier: position >= fin }
   }
 }
 
 /**
- * Décompacte et analyse le .zip en flux : le fichier lui-même est lu par petits
- * morceaux (jamais chargé entièrement en mémoire, même sous forme d'un seul
- * ArrayBuffer compressé), poussés dans fflate.Unzip qui restitue le contenu
- * décompressé de export.xml par morceaux via son callback `ondata`. C'est indispensable
- * pour un long historique Apple Watch : les données très répétitives (fréquence
- * cardiaque en continu, etc.) peuvent faire gonfler un .zip de quelques centaines de Mo
- * en plusieurs Go de XML une fois décompressé — largement au-delà de ce qu'un téléphone
- * peut garder en mémoire, y compris pour la seule archive compressée d'origine.
+ * Décompacte et analyse le .zip en flux, en localisant d'abord export.xml via le
+ * répertoire central de l'archive (`localiserEntreeZip`, dans `zipLocalisateur.ts`)
+ * plutôt qu'en scannant séquentiellement les en-têtes locaux comme le fait
+ * fflate.Unzip. Cette dernière approche s'est révélée peu fiable sur de vrais
+ * exports Apple Santé volumineux (erreur "unexpected eof"), très probablement à
+ * cause du format d'écriture en flux utilisé par l'appareil (tailles inconnues à
+ * l'avance dans l'en-tête local, ou zip64) — un cas que les en-têtes locaux seuls
+ * ne permettent pas toujours de résoudre sans ambiguïté. Une fois l'entrée
+ * localisée, seule sa plage d'octets compressés exacte est lue (par petits
+ * morceaux, jamais toute l'archive), et décompressée avec le décodeur DEFLATE brut
+ * de fflate — sans repasser par un parseur de conteneur zip.
  */
 async function analyserZipEnFlux(
   file: File,
   analyseur: AnalyseurSanteIncremental,
   surProgression: (ratio: number) => void
 ): Promise<void> {
-  let entreeTrouvee = false
+  const entree = await localiserEntreeZip(file, 'export.xml')
+  if (!entree) {
+    throw new Error("Le fichier export.xml est introuvable dans cette archive.")
+  }
+  if (entree.methodeCompression !== 8 && entree.methodeCompression !== 0) {
+    throw new Error('Ce fichier utilise une méthode de compression non prise en charge.')
+  }
+
   let enteteAccumulee = ''
   let enteteVerifiee = false
-  let erreurDetectee: string | null = null
   const decoder = new TextDecoder('utf-8')
 
-  const unzipper = new Unzip((fichier) => {
-    if (erreurDetectee) return
-    if (!fichier.name.toLowerCase().endsWith('export.xml')) return
-    entreeTrouvee = true
-    fichier.ondata = (err, chunk, final) => {
-      if (erreurDetectee) return
-      if (err) {
-        erreurDetectee = err.message || 'Erreur de décompression.'
-        return
+  const traiterTexteDecompresse = (texte: string) => {
+    if (!enteteVerifiee) {
+      enteteAccumulee += texte
+      if (enteteAccumulee.includes('<HealthData')) {
+        enteteVerifiee = true
+      } else if (enteteAccumulee.length > TAILLE_MAX_VERIF_ENTETE) {
+        throw new Error("Ce fichier ne ressemble pas à un export de l'app Santé (export.xml attendu).")
+      } else {
+        return // pas encore assez de texte accumulé pour trancher, on attend le prochain morceau
       }
-      const texte = decoder.decode(chunk, { stream: !final })
-
-      if (!enteteVerifiee) {
-        enteteAccumulee += texte
-        if (enteteAccumulee.includes('<HealthData')) {
-          enteteVerifiee = true
-        } else if (enteteAccumulee.length > TAILLE_MAX_VERIF_ENTETE) {
-          erreurDetectee = "Ce fichier ne ressemble pas à un export de l'app Santé (export.xml attendu)."
-          return
-        } else {
-          return // pas encore assez de texte accumulé pour trancher, on attend le prochain morceau
-        }
-      }
-
-      analyseur.pousser(texte)
     }
-    fichier.start()
-  })
-  unzipper.register(UnzipInflate)
+    analyseur.pousser(texte)
+  }
 
-  const total = file.size
+  const total = entree.tailleCompressee
   let lu = 0
 
-  for await (const { chunk, estDernier } of lireParMorceaux(file)) {
-    if (erreurDetectee) break
+  if (entree.methodeCompression === 0) {
+    // Méthode "store" : les données ne sont pas compressées, on les décode telles quelles.
+    for await (const { chunk, estDernier } of lireParMorceaux(
+      file,
+      entree.offsetDonnees,
+      entree.offsetDonnees + entree.tailleCompressee
+    )) {
+      lu += chunk.byteLength
+      traiterTexteDecompresse(decoder.decode(chunk, { stream: !estDernier }))
+      surProgression(total > 0 ? lu / total : 0)
+      await new Promise((resolve) => setTimeout(resolve, 0))
+    }
+    if (!enteteVerifiee) {
+      throw new Error("Ce fichier ne ressemble pas à un export de l'app Santé (export.xml attendu).")
+    }
+    return
+  }
+
+  let erreurInflate: Error | null = null
+  const inflateur = new Inflate((dat, final) => {
+    if (erreurInflate) return
+    try {
+      traiterTexteDecompresse(decoder.decode(dat, { stream: !final }))
+    } catch (e) {
+      erreurInflate = e instanceof Error ? e : new Error("Erreur pendant l'analyse.")
+    }
+  })
+
+  for await (const { chunk, estDernier } of lireParMorceaux(
+    file,
+    entree.offsetDonnees,
+    entree.offsetDonnees + entree.tailleCompressee
+  )) {
+    if (erreurInflate) break
     lu += chunk.byteLength
-    unzipper.push(chunk, estDernier)
+    inflateur.push(chunk, estDernier)
     surProgression(total > 0 ? lu / total : 0)
     await new Promise((resolve) => setTimeout(resolve, 0))
   }
 
-  if (erreurDetectee) {
-    throw new Error(erreurDetectee)
+  if (erreurInflate) {
+    throw erreurInflate
   }
-  if (!entreeTrouvee) {
-    throw new Error("Le fichier export.xml est introuvable dans cette archive.")
+  if (!enteteVerifiee) {
+    throw new Error("Ce fichier ne ressemble pas à un export de l'app Santé (export.xml attendu).")
   }
 }
 
