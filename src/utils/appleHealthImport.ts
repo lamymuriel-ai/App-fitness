@@ -1,4 +1,5 @@
 export type { EntreeAlimentaire, ResultatImportSante } from './appleHealthParser'
+export { parserHorodatageApple } from './appleHealthParser'
 import type { MessageEntree, MessageSortie } from '../workers/appleHealthWorker'
 import type { ResultatImportSante } from './appleHealthParser'
 

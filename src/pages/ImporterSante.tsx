@@ -1,7 +1,12 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
-import { analyserExportSante, type ResultatImportSante, type EntreeAlimentaire } from '../utils/appleHealthImport'
+import {
+  analyserExportSante,
+  parserHorodatageApple,
+  type ResultatImportSante,
+  type EntreeAlimentaire,
+} from '../utils/appleHealthImport'
 import { formatDateCourt, typeRepasSuggere } from '../utils/date'
 import type { Repas, SuiviJournalier } from '../types'
 
@@ -10,15 +15,15 @@ type Etat = 'attente' | 'analyse' | 'apercu' | 'import' | 'termine' | 'erreur'
 function construireRepasImport(nutrition: Map<string, EntreeAlimentaire>): Repas[] {
   const resultats: Repas[] = []
   for (const [horodatage, valeurs] of nutrition) {
-    const date = new Date(horodatage)
-    if (Number.isNaN(date.getTime())) continue // horodatage illisible, on ignore plutôt que de deviner
+    const epochMs = parserHorodatageApple(horodatage)
+    if (epochMs === null) continue // horodatage illisible, on ignore plutôt que de deviner
     // Heure locale telle qu'enregistrée (ex. "2026-07-20 19:30:00 +0200" -> 19), pas celle du fuseau
     // du navigateur qui affiche l'appli : le type de repas doit refléter l'heure réelle du repas.
     const heureMatch = /^\d{4}-\d{2}-\d{2} (\d{2}):/.exec(horodatage)
-    const heureLocale = heureMatch ? Number(heureMatch[1]) : date.getHours()
+    const heureLocale = heureMatch ? Number(heureMatch[1]) : new Date(epochMs).getUTCHours()
     resultats.push({
       id: `sante-import-${horodatage}`,
-      dateHeure: date.toISOString(),
+      dateHeure: new Date(epochMs).toISOString(),
       type: typeRepasSuggere(heureLocale),
       nom: valeurs.nom || 'Repas importé (Santé)',
       methode: 'import_sante',

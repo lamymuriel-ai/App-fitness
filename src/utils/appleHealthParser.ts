@@ -19,6 +19,23 @@ export interface ResultatImportSante {
   derniereDate: string | null
 }
 
+// Format exact des horodatages Apple Santé : "2026-07-20 19:30:00 +0200". Ce n'est PAS
+// un format standard ECMA-262 (espace au lieu de "T", décalage sans ":"), et `new Date(...)`
+// le parse de façon incohérente selon le moteur JS : Chrome est permissif et l'accepte,
+// mais Safari (donc tout iPhone) renvoie "Invalid Date" pour cette forme précise. D'où un
+// import qui semblait fonctionner en test (Chromium) mais perdait silencieusement tout le
+// sommeil et l'alimentation sur un vrai iPhone. On parse donc ce format nous-mêmes.
+const REGEX_HORODATAGE_APPLE = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2}):(\d{2}) ([+-])(\d{2})(\d{2})$/
+
+export function parserHorodatageApple(horodatage: string): number | null {
+  const m = REGEX_HORODATAGE_APPLE.exec(horodatage)
+  if (!m) return null
+  const [, aaaa, mois, jour, heure, minute, seconde, signe, decalHeure, decalMinute] = m
+  const brutUtc = Date.UTC(Number(aaaa), Number(mois) - 1, Number(jour), Number(heure), Number(minute), Number(seconde))
+  const decalageMs = (Number(decalHeure) * 60 + Number(decalMinute)) * 60000
+  return signe === '-' ? brutUtc + decalageMs : brutUtc - decalageMs
+}
+
 function nutritionVide(horodatage: string): EntreeAlimentaire {
   return {
     horodatage,
@@ -222,9 +239,9 @@ export class AnalyseurSanteIncremental {
       if (!valeurMatch[1].includes('Asleep')) return // exclut "InBed" et "Awake"
       const endMatch = REGEX_END.exec(ouverture)
       if (!endMatch) return
-      const debut = new Date(startMatch[1]).getTime()
-      const fin = new Date(endMatch[1]).getTime()
-      if (!Number.isFinite(debut) || !Number.isFinite(fin) || fin <= debut) return
+      const debut = parserHorodatageApple(startMatch[1])
+      const fin = parserHorodatageApple(endMatch[1])
+      if (debut === null || fin === null || fin <= debut) return
       const heures = (fin - debut) / 1000 / 60 / 60
       const jourFin = endMatch[1].slice(0, 10) // nuit attribuée au jour du réveil
       this.sommeil.set(jourFin, (this.sommeil.get(jourFin) || 0) + heures)
