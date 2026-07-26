@@ -32,8 +32,7 @@ export function numeroSemaine(dateDebutISO: string): number {
   return Math.max(1, Math.floor(jours / 7) + 1)
 }
 
-export function typeRepasSuggere(): 'petit_dejeuner' | 'dejeuner' | 'diner' | 'collation' {
-  const heure = new Date().getHours()
+export function typeRepasSuggere(heure = new Date().getHours()): 'petit_dejeuner' | 'dejeuner' | 'diner' | 'collation' {
   if (heure < 10) return 'petit_dejeuner'
   if (heure < 14) return 'dejeuner'
   if (heure < 18) return 'collation'

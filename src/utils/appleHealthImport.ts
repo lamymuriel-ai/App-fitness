@@ -1,7 +1,9 @@
 import { unzip } from 'fflate'
 import type { Micronutriments } from '../types'
 
-export interface NutritionJour {
+export interface EntreeAlimentaire {
+  horodatage: string // startDate brut Apple Santé, ex. "2026-07-20 12:30:00 +0200"
+  nom?: string
   calories: number
   proteines_g: number
   lipides_g: number
@@ -10,16 +12,17 @@ export interface NutritionJour {
 }
 
 export interface ResultatImportSante {
-  pas: Map<string, number>
-  poids: Map<string, number> // kg
-  sommeil: Map<string, number> // heures
-  nutrition: Map<string, NutritionJour>
+  pas: Map<string, number> // clé = jour (YYYY-MM-DD)
+  poids: Map<string, number> // clé = jour, valeur en kg
+  sommeil: Map<string, number> // clé = jour (nuit attribuée au jour du réveil), valeur en heures
+  nutrition: Map<string, EntreeAlimentaire> // clé = horodatage exact (un repas = une entrée)
   premiereDate: string | null
   derniereDate: string | null
 }
 
-function nutritionVide(): NutritionJour {
+function nutritionVide(horodatage: string): EntreeAlimentaire {
   return {
+    horodatage,
     calories: 0,
     proteines_g: 0,
     lipides_g: 0,
@@ -94,16 +97,43 @@ function convertirPoidsEnKg(valeur: number, uniteSource: string): number | null 
 }
 
 /**
+ * Repère les noms d'aliments : la plupart des apps (MyFitnessPal, Micron…) regroupent
+ * les nutriments d'un repas dans un <Correlation type="HKCorrelationTypeIdentifierFood">
+ * avec le nom en <MetadataEntry key="HKFoodType">. D'autres apps l'attachent directement
+ * à chaque <Record>. On capture les deux, indexés par horodatage exact.
+ */
+function extraireNomsAliments(xml: string): Map<string, string> {
+  const noms = new Map<string, string>()
+  const regexCorrelation = /<Correlation type="HKCorrelationTypeIdentifierFood"[^>]*?>[\s\S]*?<\/Correlation>/g
+  const regexStart = /startDate="([^"]+)"/
+  const regexNom = /<MetadataEntry key="HKFoodType" value="([^"]*)"/
+
+  let correspondance: RegExpExecArray | null
+  while ((correspondance = regexCorrelation.exec(xml)) !== null) {
+    const bloc = correspondance[0]
+    const startMatch = regexStart.exec(bloc)
+    const nomMatch = regexNom.exec(bloc)
+    if (startMatch && nomMatch && nomMatch[1]) {
+      noms.set(startMatch[1], nomMatch[1])
+    }
+  }
+  return noms
+}
+
+/**
  * Analyse le XML exporté par l'app Santé en un seul passage, sans construire de DOM
  * (les exports peuvent faire plusieurs dizaines de Mo). Les <Record> sont soit
  * auto-fermants, soit contiennent des <MetadataEntry> enfants (fréquent pour les
  * données nutritionnelles saisies via une app tierce) — les deux formes sont gérées.
+ * Les <Record> nutritionnels imbriqués dans un <Correlation> (regroupement "repas")
+ * sont comptés une seule fois grâce au balayage global des <Record>.
  */
 function extraireXml(xml: string): ResultatImportSante {
   const pas = new Map<string, number>()
   const poidsSommeCompte = new Map<string, { somme: number; compte: number }>()
   const sommeil = new Map<string, number>()
-  const nutrition = new Map<string, NutritionJour>()
+  const nutrition = new Map<string, EntreeAlimentaire>()
+  const nomsAliments = extraireNomsAliments(xml)
 
   const alternatives = TOUS_LES_TYPES_SUIVIS.join('|')
   const regexRecord = new RegExp(
@@ -115,16 +145,19 @@ function extraireXml(xml: string): ResultatImportSante {
   const regexEnd = /endDate="([^"]+)"/
   const regexValeur = /value="([^"]+)"/
   const regexUnite = /unit="([^"]+)"/
+  const regexNomRecord = /<MetadataEntry key="HKFoodType" value="([^"]*)"/
 
   let correspondance: RegExpExecArray | null
   while ((correspondance = regexRecord.exec(xml)) !== null) {
     const type = correspondance[1]
-    const ouvertureMatch = regexOuverture.exec(correspondance[0])
-    const ouverture = ouvertureMatch ? ouvertureMatch[0] : correspondance[0]
+    const blocComplet = correspondance[0]
+    const ouvertureMatch = regexOuverture.exec(blocComplet)
+    const ouverture = ouvertureMatch ? ouvertureMatch[0] : blocComplet
 
     const startMatch = regexStart.exec(ouverture)
     if (!startMatch) continue
-    const jourDebut = startMatch[1].slice(0, 10)
+    const horodatage = startMatch[1]
+    const jourDebut = horodatage.slice(0, 10)
     const valeurMatch = regexValeur.exec(ouverture)
     if (!valeurMatch) continue
 
@@ -172,13 +205,16 @@ function extraireXml(xml: string): ResultatImportSante {
           : convertirMasse(valeurBrute, uniteMatch[1], mapping.unite)
       if (convertie === null) continue
 
-      const jourNutrition = nutrition.get(jourDebut) || nutritionVide()
+      const entree = nutrition.get(horodatage) || nutritionVide(horodatage)
       if (mapping.cible === 'macro') {
-        jourNutrition[mapping.champ] += convertie
+        entree[mapping.champ] += convertie
       } else {
-        jourNutrition.micros[mapping.champ] += convertie
+        entree.micros[mapping.champ] += convertie
       }
-      nutrition.set(jourDebut, jourNutrition)
+      if (!entree.nom) {
+        entree.nom = nomsAliments.get(horodatage) || regexNomRecord.exec(blocComplet)?.[1]
+      }
+      nutrition.set(horodatage, entree)
     }
   }
 
@@ -191,7 +227,7 @@ function extraireXml(xml: string): ResultatImportSante {
     ...pas.keys(),
     ...poids.keys(),
     ...sommeil.keys(),
-    ...nutrition.keys(),
+    ...Array.from(nutrition.keys()).map((h) => h.slice(0, 10)),
   ])
   const joursTries = Array.from(tousLesJours).sort()
 

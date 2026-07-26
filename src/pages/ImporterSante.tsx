@@ -1,25 +1,35 @@
 import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
-import { analyserExportSante, type ResultatImportSante, type NutritionJour } from '../utils/appleHealthImport'
-import { formatDateCourt } from '../utils/date'
+import { analyserExportSante, type ResultatImportSante, type EntreeAlimentaire } from '../utils/appleHealthImport'
+import { formatDateCourt, typeRepasSuggere } from '../utils/date'
 import type { Repas, SuiviJournalier } from '../types'
 
 type Etat = 'attente' | 'analyse' | 'apercu' | 'import' | 'termine' | 'erreur'
 
-function construireRepasImport(nutrition: Map<string, NutritionJour>): Repas[] {
-  return Array.from(nutrition.entries()).map(([jour, valeurs]) => ({
-    id: `sante-import-${jour}`,
-    dateHeure: `${jour}T12:00:00.000Z`,
-    type: 'dejeuner',
-    nom: 'Alimentation importée (Santé)',
-    methode: 'import_sante',
-    calories: Math.round(valeurs.calories),
-    proteines_g: Math.round(valeurs.proteines_g * 10) / 10,
-    lipides_g: Math.round(valeurs.lipides_g * 10) / 10,
-    glucides_g: Math.round(valeurs.glucides_g * 10) / 10,
-    micros: valeurs.micros,
-  }))
+function construireRepasImport(nutrition: Map<string, EntreeAlimentaire>): Repas[] {
+  const resultats: Repas[] = []
+  for (const [horodatage, valeurs] of nutrition) {
+    const date = new Date(horodatage)
+    if (Number.isNaN(date.getTime())) continue // horodatage illisible, on ignore plutôt que de deviner
+    // Heure locale telle qu'enregistrée (ex. "2026-07-20 19:30:00 +0200" -> 19), pas celle du fuseau
+    // du navigateur qui affiche l'appli : le type de repas doit refléter l'heure réelle du repas.
+    const heureMatch = /^\d{4}-\d{2}-\d{2} (\d{2}):/.exec(horodatage)
+    const heureLocale = heureMatch ? Number(heureMatch[1]) : date.getHours()
+    resultats.push({
+      id: `sante-import-${horodatage}`,
+      dateHeure: date.toISOString(),
+      type: typeRepasSuggere(heureLocale),
+      nom: valeurs.nom || 'Repas importé (Santé)',
+      methode: 'import_sante',
+      calories: Math.round(valeurs.calories),
+      proteines_g: Math.round(valeurs.proteines_g * 10) / 10,
+      lipides_g: Math.round(valeurs.lipides_g * 10) / 10,
+      glucides_g: Math.round(valeurs.glucides_g * 10) / 10,
+      micros: valeurs.micros,
+    })
+  }
+  return resultats
 }
 
 function construireSuiviJours(resultat: ResultatImportSante): SuiviJournalier[] {
@@ -142,16 +152,17 @@ export default function ImporterSante() {
             {resultat.derniereDate && formatDateCourt(resultat.derniereDate)}
           </p>
           <div className="mt-16" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <StatApercu emoji="👣" label="Pas" nb={resultat.pas.size} />
-            <StatApercu emoji="⚖️" label="Poids" nb={resultat.poids.size} />
-            <StatApercu emoji="😴" label="Sommeil" nb={resultat.sommeil.size} />
-            <StatApercu emoji="🍽️" label="Alimentation" nb={resultat.nutrition.size} />
+            <StatApercu emoji="👣" label="Pas" nb={resultat.pas.size} unite="jour" />
+            <StatApercu emoji="⚖️" label="Poids" nb={resultat.poids.size} unite="jour" />
+            <StatApercu emoji="😴" label="Sommeil" nb={resultat.sommeil.size} unite="jour" />
+            <StatApercu emoji="🍽️" label="Alimentation" nb={resultat.nutrition.size} unite="repas" />
           </div>
           <p className="small muted mt-16">
             Pour un jour donné, une valeur déjà enregistrée dans l'appli (poids, pas, sommeil) sera
-            remplacée par celle venant de Santé. L'alimentation importée est ajoutée sous forme
-            d'un repas récapitulatif par jour, modifiable ensuite comme n'importe quel repas —
-            un nouvel import remplace le précédent plutôt que de le dupliquer.
+            remplacée par celle venant de Santé. Chaque repas importé (ex. depuis Micron ou une
+            autre app connectée à Santé) devient une entrée séparée dans ton journal, avec son nom
+            et son heure quand ils sont disponibles — modifiable ensuite comme n'importe quel repas.
+            Un nouvel import remplace les entrées déjà importées plutôt que de les dupliquer.
           </p>
           <button className="btn btn-primary" onClick={confirmerImport}>
             Importer
@@ -171,7 +182,7 @@ export default function ImporterSante() {
           <p>
             {resume.jours} jour{resume.jours !== 1 ? 's' : ''} de suivi (pas/poids/sommeil) mis à jour
             {resume.repas > 0 && (
-              <> et {resume.repas} jour{resume.repas !== 1 ? 's' : ''} d'alimentation ajouté{resume.repas !== 1 ? 's' : ''}</>
+              <> et {resume.repas} repas ajouté{resume.repas !== 1 ? 's' : ''} au journal</>
             )}.
           </p>
           <div className="btn-row">
@@ -188,11 +199,11 @@ export default function ImporterSante() {
   )
 }
 
-function StatApercu({ emoji, label, nb }: { emoji: string; label: string; nb: number }) {
+function StatApercu({ emoji, label, nb, unite }: { emoji: string; label: string; nb: number; unite: string }) {
   return (
     <div style={{ background: '#f7f3f5', borderRadius: 14, padding: '10px 12px' }}>
       <div style={{ fontWeight: 800 }}>{emoji} {label}</div>
-      <div className="muted small">{nb} jour{nb !== 1 ? 's' : ''}</div>
+      <div className="muted small">{nb} {unite}{nb !== 1 && !unite.endsWith('s') ? 's' : ''}</div>
     </div>
   )
 }
