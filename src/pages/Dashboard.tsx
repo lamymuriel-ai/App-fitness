@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { BarreProgression, BarreMacros } from '../components/ui'
 import { totauxRepas } from '../utils/nutrition'
-import { dateDuJourISO, estAujourdhui, formatDateLong, numeroSemaine } from '../utils/date'
+import { dateDuJourISO, debutSemaineISO, estAujourdhui, formatDateLong, numeroSemaine } from '../utils/date'
 import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
 import { detecterStagnation } from '../utils/stagnation'
 import AlerteStagnationBanniere from '../components/AlerteStagnationBanniere'
@@ -38,6 +38,17 @@ export default function Dashboard() {
   const seanceLogDuJour = seancesLog.find(
     (s) => s.date === aujourdHui && s.seanceTemplateId === idSeanceDuJour
   )
+
+  const debutSemaine = useMemo(() => debutSemaineISO(aujourdHui), [aujourdHui])
+  const seancesCetteSemaine = useMemo(
+    () =>
+      SEANCES_TEMPLATES.map((s) => ({
+        seance: s,
+        faite: seancesLog.some((log) => log.seanceTemplateId === s.id && log.date >= debutSemaine && log.termineeA),
+      })),
+    [seancesLog, debutSemaine]
+  )
+  const nbSeancesFaites = seancesCetteSemaine.filter((s) => s.faite).length
 
   const stagnationActive = useMemo(() => {
     const alerteOuverte = alertesStagnation.find((a) => !a.resolue)
@@ -132,6 +143,32 @@ export default function Dashboard() {
               Enregistrer
             </button>
           </div>
+        </div>
+
+        <div className="card">
+          <div className="card-title">
+            <h3>📅 Cette semaine</h3>
+            <span className="pill yellow">{nbSeancesFaites}/{seancesCetteSemaine.length} séances</span>
+          </div>
+          <div className="mt-8">
+            {seancesCetteSemaine.map(({ seance, faite }) => (
+              <div
+                key={seance.id}
+                style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0' }}
+              >
+                <span style={{ fontSize: '1.2em', lineHeight: '1.4' }}>{faite ? '✅' : '⬜️'}</span>
+                <div>
+                  <div style={{ fontWeight: 600 }}>{seance.nom}</div>
+                  <div className="muted small">
+                    {seance.moment} · {seance.lieu === 'salle' ? 'en salle' : 'à la maison'}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button className="btn btn-outline btn-sm mt-8" onClick={() => navigate('/entrainement')}>
+            Voir toutes les séances →
+          </button>
         </div>
 
         {seanceDuJour && (

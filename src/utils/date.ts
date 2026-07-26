@@ -32,6 +32,15 @@ export function numeroSemaine(dateDebutISO: string): number {
   return Math.max(1, Math.floor(jours / 7) + 1)
 }
 
+/** Lundi de la semaine calendaire contenant la date donnée (par défaut aujourd'hui), au format ISO (YYYY-MM-DD). */
+export function debutSemaineISO(dateISO = dateDuJourISO()): string {
+  const d = new Date(`${dateISO}T00:00:00`)
+  const jourSemaine = d.getDay() // 0 = dimanche, 1 = lundi, ...
+  const decalage = jourSemaine === 0 ? 6 : jourSemaine - 1
+  d.setDate(d.getDate() - decalage)
+  return d.toISOString().slice(0, 10)
+}
+
 export function typeRepasSuggere(heure = new Date().getHours()): 'petit_dejeuner' | 'dejeuner' | 'diner' | 'collation' {
   if (heure < 10) return 'petit_dejeuner'
   if (heure < 14) return 'dejeuner'
