@@ -129,16 +129,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       },
 
       async enregistrerSuiviJour(entree) {
+        // On fusionne avec l'entrée existante avant d'écrire dans IndexedDB (pas seulement
+        // en mémoire) : `db.put` remplace tout l'enregistrement du jour, donc enregistrer
+        // seulement les pas effacerait silencieusement le poids/sommeil déjà stockés pour
+        // ce même jour si on lui passait l'entrée partielle telle quelle.
+        const existante = suiviJournalier.find((e) => e.date === entree.date)
+        const fusionnee = existante ? { ...existante, ...entree } : entree
         setSuiviJournalier((prev) => {
           const index = prev.findIndex((e) => e.date === entree.date)
           if (index >= 0) {
             const copie = [...prev]
-            copie[index] = { ...copie[index], ...entree }
+            copie[index] = fusionnee
             return copie
           }
-          return [...prev, entree]
+          return [...prev, fusionnee]
         })
-        await db.sauvegarderSuiviJournalier(entree)
+        await db.sauvegarderSuiviJournalier(fusionnee)
       },
 
       async enregistrerSuiviJourEnMasse(entrees) {

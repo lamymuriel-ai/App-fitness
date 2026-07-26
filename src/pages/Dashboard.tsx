@@ -18,11 +18,18 @@ export default function Dashboard() {
 
   const entreeJour = suiviJournalier.find((e) => e.date === aujourdHui)
   const [pasSaisie, setPasSaisie] = useState<string>(entreeJour?.pas?.toString() || '')
+  const [sommeilSaisie, setSommeilSaisie] = useState<string>(entreeJour?.sommeil_h?.toString() || '')
 
   async function enregistrerPas() {
     const pas = Number(pasSaisie)
     if (!Number.isFinite(pas) || pas < 0) return
     await enregistrerSuiviJour({ date: aujourdHui, pas })
+  }
+
+  async function enregistrerSommeil() {
+    const sommeil_h = Number(sommeilSaisie)
+    if (!Number.isFinite(sommeil_h) || sommeil_h < 0 || sommeil_h > 24) return
+    await enregistrerSuiviJour({ date: aujourdHui, sommeil_h })
   }
 
   const jourSemaine = new Date().getDay()
@@ -95,6 +102,33 @@ export default function Dashboard() {
               />
             </div>
             <button className="btn btn-secondary btn-sm" onClick={enregistrerPas}>
+              Enregistrer
+            </button>
+          </div>
+        </div>
+
+        <div className="card pink">
+          <div className="card-title">
+            <h3>😴 Sommeil</h3>
+          </div>
+          <div className="progress-label-row">
+            <span className="progress-big-number">{entreeJour?.sommeil_h ?? '–'}</span>
+            <span className="progress-sub">{entreeJour?.sommeil_h !== undefined ? 'heures' : 'pas encore enregistré'}</span>
+          </div>
+          <p className="small muted mb-0">Repère informatif : 7 à 9h sont généralement recommandées pour un adulte.</p>
+          <div className="field-row mt-16" style={{ alignItems: 'flex-end' }}>
+            <div className="field mb-0" style={{ flex: 1 }}>
+              <input
+                type="number"
+                step="0.5"
+                min="0"
+                max="24"
+                placeholder="Heures de sommeil"
+                value={sommeilSaisie}
+                onChange={(e) => setSommeilSaisie(e.target.value)}
+              />
+            </div>
+            <button className="btn btn-secondary btn-sm" onClick={enregistrerSommeil}>
               Enregistrer
             </button>
           </div>
