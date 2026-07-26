@@ -51,14 +51,18 @@ export default function ImporterSante() {
   const [resultat, setResultat] = useState<ResultatImportSante | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   const [resume, setResume] = useState({ jours: 0, repas: 0 })
+  const [progression, setProgression] = useState(0)
+  const [tailleFichierMo, setTailleFichierMo] = useState<number | null>(null)
 
   async function surSelectionFichier(e: React.ChangeEvent<HTMLInputElement>) {
     const fichier = e.target.files?.[0]
     if (!fichier) return
     setEtat('analyse')
     setErreur(null)
+    setProgression(0)
+    setTailleFichierMo(Math.round((fichier.size / 1024 / 1024) * 10) / 10)
     try {
-      const res = await analyserExportSante(fichier)
+      const res = await analyserExportSante(fichier, setProgression)
       const totalJours = new Set([
         ...res.pas.keys(),
         ...res.poids.keys(),
@@ -127,11 +131,21 @@ export default function ImporterSante() {
               onChange={surSelectionFichier}
             />
             <button className="btn btn-primary" onClick={() => inputRef.current?.click()} disabled={etat === 'analyse'}>
-              {etat === 'analyse' ? 'Analyse en cours…' : '📁 Choisir le fichier export'}
+              {etat === 'analyse' ? `Analyse en cours… ${Math.round(progression * 100)}%` : '📁 Choisir le fichier export'}
             </button>
+            {etat === 'analyse' && (
+              <div className="progress-track mt-8">
+                <div className="progress-fill pink" style={{ width: `${Math.round(progression * 100)}%` }} />
+              </div>
+            )}
             <p className="small muted mt-8 mb-0">
-              Le fichier peut être volumineux (plusieurs dizaines de Mo) — l'analyse se fait entièrement sur ton
-              appareil, rien n'est envoyé sur internet. Ça peut prendre jusqu'à une minute pour un gros fichier.
+              {tailleFichierMo !== null && etat === 'analyse'
+                ? `Fichier de ${tailleFichierMo} Mo — `
+                : ''}
+              L'analyse se fait entièrement sur ton appareil, rien n'est envoyé sur internet.
+              {tailleFichierMo !== null && tailleFichierMo > 150
+                ? ' Ce fichier est volumineux (souvent le cas avec une Apple Watch utilisée depuis longtemps) : ça peut prendre plusieurs minutes, et le navigateur peut avoir du mal si la mémoire du téléphone est limitée.'
+                : ' Ça peut prendre jusqu\'à une minute pour un gros fichier.'}
             </p>
           </div>
 
