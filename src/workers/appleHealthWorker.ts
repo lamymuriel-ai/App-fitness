@@ -2,7 +2,7 @@ import { Unzip, UnzipInflate } from 'fflate'
 import { AnalyseurSanteIncremental, type ResultatImportSante } from '../utils/appleHealthParser'
 
 export interface MessageEntree {
-  buffer: ArrayBuffer
+  file: File
   estZip: boolean
 }
 
@@ -11,20 +11,20 @@ export type MessageSortie =
   | { type: 'result'; resultat: ResultatImportSante }
   | { type: 'error'; message: string }
 
-const TAILLE_MORCEAU = 4 * 1024 * 1024 // 4 Mo : assez gros pour être efficace, assez petit pour rester réactif
 const TAILLE_MAX_VERIF_ENTETE = 4096
 
 /**
- * Décompacte et analyse le .zip en flux : on pousse les octets bruts du .zip par
- * morceaux dans fflate.Unzip, qui restitue le contenu décompressé de export.xml par
- * morceaux via son callback `ondata` — jamais le document complet en une seule chaîne.
- * C'est indispensable pour un long historique Apple Watch : les données très répétitives
- * (fréquence cardiaque en continu, etc.) peuvent faire gonfler un .zip de quelques
- * centaines de Mo en plusieurs Go de XML une fois décompressé, ce qu'un téléphone ne
- * peut pas garder entièrement en mémoire sous forme d'une seule chaîne JavaScript.
+ * Décompacte et analyse le .zip en flux : le fichier lui-même est lu par petits
+ * morceaux via `file.stream()` (jamais chargé entièrement en mémoire, même sous forme
+ * d'un seul ArrayBuffer compressé), poussés dans fflate.Unzip qui restitue le contenu
+ * décompressé de export.xml par morceaux via son callback `ondata`. C'est indispensable
+ * pour un long historique Apple Watch : les données très répétitives (fréquence
+ * cardiaque en continu, etc.) peuvent faire gonfler un .zip de quelques centaines de Mo
+ * en plusieurs Go de XML une fois décompressé — largement au-delà de ce qu'un téléphone
+ * peut garder en mémoire, y compris pour la seule archive compressée d'origine.
  */
 async function analyserZipEnFlux(
-  buffer: ArrayBuffer,
+  file: File,
   analyseur: AnalyseurSanteIncremental,
   surProgression: (ratio: number) => void
 ): Promise<void> {
@@ -64,19 +64,20 @@ async function analyserZipEnFlux(
   })
   unzipper.register(UnzipInflate)
 
-  const total = buffer.byteLength
-  let offset = 0
-  if (total === 0) {
-    unzipper.push(new Uint8Array(0), true)
-  }
-  while (offset < total) {
+  const total = file.size
+  let lu = 0
+  const lecteur = file.stream().getReader()
+
+  while (true) {
     if (erreurDetectee) break
-    const fin = Math.min(offset + TAILLE_MORCEAU, total)
-    const morceau = new Uint8Array(buffer, offset, fin - offset)
-    const estDernier = fin >= total
-    unzipper.push(morceau, estDernier)
-    offset = fin
-    surProgression(offset / total)
+    const { done, value } = await lecteur.read()
+    if (done) {
+      unzipper.push(new Uint8Array(0), true)
+      break
+    }
+    lu += value.byteLength
+    unzipper.push(value, false)
+    surProgression(total > 0 ? lu / total : 0)
     await new Promise((resolve) => setTimeout(resolve, 0))
   }
 
@@ -89,21 +90,22 @@ async function analyserZipEnFlux(
 }
 
 async function analyserXmlBrutEnFlux(
-  buffer: ArrayBuffer,
+  file: File,
   analyseur: AnalyseurSanteIncremental,
   surProgression: (ratio: number) => void
 ): Promise<void> {
   const decoder = new TextDecoder('utf-8')
-  const total = buffer.byteLength
-  let offset = 0
+  const total = file.size
+  let lu = 0
   let enteteAccumulee = ''
   let enteteVerifiee = false
+  const lecteur = file.stream().getReader()
 
-  while (offset < total) {
-    const fin = Math.min(offset + TAILLE_MORCEAU, total)
-    const estDernier = fin >= total
-    const texte = decoder.decode(new Uint8Array(buffer, offset, fin - offset), { stream: !estDernier })
-    offset = fin
+  while (true) {
+    const { done, value } = await lecteur.read()
+    if (done) break
+    lu += value.byteLength
+    const texte = decoder.decode(value, { stream: true })
 
     if (!enteteVerifiee) {
       enteteAccumulee += texte
@@ -112,14 +114,14 @@ async function analyserXmlBrutEnFlux(
       } else if (enteteAccumulee.length > TAILLE_MAX_VERIF_ENTETE) {
         throw new Error("Ce fichier ne ressemble pas à un export de l'app Santé (export.xml attendu).")
       } else {
-        surProgression(offset / total)
+        surProgression(total > 0 ? lu / total : 0)
         await new Promise((resolve) => setTimeout(resolve, 0))
         continue
       }
     }
 
     analyseur.pousser(texte)
-    surProgression(offset / total)
+    surProgression(total > 0 ? lu / total : 0)
     await new Promise((resolve) => setTimeout(resolve, 0))
   }
 
@@ -129,7 +131,7 @@ async function analyserXmlBrutEnFlux(
 }
 
 self.onmessage = async (event: MessageEvent<MessageEntree>) => {
-  const { buffer, estZip } = event.data
+  const { file, estZip } = event.data
   try {
     const analyseur = new AnalyseurSanteIncremental()
     const surProgression = (ratio: number) => {
@@ -138,9 +140,9 @@ self.onmessage = async (event: MessageEvent<MessageEntree>) => {
     }
 
     if (estZip) {
-      await analyserZipEnFlux(buffer, analyseur, surProgression)
+      await analyserZipEnFlux(file, analyseur, surProgression)
     } else {
-      await analyserXmlBrutEnFlux(buffer, analyseur, surProgression)
+      await analyserXmlBrutEnFlux(file, analyseur, surProgression)
     }
 
     const resultat = analyseur.finaliser()

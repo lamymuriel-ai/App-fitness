@@ -3,17 +3,18 @@ import type { MessageEntree, MessageSortie } from '../workers/appleHealthWorker'
 import type { ResultatImportSante } from './appleHealthParser'
 
 /**
- * Lance l'analyse dans un Web Worker : le décompactage du .zip et le balayage du XML
- * (potentiellement plusieurs centaines de Mo pour un long historique Apple Watch)
- * tournent hors du fil principal, pour que l'interface reste réactive et affiche
- * une vraie progression au lieu de sembler figée.
+ * Lance l'analyse dans un Web Worker : le fichier est transmis tel quel (jamais chargé
+ * entièrement en mémoire sur le thread principal) et lu par petits morceaux à
+ * l'intérieur du Worker. Le décompactage du .zip et le balayage du XML (potentiellement
+ * plusieurs centaines de Mo, voire plusieurs Go une fois décompressé, pour un long
+ * historique Apple Watch) tournent hors du fil principal, pour que l'interface reste
+ * réactive et affiche une vraie progression au lieu de sembler figée.
  */
 export async function analyserExportSante(
   file: File,
   onProgression?: (ratio: number) => void
 ): Promise<ResultatImportSante> {
   const estZip = file.type === 'application/zip' || file.name.toLowerCase().endsWith('.zip')
-  const buffer = await file.arrayBuffer()
 
   return new Promise((resolve, reject) => {
     const worker = new Worker(new URL('../workers/appleHealthWorker.ts', import.meta.url), {
@@ -35,10 +36,13 @@ export async function analyserExportSante(
 
     worker.onerror = (event) => {
       worker.terminate()
-      reject(new Error(event.message || "Erreur pendant l'analyse du fichier."))
+      const details = [event.message, event.filename ? `(${event.filename}:${event.lineno})` : '']
+        .filter(Boolean)
+        .join(' ')
+      reject(new Error(details || "Erreur pendant l'analyse du fichier — le navigateur a peut-être manqué de mémoire."))
     }
 
-    const entree: MessageEntree = { buffer, estZip }
-    worker.postMessage(entree, [buffer])
+    const entree: MessageEntree = { file, estZip }
+    worker.postMessage(entree)
   })
 }
