@@ -95,166 +95,184 @@ function convertirPoidsEnKg(valeur: number, uniteSource: string): number | null 
   return null
 }
 
-/**
- * Repère les noms d'aliments : la plupart des apps (MyFitnessPal, Micron…) regroupent
- * les nutriments d'un repas dans un <Correlation type="HKCorrelationTypeIdentifierFood">
- * avec le nom en <MetadataEntry key="HKFoodType">. D'autres apps l'attachent directement
- * à chaque <Record>. On capture les deux, indexés par horodatage exact.
- */
-function extraireNomsAliments(xml: string): Map<string, string> {
-  const noms = new Map<string, string>()
-  const regexCorrelation = /<Correlation type="HKCorrelationTypeIdentifierFood"[^>]*?>[\s\S]*?<\/Correlation>/g
-  const regexStart = /startDate="([^"]+)"/
-  const regexNom = /<MetadataEntry key="HKFoodType" value="([^"]*)"/
+const REGEX_RECORD = new RegExp(
+  `<Record type="(${TOUS_LES_TYPES_SUIVIS.join('|')})"[^>]*?(?:/>|>[\\s\\S]*?</Record>)`,
+  'g'
+)
+const REGEX_CORRELATION_ALIMENT = /<Correlation type="HKCorrelationTypeIdentifierFood"[^>]*?>[\s\S]*?<\/Correlation>/g
+const REGEX_OUVERTURE = /^<Record\b[^>]*?(?:\/>|>)/
+const REGEX_START = /startDate="([^"]+)"/
+const REGEX_END = /endDate="([^"]+)"/
+const REGEX_VALEUR = /value="([^"]+)"/
+const REGEX_UNITE = /unit="([^"]+)"/
+const REGEX_NOM = /<MetadataEntry key="HKFoodType" value="([^"]*)"/
 
-  let correspondance: RegExpExecArray | null
-  while ((correspondance = regexCorrelation.exec(xml)) !== null) {
-    const bloc = correspondance[0]
-    const startMatch = regexStart.exec(bloc)
-    const nomMatch = regexNom.exec(bloc)
-    if (startMatch && nomMatch && nomMatch[1]) {
-      noms.set(startMatch[1], nomMatch[1])
-    }
+/**
+ * Un « scanner » incrémental générique : on lui pousse du texte au fil de l'eau (par
+ * morceaux, ex. depuis un flux de décompression), il applique une regex globale et ne
+ * garde en mémoire que le reliquat non encore confirmé comme complet (utile quand une
+ * balise est coupée pile à la frontière entre deux morceaux). La mémoire consommée reste
+ * bornée par la taille d'un repère + la distance jusqu'au prochain repère trouvé, jamais
+ * par la taille totale du document.
+ */
+class ScannerIncremental {
+  private buffer = ''
+  private readonly regex: RegExp
+  private readonly surMatch: (correspondance: RegExpExecArray) => void
+
+  constructor(regex: RegExp, surMatch: (correspondance: RegExpExecArray) => void) {
+    this.regex = regex
+    this.surMatch = surMatch
   }
-  return noms
+
+  pousser(texte: string) {
+    this.buffer += texte
+    this.regex.lastIndex = 0
+    let dernierIndexTraite = 0
+    let correspondance: RegExpExecArray | null
+    while ((correspondance = this.regex.exec(this.buffer)) !== null) {
+      this.surMatch(correspondance)
+      dernierIndexTraite = this.regex.lastIndex
+    }
+    this.buffer = this.buffer.slice(dernierIndexTraite)
+  }
+
+  tailleReliquat() {
+    return this.buffer.length
+  }
 }
 
 /**
- * Analyse le XML exporté par l'app Santé en un seul passage, sans construire de DOM
- * (les exports peuvent faire plusieurs centaines de Mo pour un long historique Apple
- * Watch). Les <Record> sont soit auto-fermants, soit contiennent des <MetadataEntry>
- * enfants (fréquent pour les données nutritionnelles saisies via une app tierce) — les
- * deux formes sont gérées. Les <Record> nutritionnels imbriqués dans un <Correlation>
- * (regroupement "repas") sont comptés une seule fois grâce au balayage global des <Record>.
- *
- * `surProgression` est appelé périodiquement (pas à chaque itération, pour ne pas
- * ralentir) avec une valeur de 0 à 1 ; cette fonction est async et cède la main
- * régulièrement pour ne jamais bloquer le fil d'exécution qui l'appelle (utile même
- * dans un Worker, pour que les messages de progression partent réellement).
+ * Analyseur incrémental de l'export Santé : on pousse le texte décompressé au fil de
+ * l'eau (voir `appleHealthWorker.ts`) plutôt que de charger le document entier en une
+ * seule chaîne, ce qui serait irréaliste pour un long historique Apple Watch (le XML
+ * décompressé peut atteindre plusieurs Go alors que le .zip ne fait « que » quelques
+ * centaines de Mo, du fait de la forte répétitivité des données).
  */
-export async function extraireXml(
-  xml: string,
-  surProgression?: (ratio: number) => void
-): Promise<ResultatImportSante> {
-  const pas = new Map<string, number>()
-  const poidsSommeCompte = new Map<string, { somme: number; compte: number }>()
-  const sommeil = new Map<string, number>()
-  const nutrition = new Map<string, EntreeAlimentaire>()
-  const nomsAliments = extraireNomsAliments(xml)
+export class AnalyseurSanteIncremental {
+  private readonly pas = new Map<string, number>()
+  private readonly poidsSommeCompte = new Map<string, { somme: number; compte: number }>()
+  private readonly sommeil = new Map<string, number>()
+  private readonly nutrition = new Map<string, EntreeAlimentaire>()
+  private readonly nomsAliments = new Map<string, string>()
 
-  const alternatives = TOUS_LES_TYPES_SUIVIS.join('|')
-  const regexRecord = new RegExp(
-    `<Record type="(${alternatives})"[^>]*?(?:/>|>[\\s\\S]*?</Record>)`,
-    'g'
+  private readonly scannerRecord = new ScannerIncremental(REGEX_RECORD, (m) => this.traiterRecord(m))
+  private readonly scannerCorrelation = new ScannerIncremental(REGEX_CORRELATION_ALIMENT, (m) =>
+    this.traiterCorrelationAliment(m[0])
   )
-  const regexOuverture = /^<Record\b[^>]*?(?:\/>|>)/
-  const regexStart = /startDate="([^"]+)"/
-  const regexEnd = /endDate="([^"]+)"/
-  const regexValeur = /value="([^"]+)"/
-  const regexUnite = /unit="([^"]+)"/
-  const regexNomRecord = /<MetadataEntry key="HKFoodType" value="([^"]*)"/
 
-  let correspondance: RegExpExecArray | null
-  let compteur = 0
-  const longueur = xml.length || 1
-
-  while ((correspondance = regexRecord.exec(xml)) !== null) {
-    compteur += 1
-    if (compteur % 4000 === 0) {
-      surProgression?.(regexRecord.lastIndex / longueur)
-      // Cède la main pour que les messages de progression partent et que le
-      // fil d'exécution reste réactif même sur un très gros fichier.
-      await new Promise((resolve) => setTimeout(resolve, 0))
+  private traiterCorrelationAliment(bloc: string) {
+    const startMatch = REGEX_START.exec(bloc)
+    const nomMatch = REGEX_NOM.exec(bloc)
+    if (startMatch && nomMatch && nomMatch[1]) {
+      this.nomsAliments.set(startMatch[1], nomMatch[1])
     }
+  }
 
+  private traiterRecord(correspondance: RegExpExecArray) {
     const type = correspondance[1]
     const blocComplet = correspondance[0]
-    const ouvertureMatch = regexOuverture.exec(blocComplet)
+
+    const ouvertureMatch = REGEX_OUVERTURE.exec(blocComplet)
     const ouverture = ouvertureMatch ? ouvertureMatch[0] : blocComplet
 
-    const startMatch = regexStart.exec(ouverture)
-    if (!startMatch) continue
+    const startMatch = REGEX_START.exec(ouverture)
+    if (!startMatch) return
     const horodatage = startMatch[1]
     const jourDebut = horodatage.slice(0, 10)
-    const valeurMatch = regexValeur.exec(ouverture)
-    if (!valeurMatch) continue
+    const valeurMatch = REGEX_VALEUR.exec(ouverture)
+    if (!valeurMatch) return
 
     if (type === TYPE_PAS) {
       const valeur = Number(valeurMatch[1])
-      if (!Number.isFinite(valeur)) continue
-      pas.set(jourDebut, (pas.get(jourDebut) || 0) + valeur)
-      continue
+      if (!Number.isFinite(valeur)) return
+      this.pas.set(jourDebut, (this.pas.get(jourDebut) || 0) + valeur)
+      return
     }
 
     if (type === TYPE_POIDS) {
-      const uniteMatch = regexUnite.exec(ouverture)
+      const uniteMatch = REGEX_UNITE.exec(ouverture)
       const valeurBrute = Number(valeurMatch[1])
-      if (!Number.isFinite(valeurBrute) || !uniteMatch) continue
+      if (!Number.isFinite(valeurBrute) || !uniteMatch) return
       const kg = convertirPoidsEnKg(valeurBrute, uniteMatch[1])
-      if (kg === null) continue
-      const cumul = poidsSommeCompte.get(jourDebut) || { somme: 0, compte: 0 }
+      if (kg === null) return
+      const cumul = this.poidsSommeCompte.get(jourDebut) || { somme: 0, compte: 0 }
       cumul.somme += kg
       cumul.compte += 1
-      poidsSommeCompte.set(jourDebut, cumul)
-      continue
+      this.poidsSommeCompte.set(jourDebut, cumul)
+      return
     }
 
     if (type === TYPE_SOMMEIL) {
-      if (!valeurMatch[1].includes('Asleep')) continue // exclut "InBed" et "Awake"
-      const endMatch = regexEnd.exec(ouverture)
-      if (!endMatch) continue
+      if (!valeurMatch[1].includes('Asleep')) return // exclut "InBed" et "Awake"
+      const endMatch = REGEX_END.exec(ouverture)
+      if (!endMatch) return
       const debut = new Date(startMatch[1]).getTime()
       const fin = new Date(endMatch[1]).getTime()
-      if (!Number.isFinite(debut) || !Number.isFinite(fin) || fin <= debut) continue
+      if (!Number.isFinite(debut) || !Number.isFinite(fin) || fin <= debut) return
       const heures = (fin - debut) / 1000 / 60 / 60
       const jourFin = endMatch[1].slice(0, 10) // nuit attribuée au jour du réveil
-      sommeil.set(jourFin, (sommeil.get(jourFin) || 0) + heures)
-      continue
+      this.sommeil.set(jourFin, (this.sommeil.get(jourFin) || 0) + heures)
+      return
     }
 
     const mapping = MAPPING_NUTRITION[type]
     if (mapping) {
-      const uniteMatch = regexUnite.exec(ouverture)
+      const uniteMatch = REGEX_UNITE.exec(ouverture)
       const valeurBrute = Number(valeurMatch[1])
-      if (!Number.isFinite(valeurBrute) || !uniteMatch) continue
+      if (!Number.isFinite(valeurBrute) || !uniteMatch) return
       const convertie =
         mapping.unite === 'kcal'
           ? convertirEnergie(valeurBrute, uniteMatch[1])
           : convertirMasse(valeurBrute, uniteMatch[1], mapping.unite)
-      if (convertie === null) continue
+      if (convertie === null) return
 
-      const entree = nutrition.get(horodatage) || nutritionVide(horodatage)
+      const entree = this.nutrition.get(horodatage) || nutritionVide(horodatage)
       if (mapping.cible === 'macro') {
         entree[mapping.champ] += convertie
       } else {
         entree.micros[mapping.champ] += convertie
       }
       if (!entree.nom) {
-        entree.nom = nomsAliments.get(horodatage) || regexNomRecord.exec(blocComplet)?.[1]
+        entree.nom = this.nomsAliments.get(horodatage) || REGEX_NOM.exec(blocComplet)?.[1]
       }
-      nutrition.set(horodatage, entree)
+      this.nutrition.set(horodatage, entree)
     }
   }
 
-  const poids = new Map<string, number>()
-  for (const [jour, { somme, compte }] of poidsSommeCompte) {
-    poids.set(jour, Math.round((somme / compte) * 10) / 10)
+  /** Pousse un morceau de texte décompressé. Peut être appelé autant de fois que nécessaire. */
+  pousser(texte: string) {
+    this.scannerCorrelation.pousser(texte)
+    this.scannerRecord.pousser(texte)
   }
 
-  const tousLesJours = new Set<string>([
-    ...pas.keys(),
-    ...poids.keys(),
-    ...sommeil.keys(),
-    ...Array.from(nutrition.keys()).map((h) => h.slice(0, 10)),
-  ])
-  const joursTries = Array.from(tousLesJours).sort()
+  /** Reliquat total actuellement gardé en mémoire (pour surveillance/tests uniquement). */
+  reliquatOctets() {
+    return this.scannerCorrelation.tailleReliquat() + this.scannerRecord.tailleReliquat()
+  }
 
-  return {
-    pas,
-    poids,
-    sommeil,
-    nutrition,
-    premiereDate: joursTries[0] || null,
-    derniereDate: joursTries[joursTries.length - 1] || null,
+  /** À appeler une fois tout le contenu poussé, pour obtenir le résultat final agrégé. */
+  finaliser(): ResultatImportSante {
+    const poids = new Map<string, number>()
+    for (const [jour, { somme, compte }] of this.poidsSommeCompte) {
+      poids.set(jour, Math.round((somme / compte) * 10) / 10)
+    }
+
+    const tousLesJours = new Set<string>([
+      ...this.pas.keys(),
+      ...poids.keys(),
+      ...this.sommeil.keys(),
+      ...Array.from(this.nutrition.keys()).map((h) => h.slice(0, 10)),
+    ])
+    const joursTries = Array.from(tousLesJours).sort()
+
+    return {
+      pas: this.pas,
+      poids,
+      sommeil: this.sommeil,
+      nutrition: this.nutrition,
+      premiereDate: joursTries[0] || null,
+      derniereDate: joursTries[joursTries.length - 1] || null,
+    }
   }
 }
