@@ -35,7 +35,17 @@ export default function Plus() {
             <span style={{ fontSize: '2rem' }}>🍏</span>
             <div>
               <h3 className="mb-0">Importer depuis Santé</h3>
-              <p className="small muted mb-0">Récupère ton historique de pas depuis l'app Santé d'Apple</p>
+              <p className="small muted mb-0">Historique complet (pas, poids, sommeil, alimentation) depuis un fichier d'export</p>
+            </div>
+          </div>
+        </button>
+
+        <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/raccourci-ios')}>
+          <div className="row gap-12">
+            <span style={{ fontSize: '2rem' }}>📲</span>
+            <div>
+              <h3 className="mb-0">Raccourci iOS</h3>
+              <p className="small muted mb-0">Envoie tes pas et ton poids du jour en un tap, sans ouvrir Santé</p>
             </div>
           </div>
         </button>
