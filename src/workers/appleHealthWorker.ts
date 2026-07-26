@@ -13,10 +13,36 @@ export type MessageSortie =
 
 const TAILLE_MAX_VERIF_ENTETE = 4096
 
+// Taille de lecture forcée, volontairement petite : `file.stream()` délègue le
+// découpage en morceaux au navigateur, et ce découpage n'est pas garanti pareil
+// partout (Safari/iOS peut rendre des morceaux bien plus gros que Chrome). Pour
+// un .zip très compressible (données Apple Watch très répétitives), un seul gros
+// morceau compressé peut se décompresser en un morceau démesurément plus gros
+// d'un coup — largement de quoi faire planter un onglet Safari sur iPhone. En
+// découpant nous-mêmes via `file.slice()`, la taille du morceau lu (donc, dans le
+// pire des cas, la taille du sursaut de décompression) reste sous notre contrôle
+// quel que soit le navigateur.
+const TAILLE_MORCEAU_LECTURE = 32 * 1024
+
+async function* lireParMorceaux(file: File): AsyncGenerator<{ chunk: Uint8Array; estDernier: boolean }> {
+  const total = file.size
+  let position = 0
+  if (total === 0) {
+    yield { chunk: new Uint8Array(0), estDernier: true }
+    return
+  }
+  while (position < total) {
+    const fin = Math.min(position + TAILLE_MORCEAU_LECTURE, total)
+    const buffer = await file.slice(position, fin).arrayBuffer()
+    position = fin
+    yield { chunk: new Uint8Array(buffer), estDernier: position >= total }
+  }
+}
+
 /**
  * Décompacte et analyse le .zip en flux : le fichier lui-même est lu par petits
- * morceaux via `file.stream()` (jamais chargé entièrement en mémoire, même sous forme
- * d'un seul ArrayBuffer compressé), poussés dans fflate.Unzip qui restitue le contenu
+ * morceaux (jamais chargé entièrement en mémoire, même sous forme d'un seul
+ * ArrayBuffer compressé), poussés dans fflate.Unzip qui restitue le contenu
  * décompressé de export.xml par morceaux via son callback `ondata`. C'est indispensable
  * pour un long historique Apple Watch : les données très répétitives (fréquence
  * cardiaque en continu, etc.) peuvent faire gonfler un .zip de quelques centaines de Mo
@@ -66,28 +92,13 @@ async function analyserZipEnFlux(
 
   const total = file.size
   let lu = 0
-  const lecteur = file.stream().getReader()
 
-  // Lookahead d'un morceau : fflate a besoin que le DERNIER morceau contenant
-  // réellement des octets porte le flag final=true (pour flusher son dernier bloc
-  // DEFLATE partiel). Pousser un morceau vide avec final=true après coup ne suffit
-  // pas et provoque une erreur "unexpected EOF" — c'est ce qui causait l'échec.
-  let morceauCourant = await lecteur.read()
-  let unPoussage = false
-
-  while (!morceauCourant.done) {
+  for await (const { chunk, estDernier } of lireParMorceaux(file)) {
     if (erreurDetectee) break
-    const morceauSuivant = await lecteur.read()
-    const estDernier = morceauSuivant.done
-    lu += morceauCourant.value.byteLength
-    unzipper.push(morceauCourant.value, estDernier)
-    unPoussage = true
+    lu += chunk.byteLength
+    unzipper.push(chunk, estDernier)
     surProgression(total > 0 ? lu / total : 0)
     await new Promise((resolve) => setTimeout(resolve, 0))
-    morceauCourant = morceauSuivant
-  }
-  if (!unPoussage && !erreurDetectee) {
-    unzipper.push(new Uint8Array(0), true) // fichier vide
   }
 
   if (erreurDetectee) {
@@ -108,14 +119,10 @@ async function analyserXmlBrutEnFlux(
   let lu = 0
   let enteteAccumulee = ''
   let enteteVerifiee = false
-  const lecteur = file.stream().getReader()
 
-  let morceauCourant = await lecteur.read()
-  while (!morceauCourant.done) {
-    const morceauSuivant = await lecteur.read()
-    const estDernier = morceauSuivant.done
-    lu += morceauCourant.value.byteLength
-    const texte = decoder.decode(morceauCourant.value, { stream: !estDernier })
+  for await (const { chunk, estDernier } of lireParMorceaux(file)) {
+    lu += chunk.byteLength
+    const texte = decoder.decode(chunk, { stream: !estDernier })
 
     if (!enteteVerifiee) {
       enteteAccumulee += texte
@@ -126,7 +133,6 @@ async function analyserXmlBrutEnFlux(
       } else {
         surProgression(total > 0 ? lu / total : 0)
         await new Promise((resolve) => setTimeout(resolve, 0))
-        morceauCourant = morceauSuivant
         continue
       }
     }
@@ -134,7 +140,6 @@ async function analyserXmlBrutEnFlux(
     analyseur.pousser(texte)
     surProgression(total > 0 ? lu / total : 0)
     await new Promise((resolve) => setTimeout(resolve, 0))
-    morceauCourant = morceauSuivant
   }
 
   if (!enteteVerifiee) {
@@ -168,3 +173,16 @@ self.onmessage = async (event: MessageEvent<MessageEntree>) => {
     self.postMessage(message)
   }
 }
+
+// Filet de sécurité : capture toute erreur qui échapperait au try/catch ci-dessus
+// (ex. rejet de promesse non attendu) pour renvoyer un message exploitable plutôt
+// que de laisser le Worker se terminer silencieusement avec un `onerror` vide côté
+// thread principal (ce qui donne un message générique "manque de mémoire ?").
+self.addEventListener('unhandledrejection', (event) => {
+  const raison = (event as PromiseRejectionEvent).reason
+  const message: MessageSortie = {
+    type: 'error',
+    message: raison instanceof Error ? raison.message : String(raison ?? "Erreur inconnue (promesse rejetée)."),
+  }
+  self.postMessage(message)
+})
