@@ -68,17 +68,26 @@ async function analyserZipEnFlux(
   let lu = 0
   const lecteur = file.stream().getReader()
 
-  while (true) {
+  // Lookahead d'un morceau : fflate a besoin que le DERNIER morceau contenant
+  // réellement des octets porte le flag final=true (pour flusher son dernier bloc
+  // DEFLATE partiel). Pousser un morceau vide avec final=true après coup ne suffit
+  // pas et provoque une erreur "unexpected EOF" — c'est ce qui causait l'échec.
+  let morceauCourant = await lecteur.read()
+  let unPoussage = false
+
+  while (!morceauCourant.done) {
     if (erreurDetectee) break
-    const { done, value } = await lecteur.read()
-    if (done) {
-      unzipper.push(new Uint8Array(0), true)
-      break
-    }
-    lu += value.byteLength
-    unzipper.push(value, false)
+    const morceauSuivant = await lecteur.read()
+    const estDernier = morceauSuivant.done
+    lu += morceauCourant.value.byteLength
+    unzipper.push(morceauCourant.value, estDernier)
+    unPoussage = true
     surProgression(total > 0 ? lu / total : 0)
     await new Promise((resolve) => setTimeout(resolve, 0))
+    morceauCourant = morceauSuivant
+  }
+  if (!unPoussage && !erreurDetectee) {
+    unzipper.push(new Uint8Array(0), true) // fichier vide
   }
 
   if (erreurDetectee) {
@@ -101,11 +110,12 @@ async function analyserXmlBrutEnFlux(
   let enteteVerifiee = false
   const lecteur = file.stream().getReader()
 
-  while (true) {
-    const { done, value } = await lecteur.read()
-    if (done) break
-    lu += value.byteLength
-    const texte = decoder.decode(value, { stream: true })
+  let morceauCourant = await lecteur.read()
+  while (!morceauCourant.done) {
+    const morceauSuivant = await lecteur.read()
+    const estDernier = morceauSuivant.done
+    lu += morceauCourant.value.byteLength
+    const texte = decoder.decode(morceauCourant.value, { stream: !estDernier })
 
     if (!enteteVerifiee) {
       enteteAccumulee += texte
@@ -116,6 +126,7 @@ async function analyserXmlBrutEnFlux(
       } else {
         surProgression(total > 0 ? lu / total : 0)
         await new Promise((resolve) => setTimeout(resolve, 0))
+        morceauCourant = morceauSuivant
         continue
       }
     }
@@ -123,6 +134,7 @@ async function analyserXmlBrutEnFlux(
     analyseur.pousser(texte)
     surProgression(total > 0 ? lu / total : 0)
     await new Promise((resolve) => setTimeout(resolve, 0))
+    morceauCourant = morceauSuivant
   }
 
   if (!enteteVerifiee) {
