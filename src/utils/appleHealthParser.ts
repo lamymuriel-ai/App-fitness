@@ -135,7 +135,22 @@ class ScannerIncremental {
       dernierIndexTraite = this.regex.lastIndex
     }
     this.buffer = this.buffer.slice(dernierIndexTraite)
+
+    // Garde-fou : un <Record> ou <Correlation> valide ne dépasse jamais quelques Ko.
+    // Si le reliquat grossit sans qu'aucune correspondance ne soit trouvée (ex. les
+    // entrées d'alimentation sont rares comparées au volume de fréquence cardiaque
+    // entre deux repas notés), c'est qu'il ne contient que du contenu qui ne
+    // correspondra jamais — sans ce plafond, ce texte serait gardé indéfiniment ET
+    // entièrement re-scanné à chaque nouveau morceau poussé (coût croissant avec la
+    // taille du fichier), ce qui peut expliquer un ralentissement ou un plantage sur
+    // un très gros fichier.
+    if (this.buffer.length > ScannerIncremental.TAILLE_MAX_RELIQUAT) {
+      this.buffer = this.buffer.slice(-ScannerIncremental.TAILLE_CONSERVEE_SI_DEPASSEMENT)
+    }
   }
+
+  private static readonly TAILLE_MAX_RELIQUAT = 65536
+  private static readonly TAILLE_CONSERVEE_SI_DEPASSEMENT = 8192
 
   tailleReliquat() {
     return this.buffer.length
