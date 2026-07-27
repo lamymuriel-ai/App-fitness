@@ -36,11 +36,14 @@ function statutCalories(repasDuJour: Repas[], objectifCalories: number): StatutM
 }
 
 function statutSport(date: string, seancesLog: SeanceLog[]): StatutSport {
+  // Une séance réellement faite ce jour-là compte, même un jour où rien n'était prévu
+  // (planning déplacé, séance de rattrapage...) — on ne se limite pas à vérifier si LA
+  // séance prévue ce jour précis a été cochée.
+  const seanceFaite = seancesLog.some((s) => s.date === date && s.termineeA)
+  if (seanceFaite) return 'ok'
   const jourSemaine = new Date(`${date}T00:00:00`).getDay()
   const idSeancePrevue = PLANNING_SEMAINE[jourSemaine]
-  if (!idSeancePrevue) return 'repos'
-  const log = seancesLog.find((s) => s.date === date && s.seanceTemplateId === idSeancePrevue)
-  return log?.termineeA ? 'ok' : 'attention'
+  return idSeancePrevue ? 'attention' : 'repos'
 }
 
 function statutGlobal(statuts: StatutMetrique[]): StatutMetrique {
