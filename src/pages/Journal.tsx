@@ -134,13 +134,9 @@ export default function Journal() {
 
             <AlertesNutriments apportsMoyens={moyenneMicrosSemaine} reference={objectifs.micros} />
 
-            <button className="btn btn-primary mt-8" onClick={() => navigate(`/journal/ajouter?date=${dateAffichee}`)}>
-              + Ajouter un repas
-            </button>
-
             {dateAffichee === dateDuJourISO() && (
-              <button className="link-btn mt-8" onClick={() => navigate('/journal/suggestions')}>
-                🥗 Idées pour compléter ta journée →
+              <button className="btn btn-primary mt-8" onClick={() => navigate('/journal/suggestions')}>
+                🥗 Idées pour compléter ta journée
               </button>
             )}
 
