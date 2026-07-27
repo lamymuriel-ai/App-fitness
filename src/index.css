@@ -297,19 +297,26 @@ button {
 
 .macro-legend {
   display: flex;
-  gap: 16px;
+  justify-content: space-between;
+  gap: 6px;
   margin-top: 10px;
-  flex-wrap: wrap;
-  font-size: 0.9rem;
+  font-size: 0.78rem;
   font-weight: 700;
   color: var(--text-soft);
 }
-.macro-legend span.dot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  margin-right: 6px;
+/* flex-shrink (pas flex:1) : chaque item garde sa largeur naturelle et ne se
+   réduit que proportionnellement à ce qu'il lui faut vraiment, plutôt que
+   d'être forcé à un tiers égal (ce qui écrasait "Protéines"/"Glucides", plus
+   longs que "Lipides", même quand tout tenait largement dans la carte). Le
+   troncage avec points de suspension reste un filet de sécurité pour des
+   valeurs vraiment extrêmes plutôt que de déborder de la carte et de la page.
+*/
+.macro-legend > span {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Bottom nav */

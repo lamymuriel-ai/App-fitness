@@ -38,9 +38,9 @@ export function BarreMacros({
         <div className="macro-carbs" style={{ width: `${pctG}%` }} />
       </div>
       <div className="macro-legend">
-        <span><span className="dot" style={{ background: 'var(--pink-deep)' }} />Protéines {Math.round(proteines_g)}g</span>
-        <span><span className="dot" style={{ background: 'var(--yellow-deep)' }} />Lipides {Math.round(lipides_g)}g</span>
-        <span><span className="dot" style={{ background: 'var(--blue-deep)' }} />Glucides {Math.round(glucides_g)}g</span>
+        <span style={{ color: 'var(--pink-deep)' }}>Prot. {Math.round(proteines_g)}g</span>
+        <span style={{ color: '#a3821f' }}>Lip. {Math.round(lipides_g)}g</span>
+        <span style={{ color: 'var(--blue-deep)' }}>Gluc. {Math.round(glucides_g)}g</span>
       </div>
     </div>
   )

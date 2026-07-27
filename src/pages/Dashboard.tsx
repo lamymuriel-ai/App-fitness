@@ -79,15 +79,10 @@ export default function Dashboard() {
             <h3 style={{ fontSize: '1rem' }}>🍽️ Calories</h3>
             <span className="pill pink">{repasDuJour.length} repas</span>
           </div>
-          <div className="progress-label-row" style={{ marginBottom: 4 }}>
-            <span className="progress-big-number" style={{ fontSize: '1.7rem' }}>{Math.round(totaux.calories)}</span>
-            <div style={{ textAlign: 'right' }}>
-              <div className="progress-sub">objectif {objectifs.calories} kcal</div>
-              <div className="progress-sub" style={{ color: 'var(--pink-deep)', fontWeight: 800 }}>
-                {Math.round(budgetRestant.calories)} restantes
-              </div>
-            </div>
-          </div>
+          <p className="small" style={{ fontWeight: 700, marginBottom: 8 }}>
+            {Math.round(totaux.calories)}/{objectifs.calories}kcal ·{' '}
+            <span style={{ color: 'var(--pink-deep)' }}>{Math.round(budgetRestant.calories)} restantes</span>
+          </p>
           <BarreProgression valeur={totaux.calories} objectif={objectifs.calories} couleur="pink" />
           <div style={{ marginTop: 10 }}>
             <BarreMacros
