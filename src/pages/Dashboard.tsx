@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { BarreProgression, BarreMacros } from '../components/ui'
 import { totauxRepas } from '../utils/nutrition'
+import { calculerBudgetRestant } from '../utils/suggestionsAlimentaires'
 import { dateDuJourISO, debutSemaineISO, estAujourdhui, formatDateLong, numeroSemaine } from '../utils/date'
 import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
 import { detecterStagnation } from '../utils/stagnation'
@@ -60,6 +61,7 @@ export default function Dashboard() {
   }, [alertesStagnation, suiviJournalier, aujourdHui])
 
   const objectifs = profil.objectifsNutritionnels
+  const budgetRestant = useMemo(() => calculerBudgetRestant(totaux, objectifs), [totaux, objectifs])
 
   return (
     <div>
@@ -79,7 +81,12 @@ export default function Dashboard() {
           </div>
           <div className="progress-label-row">
             <span className="progress-big-number">{Math.round(totaux.calories)}</span>
-            <span className="progress-sub">objectif {objectifs.calories} kcal</span>
+            <div style={{ textAlign: 'right' }}>
+              <div className="progress-sub">objectif {objectifs.calories} kcal</div>
+              <div className="progress-sub" style={{ color: 'var(--pink-deep)', fontWeight: 800 }}>
+                {Math.round(budgetRestant.calories)} kcal restantes
+              </div>
+            </div>
           </div>
           <BarreProgression valeur={totaux.calories} objectif={objectifs.calories} couleur="pink" />
           <div style={{ marginTop: 16 }}>
