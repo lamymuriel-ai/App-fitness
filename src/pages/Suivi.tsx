@@ -25,7 +25,6 @@ export default function Suivi() {
   const [poidsHebdo, setPoidsHebdo] = useState(entreeJour?.poids_kg?.toString() || profil.poids_kg.toString())
   const [taille, setTaille] = useState('')
   const [ressenti, setRessenti] = useState(3)
-  const [sommeil, setSommeil] = useState('7')
 
   async function enregistrerPoidsJour() {
     const p = Number(poidsJour)
@@ -42,7 +41,6 @@ export default function Suivi() {
       poids_kg: p,
       tourDeTaille_cm: taille ? Number(taille) : undefined,
       ressenti,
-      sommeil_h: sommeil ? Number(sommeil) : undefined,
     })
     await enregistrerSuiviJour({ date: aujourdHui, poids_kg: p })
     await mettreAJourProfil({ ...profil, poids_kg: p })
@@ -156,10 +154,6 @@ export default function Suivi() {
                 </button>
               ))}
             </div>
-          </div>
-          <div className="field">
-            <label>Sommeil (heures / nuit en moyenne)</label>
-            <input type="number" step="0.5" value={sommeil} onChange={(e) => setSommeil(e.target.value)} />
           </div>
           <button className="btn btn-yellow" onClick={enregistrerCheckinHebdo}>Enregistrer le check-in</button>
         </div>

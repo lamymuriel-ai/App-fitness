@@ -56,9 +56,10 @@ function SeanceActiveInner() {
     )
   }
 
-  async function basculerSet(iEx: number, iSet: number) {
+  async function basculerExercice(iEx: number) {
     const copie = structuredClone(log)
-    copie.exercices[iEx].sets[iSet].fait = !copie.exercices[iEx].sets[iSet].fait
+    const dejaFait = copie.exercices[iEx].sets.every((s) => s.fait)
+    copie.exercices[iEx].sets = copie.exercices[iEx].sets.map(() => ({ fait: !dejaFait }))
     setLog(copie)
     await enregistrerSeanceLog(copie)
   }
@@ -122,18 +123,12 @@ function SeanceActiveInner() {
               </div>
             )}
 
-            <div className="row gap-12 mt-8">
-              {exLog?.sets.map((s, iSet) => (
-                <button
-                  key={iSet}
-                  className={`set-check ${s.fait ? 'done' : ''}`}
-                  onClick={() => basculerSet(iEx, iSet)}
-                  aria-label={`Série ${iSet + 1}`}
-                >
-                  {s.fait ? '✓' : iSet + 1}
-                </button>
-              ))}
-            </div>
+            <button
+              className={`set-check-single mt-8 ${exLog?.sets.every((s) => s.fait) ? 'done' : ''}`}
+              onClick={() => basculerExercice(iEx)}
+            >
+              {exLog?.sets.every((s) => s.fait) ? '✓ Fait' : 'OK'}
+            </button>
           </div>
         )
       })}

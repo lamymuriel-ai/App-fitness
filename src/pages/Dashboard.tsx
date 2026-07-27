@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { BarreProgression, BarreMacros } from '../components/ui'
@@ -10,7 +10,7 @@ import { detecterStagnation } from '../utils/stagnation'
 import AlerteStagnationBanniere from '../components/AlerteStagnationBanniere'
 
 export default function Dashboard() {
-  const { profil, repas, suiviJournalier, enregistrerSuiviJour, seancesLog, alertesStagnation } = useAppData()
+  const { profil, repas, suiviJournalier, seancesLog, alertesStagnation } = useAppData()
   const navigate = useNavigate()
 
   const aujourdHui = dateDuJourISO()
@@ -18,20 +18,6 @@ export default function Dashboard() {
   const totaux = useMemo(() => totauxRepas(repasDuJour), [repasDuJour])
 
   const entreeJour = suiviJournalier.find((e) => e.date === aujourdHui)
-  const [pasSaisie, setPasSaisie] = useState<string>(entreeJour?.pas?.toString() || '')
-  const [sommeilSaisie, setSommeilSaisie] = useState<string>(entreeJour?.sommeil_h?.toString() || '')
-
-  async function enregistrerPas() {
-    const pas = Number(pasSaisie)
-    if (!Number.isFinite(pas) || pas < 0) return
-    await enregistrerSuiviJour({ date: aujourdHui, pas })
-  }
-
-  async function enregistrerSommeil() {
-    const sommeil_h = Number(sommeilSaisie)
-    if (!Number.isFinite(sommeil_h) || sommeil_h < 0 || sommeil_h > 24) return
-    await enregistrerSuiviJour({ date: aujourdHui, sommeil_h })
-  }
 
   const jourSemaine = new Date().getDay()
   const idSeanceDuJour = PLANNING_SEMAINE[jourSemaine]
@@ -101,20 +87,6 @@ export default function Dashboard() {
                 <span className="muted"> / {profil.objectifPas.toLocaleString('fr-FR')}</span>
               </p>
               <BarreProgression valeur={entreeJour?.pas || 0} objectif={profil.objectifPas} couleur="blue" />
-              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                <div className="field mb-0" style={{ flex: 1 }}>
-                  <input
-                    type="number"
-                    placeholder="Pas"
-                    value={pasSaisie}
-                    onChange={(e) => setPasSaisie(e.target.value)}
-                    style={{ padding: '8px 10px', fontSize: '0.85rem' }}
-                  />
-                </div>
-                <button className="btn btn-secondary" style={{ padding: '0 14px', fontSize: '0.8rem' }} onClick={enregistrerPas}>
-                  OK
-                </button>
-              </div>
             </div>
             <div>
               <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>
@@ -122,23 +94,6 @@ export default function Dashboard() {
                 <span className="muted"> {entreeJour?.sommeil_h !== undefined ? 'h (7-9 reco.)' : 'pas enreg.'}</span>
               </p>
               <BarreProgression valeur={entreeJour?.sommeil_h || 0} objectif={7} couleur="pink" />
-              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-                <div className="field mb-0" style={{ flex: 1 }}>
-                  <input
-                    type="number"
-                    step="0.5"
-                    min="0"
-                    max="24"
-                    placeholder="Heures"
-                    value={sommeilSaisie}
-                    onChange={(e) => setSommeilSaisie(e.target.value)}
-                    style={{ padding: '8px 10px', fontSize: '0.85rem' }}
-                  />
-                </div>
-                <button className="btn btn-secondary" style={{ padding: '0 14px', fontSize: '0.8rem' }} onClick={enregistrerSommeil}>
-                  OK
-                </button>
-              </div>
             </div>
           </div>
         </div>
