@@ -74,135 +74,132 @@ export default function Dashboard() {
       <div className="screen" style={{ paddingTop: 0 }}>
         {stagnationActive && <AlerteStagnationBanniere alerte={stagnationActive} />}
 
-        <div className="card pink">
-          <div className="card-title">
-            <h3>🍽️ Calories du jour</h3>
+        <div className="card pink" style={{ padding: 16 }}>
+          <div className="card-title" style={{ marginBottom: 8 }}>
+            <h3 style={{ fontSize: '1rem' }}>🍽️ Calories</h3>
             <span className="pill pink">{repasDuJour.length} repas</span>
           </div>
-          <div className="progress-label-row">
-            <span className="progress-big-number">{Math.round(totaux.calories)}</span>
+          <div className="progress-label-row" style={{ marginBottom: 4 }}>
+            <span className="progress-big-number" style={{ fontSize: '1.7rem' }}>{Math.round(totaux.calories)}</span>
             <div style={{ textAlign: 'right' }}>
               <div className="progress-sub">objectif {objectifs.calories} kcal</div>
               <div className="progress-sub" style={{ color: 'var(--pink-deep)', fontWeight: 800 }}>
-                {Math.round(budgetRestant.calories)} kcal restantes
+                {Math.round(budgetRestant.calories)} restantes
               </div>
             </div>
           </div>
           <BarreProgression valeur={totaux.calories} objectif={objectifs.calories} couleur="pink" />
-          <div style={{ marginTop: 16 }}>
+          <div style={{ marginTop: 10 }}>
             <BarreMacros
               proteines_g={totaux.proteines_g}
               lipides_g={totaux.lipides_g}
               glucides_g={totaux.glucides_g}
             />
           </div>
-          <button className="btn btn-primary mt-16" onClick={() => navigate('/journal/ajouter')}>
-            + Ajouter un repas
-          </button>
         </div>
 
-        <div className="card blue">
-          <div className="card-title">
-            <h3>👣 Pas du jour</h3>
-          </div>
-          <div className="progress-label-row">
-            <span className="progress-big-number">{entreeJour?.pas?.toLocaleString('fr-FR') || 0}</span>
-            <span className="progress-sub">objectif {profil.objectifPas.toLocaleString('fr-FR')}</span>
-          </div>
-          <BarreProgression valeur={entreeJour?.pas || 0} objectif={profil.objectifPas} couleur="blue" />
-          <div className="field-row mt-16" style={{ alignItems: 'flex-end' }}>
-            <div className="field mb-0" style={{ flex: 1 }}>
-              <input
-                type="number"
-                placeholder="Nombre de pas"
-                value={pasSaisie}
-                onChange={(e) => setPasSaisie(e.target.value)}
-              />
+        <div className="card" style={{ padding: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            <div>
+              <div className="small muted" style={{ fontWeight: 700 }}>👣 Pas</div>
+              <div className="progress-big-number" style={{ fontSize: '1.5rem' }}>
+                {entreeJour?.pas?.toLocaleString('fr-FR') || 0}
+              </div>
+              <div className="small muted" style={{ marginBottom: 6 }}>/ {profil.objectifPas.toLocaleString('fr-FR')}</div>
+              <BarreProgression valeur={entreeJour?.pas || 0} objectif={profil.objectifPas} couleur="blue" />
+              <div className="field mb-0 mt-8">
+                <input
+                  type="number"
+                  placeholder="Pas"
+                  value={pasSaisie}
+                  onChange={(e) => setPasSaisie(e.target.value)}
+                />
+              </div>
+              <button className="btn btn-secondary btn-sm mt-8" style={{ width: '100%' }} onClick={enregistrerPas}>
+                OK
+              </button>
             </div>
-            <button className="btn btn-secondary btn-sm" onClick={enregistrerPas}>
-              Enregistrer
-            </button>
-          </div>
-        </div>
-
-        <div className="card pink">
-          <div className="card-title">
-            <h3>😴 Sommeil</h3>
-          </div>
-          <div className="progress-label-row">
-            <span className="progress-big-number">{entreeJour?.sommeil_h ?? '–'}</span>
-            <span className="progress-sub">{entreeJour?.sommeil_h !== undefined ? 'heures' : 'pas encore enregistré'}</span>
-          </div>
-          <p className="small muted mb-0">Repère informatif : 7 à 9h sont généralement recommandées pour un adulte.</p>
-          <div className="field-row mt-16" style={{ alignItems: 'flex-end' }}>
-            <div className="field mb-0" style={{ flex: 1 }}>
-              <input
-                type="number"
-                step="0.5"
-                min="0"
-                max="24"
-                placeholder="Heures de sommeil"
-                value={sommeilSaisie}
-                onChange={(e) => setSommeilSaisie(e.target.value)}
-              />
+            <div>
+              <div className="small muted" style={{ fontWeight: 700 }}>😴 Sommeil</div>
+              <div className="progress-big-number" style={{ fontSize: '1.5rem' }}>
+                {entreeJour?.sommeil_h ?? '–'}
+              </div>
+              <div className="small muted" style={{ marginBottom: 6 }}>
+                {entreeJour?.sommeil_h !== undefined ? 'heures (7-9h reco.)' : 'pas enregistré'}
+              </div>
+              <BarreProgression valeur={entreeJour?.sommeil_h || 0} objectif={7} couleur="pink" />
+              <div className="field mb-0 mt-8">
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="24"
+                  placeholder="Heures"
+                  value={sommeilSaisie}
+                  onChange={(e) => setSommeilSaisie(e.target.value)}
+                />
+              </div>
+              <button className="btn btn-secondary btn-sm mt-8" style={{ width: '100%' }} onClick={enregistrerSommeil}>
+                OK
+              </button>
             </div>
-            <button className="btn btn-secondary btn-sm" onClick={enregistrerSommeil}>
-              Enregistrer
-            </button>
           </div>
         </div>
 
-        <div className="card">
-          <div className="card-title">
-            <h3>📅 Cette semaine</h3>
-            <span className="pill yellow">{nbSeancesFaites}/{seancesCetteSemaine.length} séances</span>
-          </div>
-          <div className="mt-8">
-            {seancesCetteSemaine.map(({ seance, faite }) => (
-              <div
-                key={seance.id}
-                style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 0' }}
-              >
-                <span style={{ fontSize: '1.2em', lineHeight: '1.4' }}>{faite ? '✅' : '⬜️'}</span>
+        {seanceDuJour ? (
+          <div className="card yellow" style={{ padding: 16 }}>
+            <div className="row-between">
+              <div className="row gap-12">
+                <span style={{ fontSize: '1.5rem' }}>💪</span>
                 <div>
-                  <div style={{ fontWeight: 600 }}>{seance.nom}</div>
+                  <div style={{ fontWeight: 800 }}>{seanceDuJour.nom}</div>
                   <div className="muted small">
-                    {seance.moment} · {seance.lieu === 'salle' ? 'en salle' : 'à la maison'}
+                    {seanceDuJour.moment} · {seanceDuJour.lieu === 'salle' ? 'en salle' : 'à la maison'}
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-          <button className="btn btn-outline btn-sm mt-8" onClick={() => navigate('/entrainement')}>
-            Voir toutes les séances →
-          </button>
-        </div>
-
-        {seanceDuJour && (
-          <div className="card yellow">
-            <div className="card-title">
-              <h3>💪 Séance du jour</h3>
-              {seanceLogDuJour?.termineeA && <span className="pill green">Terminée ✓</span>}
+              {seanceLogDuJour?.termineeA && <span className="pill green">✓</span>}
             </div>
-            <p style={{ fontWeight: 700 }}>{seanceDuJour.nom}</p>
-            <p className="muted small">
-              {seanceDuJour.exercices.length} exercices · {seanceDuJour.moment} · {seanceDuJour.lieu === 'salle' ? 'En salle' : 'À la maison'}
-            </p>
             <button
-              className="btn btn-yellow mt-8"
+              className="btn btn-yellow btn-sm mt-8"
+              style={{ width: '100%' }}
               onClick={() => navigate(`/entrainement/seance/${seanceDuJour.id}`)}
             >
               {seanceLogDuJour?.termineeA ? 'Revoir la séance' : 'Commencer la séance'}
             </button>
           </div>
-        )}
-
-        {!seanceDuJour && (
-          <div className="card">
-            <h3>😌 Jour de repos</h3>
-            <p className="muted mb-0">Pas de séance prévue aujourd'hui. Profites-en pour bouger un peu (marche, étirements).</p>
+        ) : (
+          <div className="card" style={{ padding: 16 }}>
+            <div className="row gap-12">
+              <span style={{ fontSize: '1.5rem' }}>😌</span>
+              <div>
+                <div style={{ fontWeight: 800 }}>Jour de repos</div>
+                <div className="muted small">Pas de séance prévue, profites-en pour bouger un peu.</div>
+              </div>
+            </div>
           </div>
         )}
+
+        <div className="card" style={{ padding: 16 }}>
+          <div className="card-title" style={{ marginBottom: 4 }}>
+            <h3 style={{ fontSize: '1rem' }}>📅 Cette semaine</h3>
+            <span className="pill yellow">{nbSeancesFaites}/{seancesCetteSemaine.length}</span>
+          </div>
+          <div>
+            {seancesCetteSemaine.map(({ seance, faite }) => (
+              <div
+                key={seance.id}
+                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}
+              >
+                <span style={{ fontSize: '1em' }}>{faite ? '✅' : '⬜️'}</span>
+                <span className="small" style={{ fontWeight: 600 }}>{seance.nom}</span>
+              </div>
+            ))}
+          </div>
+          <button className="link-btn small" style={{ padding: '4px 0 0' }} onClick={() => navigate('/entrainement')}>
+            Voir toutes les séances →
+          </button>
+        </div>
       </div>
     </div>
   )
