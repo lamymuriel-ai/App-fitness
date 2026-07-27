@@ -1,10 +1,11 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import FormulaireRepas, { valeursVides } from '../components/FormulaireRepas'
-import { genererId } from '../utils/date'
+import { combinerDateEtHeureActuelle, genererId } from '../utils/date'
 
 export default function AjouterRepasManuel() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { ajouterRepas } = useAppData()
 
   return (
@@ -19,7 +20,7 @@ export default function AjouterRepasManuel() {
         onEnregistrer={async (valeurs) => {
           await ajouterRepas({
             id: genererId(),
-            dateHeure: new Date().toISOString(),
+            dateHeure: combinerDateEtHeureActuelle(searchParams.get('date')),
             type: valeurs.type,
             nom: valeurs.nom || 'Repas',
             methode: 'manuel',

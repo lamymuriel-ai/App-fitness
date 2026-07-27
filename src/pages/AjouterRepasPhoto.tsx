@@ -1,12 +1,13 @@
 import { useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import FormulaireRepas, { type ValeursRepasForm } from '../components/FormulaireRepas'
 import { compresserImage, estimerRepasDepuisPhoto } from '../utils/photoEstimate'
-import { genererId, typeRepasSuggere } from '../utils/date'
+import { combinerDateEtHeureActuelle, genererId, typeRepasSuggere } from '../utils/date'
 
 export default function AjouterRepasPhoto() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { ajouterRepas } = useAppData()
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -79,7 +80,7 @@ export default function AjouterRepasPhoto() {
           onEnregistrer={async (v) => {
             await ajouterRepas({
               id: genererId(),
-              dateHeure: new Date().toISOString(),
+              dateHeure: combinerDateEtHeureActuelle(searchParams.get('date')),
               type: v.type,
               nom: v.nom || 'Repas',
               methode: 'photo',

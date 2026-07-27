@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useAppData } from '../context/AppDataContext'
 import { calculerRecapJour, type RecapJour, type StatutMetrique } from '../utils/recapJournalier'
-import { dateDuJourISO, debutSemaineISO, formatDateCourt, formatDateLong } from '../utils/date'
+import { ajouterJours, dateDuJourISO, debutSemaineISO, formatDateCourt, formatDateLong } from '../utils/date'
 
 const COULEURS_STATUT: Record<StatutMetrique, { bg: string; fg: string }> = {
   ok: { bg: '#e4f7e8', fg: '#3f9955' },
@@ -9,20 +9,10 @@ const COULEURS_STATUT: Record<StatutMetrique, { bg: string; fg: string }> = {
   absent: { bg: '#f2eef0', fg: '#9b8f97' },
 }
 
-function versISO(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function ajouterJours(dateISO: string, n: number): string {
-  const d = new Date(`${dateISO}T00:00:00`)
-  d.setDate(d.getDate() + n)
-  return versISO(d)
-}
-
 function ajouterMois(dateISO: string, n: number): string {
   const d = new Date(`${dateISO}T00:00:00`)
   d.setMonth(d.getMonth() + n)
-  return versISO(d)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 function grilleDuMois(dateISO: string): (string | null)[] {

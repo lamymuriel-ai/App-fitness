@@ -1,7 +1,9 @@
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 
 export default function AjouterRepas() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const suffixeDate = searchParams.get('date') ? `?date=${searchParams.get('date')}` : ''
 
   return (
     <div className="screen">
@@ -14,7 +16,7 @@ export default function AjouterRepas() {
       <button
         className="card"
         style={{ width: '100%', border: '2px solid var(--pink)', textAlign: 'left' }}
-        onClick={() => navigate('/journal/ajouter/photo')}
+        onClick={() => navigate(`/journal/ajouter/photo${suffixeDate}`)}
       >
         <div className="row gap-12">
           <span style={{ fontSize: '2rem' }}>📷</span>
@@ -28,7 +30,7 @@ export default function AjouterRepas() {
       <button
         className="card"
         style={{ width: '100%', border: '2px solid var(--blue)', textAlign: 'left' }}
-        onClick={() => navigate('/journal/ajouter/scan')}
+        onClick={() => navigate(`/journal/ajouter/scan${suffixeDate}`)}
       >
         <div className="row gap-12">
           <span style={{ fontSize: '2rem' }}>📦</span>
@@ -42,7 +44,7 @@ export default function AjouterRepas() {
       <button
         className="card"
         style={{ width: '100%', border: '2px solid var(--yellow)', textAlign: 'left' }}
-        onClick={() => navigate('/journal/ajouter/manuel')}
+        onClick={() => navigate(`/journal/ajouter/manuel${suffixeDate}`)}
       >
         <div className="row gap-12">
           <span style={{ fontSize: '2rem' }}>✍️</span>

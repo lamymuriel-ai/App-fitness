@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { BrowserMultiFormatReader } from '@zxing/browser'
 import type { IScannerControls } from '@zxing/browser'
 import { useAppData } from '../context/AppDataContext'
 import FormulaireRepas, { type ValeursRepasForm } from '../components/FormulaireRepas'
 import { rechercherProduitParCodeBarres, mettreAlEchelle, type ProduitCodeBarres } from '../utils/barcode'
-import { genererId, typeRepasSuggere } from '../utils/date'
+import { combinerDateEtHeureActuelle, genererId, typeRepasSuggere } from '../utils/date'
 
 export default function AjouterRepasScan() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const { ajouterRepas } = useAppData()
   const videoRef = useRef<HTMLVideoElement>(null)
   const controlsRef = useRef<IScannerControls | null>(null)
@@ -157,7 +158,7 @@ export default function AjouterRepasScan() {
           onEnregistrer={async (v) => {
             await ajouterRepas({
               id: genererId(),
-              dateHeure: new Date().toISOString(),
+              dateHeure: combinerDateEtHeureActuelle(searchParams.get('date')),
               type: v.type,
               nom: v.nom || 'Repas',
               methode: 'code_barres',

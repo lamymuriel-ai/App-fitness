@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
-import { estAujourdhui, formatDateCourt, formatHeure, dateDuJourISO } from '../utils/date'
+import { ajouterJours, formatDateCourt, formatDateLong, formatHeure, dateDuJourISO } from '../utils/date'
 import { totauxRepas } from '../utils/nutrition'
 import { BarreProgression, BarreMacros, EtatVide } from '../components/ui'
 import GrilleMicronutriments from '../components/GrilleMicronutriments'
@@ -22,14 +22,26 @@ const EMOJI_METHODE: Record<Repas['methode'], string> = {
   import_sante: '🍏',
 }
 
+function libelleJour(iso: string): string {
+  const aujourdHui = dateDuJourISO()
+  if (iso === aujourdHui) return "Aujourd'hui"
+  if (iso === ajouterJours(aujourdHui, -1)) return 'Hier'
+  if (iso === ajouterJours(aujourdHui, 1)) return 'Demain'
+  return formatDateLong(iso)
+}
+
 export default function Journal() {
   const { profil, repas } = useAppData()
   const navigate = useNavigate()
   const [onglet, setOnglet] = useState<'jour' | 'historique'>('jour')
+  const [dateAffichee, setDateAffichee] = useState(dateDuJourISO())
 
   const repasDuJour = useMemo(
-    () => repas.filter((r) => estAujourdhui(r.dateHeure)).sort((a, b) => a.dateHeure.localeCompare(b.dateHeure)),
-    [repas]
+    () =>
+      repas
+        .filter((r) => r.dateHeure.slice(0, 10) === dateAffichee)
+        .sort((a, b) => a.dateHeure.localeCompare(b.dateHeure)),
+    [repas, dateAffichee]
   )
   const totauxJour = useMemo(() => totauxRepas(repasDuJour), [repasDuJour])
 
@@ -73,7 +85,7 @@ export default function Journal() {
       <div className="screen" style={{ paddingTop: 0 }}>
         <div className="segmented">
           <button className={onglet === 'jour' ? 'active' : ''} onClick={() => setOnglet('jour')}>
-            Aujourd'hui
+            Jour
           </button>
           <button className={onglet === 'historique' ? 'active' : ''} onClick={() => setOnglet('historique')}>
             Historique
@@ -82,6 +94,23 @@ export default function Journal() {
 
         {onglet === 'jour' && (
           <>
+            <div className="row-between mb-16">
+              <button className="btn-ghost btn-sm" onClick={() => setDateAffichee((d) => ajouterJours(d, -1))}>
+                ←
+              </button>
+              <div className="center">
+                <div style={{ fontWeight: 800, textTransform: 'capitalize' }}>{libelleJour(dateAffichee)}</div>
+                {dateAffichee !== dateDuJourISO() && (
+                  <button className="link-btn small" style={{ padding: 0 }} onClick={() => setDateAffichee(dateDuJourISO())}>
+                    Revenir à aujourd'hui
+                  </button>
+                )}
+              </div>
+              <button className="btn-ghost btn-sm" onClick={() => setDateAffichee((d) => ajouterJours(d, 1))}>
+                →
+              </button>
+            </div>
+
             <div className="card pink">
               <div className="progress-label-row">
                 <span className="progress-big-number">{Math.round(totauxJour.calories)}</span>
@@ -103,13 +132,21 @@ export default function Journal() {
               <GrilleMicronutriments apports={totauxJour.micros} reference={objectifs.micros} titre="Micronutriments du jour" />
             </div>
 
-            <button className="btn btn-primary mt-8" onClick={() => navigate('/journal/ajouter')}>
+            <button className="btn btn-primary mt-8" onClick={() => navigate(`/journal/ajouter?date=${dateAffichee}`)}>
               + Ajouter un repas
             </button>
 
             <div className="mt-16">
               {repasDuJour.length === 0 ? (
-                <EtatVide emoji="🍽️" titre="Rien enregistré pour l'instant" texte="Ajoute ton premier repas du jour !" />
+                <EtatVide
+                  emoji="🍽️"
+                  titre="Rien enregistré pour l'instant"
+                  texte={
+                    dateAffichee === dateDuJourISO()
+                      ? 'Ajoute ton premier repas du jour !'
+                      : "Aucun repas enregistré ce jour-là."
+                  }
+                />
               ) : (
                 repasDuJour.map((r) => <LigneRepas key={r.id} repas={r} onClick={() => navigate(`/journal/repas/${r.id}`)} />)
               )}

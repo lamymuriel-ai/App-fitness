@@ -23,7 +23,7 @@ npm run preview
 ## Fonctionnalités
 
 - **Tableau de bord** : calories/macros du jour, pas, séance du jour.
-- **Journal alimentaire** : ajout d'un repas par photo (estimation automatique à corriger), scan de code-barres (base [Open Food Facts](https://world.openfoodfacts.org/)), ou saisie manuelle. Suivi des macronutriments et de 12 micronutriments clés, avec détection des apports faibles/élevés sur la semaine.
+- **Journal alimentaire** : ajout d'un repas par photo (estimation automatique à corriger), scan de code-barres (base [Open Food Facts](https://world.openfoodfacts.org/)), ou saisie manuelle. Suivi des macronutriments et de 12 micronutriments clés, avec détection des apports faibles/élevés sur la semaine. La vue "Jour" navigue librement d'un jour à l'autre (← →, avec un raccourci "Revenir à aujourd'hui") ; ajouter un repas depuis un autre jour que celui du jour l'enregistre bien à cette date-là (et pas à aujourd'hui).
 - **Entraînement** : 3 séances préremplies (2 en salle, 1 à la maison), poids mémorisé par exercice, cases à cocher par série, historique des séances.
 - **Suivi hebdomadaire** : pesée, moyenne mobile sur 7 jours, tour de taille, ressenti, sommeil, graphiques d'évolution, et un **récap visuel** (semaine ou mois) qui indique pour chaque jour si le sommeil, les calories, les pas et la séance prévue étaient dans les objectifs — avec une couleur globale par jour (vert si tout est dans les clous, orange sinon, gris si aucune donnée ce jour-là ; un jour de repos sans séance prévue n'est jamais compté contre le vert).
 - **Alerte de stagnation** : si la moyenne de poids ne baisse pas sur 2 semaines, l'appli propose un seul ajustement (calories ou pas) à la fois.
