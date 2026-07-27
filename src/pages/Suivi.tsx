@@ -66,11 +66,11 @@ export default function Suivi() {
   const stagnationActive = useMemo(() => {
     const alerteOuverte = alertesStagnation.find((a) => !a.resolue)
     if (alerteOuverte) return alerteOuverte
-    if (detecterStagnation(suiviJournalier)) {
+    if (detecterStagnation(suiviJournalier, profil.dateDebut)) {
       return { id: 'nouvelle', dateDetection: aujourdHui, resolue: false } as const
     }
     return null
-  }, [alertesStagnation, suiviJournalier, aujourdHui])
+  }, [alertesStagnation, suiviJournalier, aujourdHui, profil.dateDebut])
 
   const poidsDepart = profil.poidsDepart_kg
   const dernierMoyenne = pointsMoyenne.length > 0 ? pointsMoyenne[pointsMoyenne.length - 1].poidsMoyen : null

@@ -54,11 +54,11 @@ export default function Dashboard() {
   const stagnationActive = useMemo(() => {
     const alerteOuverte = alertesStagnation.find((a) => !a.resolue)
     if (alerteOuverte) return alerteOuverte
-    if (detecterStagnation(suiviJournalier)) {
+    if (detecterStagnation(suiviJournalier, profil.dateDebut)) {
       return { id: 'nouvelle', dateDetection: aujourdHui, resolue: false } as const
     }
     return null
-  }, [alertesStagnation, suiviJournalier, aujourdHui])
+  }, [alertesStagnation, suiviJournalier, aujourdHui, profil.dateDebut])
 
   const objectifs = profil.objectifsNutritionnels
   const budgetRestant = useMemo(() => calculerBudgetRestant(totaux, objectifs), [totaux, objectifs])

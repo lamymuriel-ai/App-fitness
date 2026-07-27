@@ -31,9 +31,15 @@ export function moyenneMobile7Jours(entrees: SuiviJournalier[]): PointMoyenne[] 
 /**
  * Détecte une stagnation : la moyenne mobile n'a pas baissé sur les 2 dernières semaines
  * (comparaison de la moyenne de la semaine la plus récente vs celle de la semaine précédente).
+ *
+ * `dateDebut` (le début du plan, `profil.dateDebut`) exclut tout ce qui précède : un
+ * historique de poids importé depuis Santé peut remonter à bien avant le début du plan,
+ * et des semaines où on ne suivait rien de particulier ne doivent pas compter comme une
+ * "stagnation" du plan en cours.
  */
-export function detecterStagnation(entrees: SuiviJournalier[]): boolean {
-  const points = moyenneMobile7Jours(entrees)
+export function detecterStagnation(entrees: SuiviJournalier[], dateDebut?: string): boolean {
+  const entreesPertinentes = dateDebut ? entrees.filter((e) => e.date >= dateDebut) : entrees
+  const points = moyenneMobile7Jours(entreesPertinentes)
   if (points.length < 14) return false
 
   const dernieres14 = points.slice(-14)
