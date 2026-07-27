@@ -1,16 +1,24 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { totauxRepas } from '../utils/nutrition'
 import { calculerBudgetRestant, genererSuggestions } from '../utils/suggestionsAlimentaires'
+import type { MomentRepas } from '../data/alimentsReference'
 import { dateDuJourISO, typeRepasSuggere } from '../utils/date'
 import type { ValeursRepasForm } from '../components/FormulaireRepas'
+
+const LABEL_MOMENT: Record<MomentRepas, string> = {
+  petit_dejeuner: '🌅 Petit-déj',
+  repas: '🍽️ Repas',
+  collation: '🍎 Collation',
+}
 
 export default function SuggestionsAlimentaires() {
   const navigate = useNavigate()
   const { profil, repas } = useAppData()
   const objectifs = profil.objectifsNutritionnels
   const aujourdHui = dateDuJourISO()
+  const [filtreMoment, setFiltreMoment] = useState<MomentRepas | null>(null)
 
   const repasAujourdhui = useMemo(
     () => repas.filter((r) => r.dateHeure.slice(0, 10) === aujourdHui),
@@ -38,8 +46,8 @@ export default function SuggestionsAlimentaires() {
   const budgetRestant = useMemo(() => calculerBudgetRestant(totauxJour, objectifs), [totauxJour, objectifs])
 
   const suggestions = useMemo(
-    () => genererSuggestions(budgetRestant, moyenneMicrosSemaine, objectifs.micros),
-    [budgetRestant, moyenneMicrosSemaine, objectifs.micros]
+    () => genererSuggestions(budgetRestant, moyenneMicrosSemaine, objectifs.micros, 5, filtreMoment || undefined),
+    [budgetRestant, moyenneMicrosSemaine, objectifs.micros, filtreMoment]
   )
 
   function ajouterCetAliment(suggestion: (typeof suggestions)[number]) {
@@ -71,6 +79,21 @@ export default function SuggestionsAlimentaires() {
           <StatRestante label="Lipides" valeur={Math.round(budgetRestant.lipides_g)} unite="g" />
           <StatRestante label="Glucides" valeur={Math.round(budgetRestant.glucides_g)} unite="g" />
         </div>
+      </div>
+
+      <div className="segmented">
+        <button className={filtreMoment === null ? 'active' : ''} onClick={() => setFiltreMoment(null)}>
+          Tous
+        </button>
+        {(Object.keys(LABEL_MOMENT) as MomentRepas[]).map((moment) => (
+          <button
+            key={moment}
+            className={filtreMoment === moment ? 'active' : ''}
+            onClick={() => setFiltreMoment(moment)}
+          >
+            {LABEL_MOMENT[moment]}
+          </button>
+        ))}
       </div>
 
       {budgetRestant.calories < 15 ? (

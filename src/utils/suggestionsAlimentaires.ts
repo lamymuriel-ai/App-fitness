@@ -1,5 +1,5 @@
 import type { Micronutriments, ObjectifsNutritionnels } from '../types'
-import { ALIMENTS_REFERENCE, type AlimentReference } from '../data/alimentsReference'
+import { ALIMENTS_REFERENCE, type AlimentReference, type MomentRepas } from '../data/alimentsReference'
 import { MICRO_REFERENCE } from '../data/defaults'
 import { analyserMicronutriments } from './nutrition'
 
@@ -68,7 +68,8 @@ export function genererSuggestions(
   budgetRestant: BudgetRestant,
   moyenneMicrosSemaine: Micronutriments,
   reference: Micronutriments,
-  limite = 5
+  limite = 5,
+  filtreMoment?: MomentRepas
 ): SuggestionAliment[] {
   if (budgetRestant.calories < PORTION_MINIMALE_G) return [] // quasi plus de marge, rien à proposer
 
@@ -78,6 +79,8 @@ export function genererSuggestions(
   const candidats: { suggestion: SuggestionAliment; score: number }[] = []
 
   for (const aliment of ALIMENTS_REFERENCE) {
+    if (filtreMoment && !aliment.moments.includes(filtreMoment)) continue
+
     // On part de la portion de référence, réduite si besoin pour tenir dans les
     // calories restantes (jamais l'inverse : on ne propose jamais plus que ce qui reste).
     let portion_g = aliment.portionReference_g
