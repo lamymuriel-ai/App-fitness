@@ -1,12 +1,14 @@
-import { useNavigate, useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
-import FormulaireRepas, { valeursVides } from '../components/FormulaireRepas'
+import FormulaireRepas, { valeursVides, type ValeursRepasForm } from '../components/FormulaireRepas'
 import { combinerDateEtHeureActuelle, genererId } from '../utils/date'
 
 export default function AjouterRepasManuel() {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
+  const location = useLocation()
   const { ajouterRepas } = useAppData()
+  const valeursInitiales = (location.state as { valeursInitiales?: ValeursRepasForm } | null)?.valeursInitiales
 
   return (
     <div className="screen">
@@ -15,7 +17,7 @@ export default function AjouterRepasManuel() {
       <p className="muted">Renseigne toi-même les valeurs de ton repas.</p>
 
       <FormulaireRepas
-        valeursInitiales={valeursVides()}
+        valeursInitiales={valeursInitiales || valeursVides()}
         texteBouton="Enregistrer le repas"
         onEnregistrer={async (valeurs) => {
           await ajouterRepas({

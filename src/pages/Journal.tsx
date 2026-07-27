@@ -136,6 +136,12 @@ export default function Journal() {
               + Ajouter un repas
             </button>
 
+            {dateAffichee === dateDuJourISO() && (
+              <button className="link-btn mt-8" onClick={() => navigate('/journal/suggestions')}>
+                🥗 Idées pour compléter ta journée →
+              </button>
+            )}
+
             <div className="mt-16">
               {repasDuJour.length === 0 ? (
                 <EtatVide

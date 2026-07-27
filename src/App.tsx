@@ -11,6 +11,7 @@ import AjouterRepasScan from './pages/AjouterRepasScan'
 import AjouterRepasManuel from './pages/AjouterRepasManuel'
 import DetailRepas from './pages/DetailRepas'
 import Tendances from './pages/Tendances'
+import SuggestionsAlimentaires from './pages/SuggestionsAlimentaires'
 import Entrainement from './pages/Entrainement'
 import SeanceActive from './pages/SeanceActive'
 import HistoriqueEntrainement from './pages/HistoriqueEntrainement'
@@ -55,6 +56,7 @@ function RoutesApp() {
         <Route path="/journal/ajouter/manuel" element={<AjouterRepasManuel />} />
         <Route path="/journal/repas/:id" element={<DetailRepas />} />
         <Route path="/journal/tendances" element={<Tendances />} />
+        <Route path="/journal/suggestions" element={<SuggestionsAlimentaires />} />
         <Route path="/entrainement" element={<Entrainement />} />
         <Route path="/entrainement/seance/:templateId" element={<SeanceActive />} />
         <Route path="/entrainement/historique" element={<HistoriqueEntrainement />} />
