@@ -4,6 +4,7 @@ import { useAppData } from '../context/AppDataContext'
 import { dateDuJourISO, formatDateCourt } from '../utils/date'
 import { moyenneMobile7Jours, detecterStagnation } from '../utils/stagnation'
 import AlerteStagnationBanniere from '../components/AlerteStagnationBanniere'
+import RecapVisuel from '../components/RecapVisuel'
 import { EtatVide } from '../components/ui'
 
 export default function Suivi() {
@@ -84,6 +85,8 @@ export default function Suivi() {
 
       <div className="screen" style={{ paddingTop: 0 }}>
         {stagnationActive && <AlerteStagnationBanniere alerte={stagnationActive} />}
+
+        <RecapVisuel />
 
         <div className="card pink">
           <div className="row-between">
