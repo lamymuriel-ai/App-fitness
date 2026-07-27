@@ -184,7 +184,7 @@ class ScannerIncremental {
 export class AnalyseurSanteIncremental {
   private readonly pas = new Map<string, number>()
   private readonly poidsSommeCompte = new Map<string, { somme: number; compte: number }>()
-  private readonly sommeil = new Map<string, number>()
+  private readonly sommeilIntervalles = new Map<string, Array<{ debut: number; fin: number }>>()
   private readonly nutrition = new Map<string, EntreeAlimentaire>()
   private readonly nomsAliments = new Map<string, string>()
 
@@ -242,9 +242,16 @@ export class AnalyseurSanteIncremental {
       const debut = parserHorodatageApple(startMatch[1])
       const fin = parserHorodatageApple(endMatch[1])
       if (debut === null || fin === null || fin <= debut) return
-      const heures = (fin - debut) / 1000 / 60 / 60
+      // On stocke chaque intervalle brut plutôt que de sommer directement : plusieurs
+      // sources (Apple Watch, iPhone, une appli tierce) peuvent chacune écrire leur propre
+      // analyse de sommeil pour la même nuit, avec des plages qui se chevauchent largement.
+      // Les additionner telles quelles double-compte le sommeil réel (ex. 13,6h pour une
+      // vraie nuit de ~7h). Il faut fusionner les intervalles avant de sommer — voir
+      // `finaliser()`.
       const jourFin = endMatch[1].slice(0, 10) // nuit attribuée au jour du réveil
-      this.sommeil.set(jourFin, (this.sommeil.get(jourFin) || 0) + heures)
+      const intervalles = this.sommeilIntervalles.get(jourFin) || []
+      intervalles.push({ debut, fin })
+      this.sommeilIntervalles.set(jourFin, intervalles)
       return
     }
 
@@ -290,10 +297,15 @@ export class AnalyseurSanteIncremental {
       poids.set(jour, Math.round((somme / compte) * 10) / 10)
     }
 
+    const sommeil = new Map<string, number>()
+    for (const [jour, intervalles] of this.sommeilIntervalles) {
+      sommeil.set(jour, Math.round(fusionnerEtSommerHeures(intervalles) * 10) / 10)
+    }
+
     const tousLesJours = new Set<string>([
       ...this.pas.keys(),
       ...poids.keys(),
-      ...this.sommeil.keys(),
+      ...sommeil.keys(),
       ...Array.from(this.nutrition.keys()).map((h) => h.slice(0, 10)),
     ])
     const joursTries = Array.from(tousLesJours).sort()
@@ -301,10 +313,35 @@ export class AnalyseurSanteIncremental {
     return {
       pas: this.pas,
       poids,
-      sommeil: this.sommeil,
+      sommeil,
       nutrition: this.nutrition,
       premiereDate: joursTries[0] || null,
       derniereDate: joursTries[joursTries.length - 1] || null,
     }
   }
+}
+
+/**
+ * Fusionne des intervalles de sommeil potentiellement chevauchants (plusieurs sources
+ * peuvent chacune écrire leur propre analyse pour la même nuit) et retourne la durée
+ * totale réellement couverte, en heures — pas la somme brute de chaque intervalle.
+ */
+function fusionnerEtSommerHeures(intervalles: Array<{ debut: number; fin: number }>): number {
+  if (intervalles.length === 0) return 0
+  const tries = [...intervalles].sort((a, b) => a.debut - b.debut)
+  let total = 0
+  let debutCourant = tries[0].debut
+  let finCourante = tries[0].fin
+  for (let i = 1; i < tries.length; i++) {
+    const { debut, fin } = tries[i]
+    if (debut <= finCourante) {
+      finCourante = Math.max(finCourante, fin)
+    } else {
+      total += finCourante - debutCourant
+      debutCourant = debut
+      finCourante = fin
+    }
+  }
+  total += finCourante - debutCourant
+  return total / 1000 / 60 / 60
 }
