@@ -57,6 +57,17 @@ export default function RaccourciIOS() {
           <li>Date : <strong>Aujourd'hui</strong></li>
           <li>Combiner les échantillons : <strong>Somme</strong></li>
         </ul>
+        <div className="alert-banner info mt-8">
+          <span className="icon">⚠️</span>
+          <p className="mb-0 small">
+            Important : sans filtre, cette recherche additionne les pas de <strong>chaque source</strong>{' '}
+            (iPhone et Watch comptent souvent les mêmes pas chacun de leur côté), ce qui gonfle le total.
+            Ajoute un <strong>Filtre</strong> à l'action : <strong>Où</strong> → <strong>Nom de la source</strong>{' '}
+            → <strong>contient</strong> → le nom de l'appareil que tu portes toute la journée (ex. "Apple
+            Watch de Muriel" — visible dans Santé → Parcourir → Pas → onglet "Sources de données").
+            N'utilise qu'une seule source, sinon la somme reste faussée.
+          </p>
+        </div>
       </div>
 
       <div className="card">
