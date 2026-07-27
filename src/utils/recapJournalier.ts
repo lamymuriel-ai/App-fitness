@@ -14,7 +14,7 @@ export interface RecapJour {
   global: StatutMetrique
 }
 
-const TOLERANCE_CALORIES = 0.15 // ±15% autour de l'objectif
+const TOLERANCE_CALORIES_MAX = 0.15 // toléré jusqu'à +15% au-dessus de l'objectif
 const SOMMEIL_MIN_H = 7
 
 function statutSommeil(entree: SuiviJournalier | undefined): StatutMetrique {
@@ -29,9 +29,10 @@ function statutPas(entree: SuiviJournalier | undefined, objectifPas: number): St
 
 function statutCalories(repasDuJour: Repas[], objectifCalories: number): StatutMetrique {
   if (repasDuJour.length === 0) return 'absent'
+  // Objectif de perte de graisse : rester sous l'objectif (voire bien en dessous) est
+  // toujours dans les clous, seul un dépassement compte comme un écart à ajuster.
   const { calories } = totauxRepas(repasDuJour)
-  const ecart = Math.abs(calories - objectifCalories) / objectifCalories
-  return ecart <= TOLERANCE_CALORIES ? 'ok' : 'attention'
+  return calories <= objectifCalories * (1 + TOLERANCE_CALORIES_MAX) ? 'ok' : 'attention'
 }
 
 function statutSport(date: string, seancesLog: SeanceLog[]): StatutSport {
