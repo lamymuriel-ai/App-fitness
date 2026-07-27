@@ -126,11 +126,11 @@ export default function Journal() {
               </div>
             </div>
 
-            <AlertesNutriments apportsMoyens={moyenneMicrosSemaine} reference={objectifs.micros} />
-
             <div className="card">
               <GrilleMicronutriments apports={totauxJour.micros} reference={objectifs.micros} titre="Micronutriments du jour" />
             </div>
+
+            <AlertesNutriments apportsMoyens={moyenneMicrosSemaine} reference={objectifs.micros} />
 
             <button className="btn btn-primary mt-8" onClick={() => navigate(`/journal/ajouter?date=${dateAffichee}`)}>
               + Ajouter un repas
