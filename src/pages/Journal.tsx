@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { ajouterJours, formatDateCourt, formatDateLong, formatHeure, dateDuJourISO } from '../utils/date'
 import { totauxRepas } from '../utils/nutrition'
+import { calculerBudgetRestant } from '../utils/suggestionsAlimentaires'
 import { BarreProgression, BarreMacros, EtatVide } from '../components/ui'
 import GrilleMicronutriments from '../components/GrilleMicronutriments'
 import AlertesNutriments from '../components/AlertesNutriments'
@@ -74,6 +75,7 @@ export default function Journal() {
   }, [repas])
 
   const objectifs = profil.objectifsNutritionnels
+  const budgetRestant = useMemo(() => calculerBudgetRestant(totauxJour, objectifs), [totauxJour, objectifs])
 
   return (
     <div>
@@ -111,13 +113,13 @@ export default function Journal() {
               </button>
             </div>
 
-            <div className="card pink">
-              <div className="progress-label-row">
-                <span className="progress-big-number">{Math.round(totauxJour.calories)}</span>
-                <span className="progress-sub">/ {objectifs.calories} kcal</span>
-              </div>
+            <div className="card pink" style={{ padding: 16 }}>
+              <p className="small" style={{ fontWeight: 700, marginBottom: 8 }}>
+                {Math.round(totauxJour.calories)}/{objectifs.calories}kcal ·{' '}
+                <span style={{ color: 'var(--pink-deep)' }}>{Math.round(budgetRestant.calories)} restantes</span>
+              </p>
               <BarreProgression valeur={totauxJour.calories} objectif={objectifs.calories} couleur="pink" />
-              <div className="mt-16">
+              <div style={{ marginTop: 10 }}>
                 <BarreMacros
                   proteines_g={totauxJour.proteines_g}
                   lipides_g={totauxJour.lipides_g}

@@ -93,66 +93,62 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="card" style={{ padding: 16 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div className="card" style={{ padding: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
             <div>
-              <div className="small muted" style={{ fontWeight: 700 }}>👣 Pas</div>
-              <div className="progress-big-number" style={{ fontSize: '1.5rem' }}>
-                {entreeJour?.pas?.toLocaleString('fr-FR') || 0}
-              </div>
-              <div className="small muted" style={{ marginBottom: 6 }}>/ {profil.objectifPas.toLocaleString('fr-FR')}</div>
+              <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>
+                👣 {entreeJour?.pas?.toLocaleString('fr-FR') || 0}
+                <span className="muted"> / {profil.objectifPas.toLocaleString('fr-FR')}</span>
+              </p>
               <BarreProgression valeur={entreeJour?.pas || 0} objectif={profil.objectifPas} couleur="blue" />
-              <div className="field mb-0 mt-8">
-                <input
-                  type="number"
-                  placeholder="Pas"
-                  value={pasSaisie}
-                  onChange={(e) => setPasSaisie(e.target.value)}
-                />
+              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                <div className="field mb-0" style={{ flex: 1 }}>
+                  <input
+                    type="number"
+                    placeholder="Pas"
+                    value={pasSaisie}
+                    onChange={(e) => setPasSaisie(e.target.value)}
+                    style={{ padding: '8px 10px', fontSize: '0.85rem' }}
+                  />
+                </div>
+                <button className="btn btn-secondary" style={{ padding: '0 14px', fontSize: '0.8rem' }} onClick={enregistrerPas}>
+                  OK
+                </button>
               </div>
-              <button className="btn btn-secondary btn-sm mt-8" style={{ width: '100%' }} onClick={enregistrerPas}>
-                OK
-              </button>
             </div>
             <div>
-              <div className="small muted" style={{ fontWeight: 700 }}>😴 Sommeil</div>
-              <div className="progress-big-number" style={{ fontSize: '1.5rem' }}>
-                {entreeJour?.sommeil_h ?? '–'}
-              </div>
-              <div className="small muted" style={{ marginBottom: 6 }}>
-                {entreeJour?.sommeil_h !== undefined ? 'heures (7-9h reco.)' : 'pas enregistré'}
-              </div>
+              <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>
+                😴 {entreeJour?.sommeil_h ?? '–'}
+                <span className="muted"> {entreeJour?.sommeil_h !== undefined ? 'h (7-9 reco.)' : 'pas enreg.'}</span>
+              </p>
               <BarreProgression valeur={entreeJour?.sommeil_h || 0} objectif={7} couleur="pink" />
-              <div className="field mb-0 mt-8">
-                <input
-                  type="number"
-                  step="0.5"
-                  min="0"
-                  max="24"
-                  placeholder="Heures"
-                  value={sommeilSaisie}
-                  onChange={(e) => setSommeilSaisie(e.target.value)}
-                />
+              <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                <div className="field mb-0" style={{ flex: 1 }}>
+                  <input
+                    type="number"
+                    step="0.5"
+                    min="0"
+                    max="24"
+                    placeholder="Heures"
+                    value={sommeilSaisie}
+                    onChange={(e) => setSommeilSaisie(e.target.value)}
+                    style={{ padding: '8px 10px', fontSize: '0.85rem' }}
+                  />
+                </div>
+                <button className="btn btn-secondary" style={{ padding: '0 14px', fontSize: '0.8rem' }} onClick={enregistrerSommeil}>
+                  OK
+                </button>
               </div>
-              <button className="btn btn-secondary btn-sm mt-8" style={{ width: '100%' }} onClick={enregistrerSommeil}>
-                OK
-              </button>
             </div>
           </div>
         </div>
 
         {seanceDuJour ? (
-          <div className="card yellow" style={{ padding: 16 }}>
+          <div className="card yellow" style={{ padding: 14 }}>
             <div className="row-between">
-              <div className="row gap-12">
-                <span style={{ fontSize: '1.5rem' }}>💪</span>
-                <div>
-                  <div style={{ fontWeight: 800 }}>{seanceDuJour.nom}</div>
-                  <div className="muted small">
-                    {seanceDuJour.moment} · {seanceDuJour.lieu === 'salle' ? 'en salle' : 'à la maison'}
-                  </div>
-                </div>
-              </div>
+              <p className="small" style={{ fontWeight: 700, marginBottom: 0 }}>
+                💪 Séance {seanceDuJour.id} <span className="muted">· {seanceDuJour.moment}, {seanceDuJour.lieu === 'salle' ? 'en salle' : 'à la maison'}</span>
+              </p>
               {seanceLogDuJour?.termineeA && <span className="pill green">✓</span>}
             </div>
             <button
@@ -164,30 +160,27 @@ export default function Dashboard() {
             </button>
           </div>
         ) : (
-          <div className="card" style={{ padding: 16 }}>
-            <div className="row gap-12">
-              <span style={{ fontSize: '1.5rem' }}>😌</span>
-              <div>
-                <div style={{ fontWeight: 800 }}>Jour de repos</div>
-                <div className="muted small">Pas de séance prévue, profites-en pour bouger un peu.</div>
-              </div>
-            </div>
+          <div className="card" style={{ padding: 14 }}>
+            <p className="small" style={{ fontWeight: 700, marginBottom: 0 }}>
+              😌 Jour de repos <span className="muted">· profites-en pour bouger un peu</span>
+            </p>
           </div>
         )}
 
-        <div className="card" style={{ padding: 16 }}>
-          <div className="card-title" style={{ marginBottom: 4 }}>
-            <h3 style={{ fontSize: '1rem' }}>📅 Cette semaine</h3>
+        <div className="card" style={{ padding: 14 }}>
+          <div className="row-between" style={{ marginBottom: 2 }}>
+            <h3 style={{ fontSize: '0.95rem', margin: 0 }}>📅 Cette semaine</h3>
             <span className="pill yellow">{nbSeancesFaites}/{seancesCetteSemaine.length}</span>
           </div>
-          <div>
+          <div style={{ display: 'flex', gap: 12 }}>
             {seancesCetteSemaine.map(({ seance, faite }) => (
               <div
                 key={seance.id}
-                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0' }}
+                className="small"
+                style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600, whiteSpace: 'nowrap' }}
               >
-                <span style={{ fontSize: '1em' }}>{faite ? '✅' : '⬜️'}</span>
-                <span className="small" style={{ fontWeight: 600 }}>{seance.nom}</span>
+                <span>{faite ? '✅' : '⬜️'}</span>
+                <span>Séance {seance.id}</span>
               </div>
             ))}
           </div>
