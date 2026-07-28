@@ -1,6 +1,7 @@
 import type { ProfilUtilisatrice, Repas, SeanceLog, SuiviJournalier } from '../types'
 import { PLANNING_SEMAINE } from '../data/defaults'
 import { totauxRepas } from './nutrition'
+import { dateDuJourISO } from './date'
 
 export type StatutMetrique = 'ok' | 'attention' | 'absent'
 export type StatutSport = StatutMetrique | 'repos'
@@ -43,7 +44,11 @@ function statutSport(date: string, seancesLog: SeanceLog[]): StatutSport {
   if (seanceFaite) return 'ok'
   const jourSemaine = new Date(`${date}T00:00:00`).getDay()
   const idSeancePrevue = PLANNING_SEMAINE[jourSemaine]
-  return idSeancePrevue ? 'attention' : 'repos'
+  if (!idSeancePrevue) return 'repos'
+  // Un jour à venir ne peut pas encore être "à ajuster" : la séance prévue n'a simplement
+  // pas encore eu lieu, ce n'est pas un écart constaté.
+  if (date > dateDuJourISO()) return 'absent'
+  return 'attention'
 }
 
 function statutGlobal(statuts: StatutMetrique[]): StatutMetrique {
