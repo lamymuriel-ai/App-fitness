@@ -150,23 +150,13 @@ export default function Journal() {
               </button>
             )}
 
-            <div className="mt-16">
-              {repasDuJourVisibles.length === 0 ? (
-                <EtatVide
-                  emoji="🍽️"
-                  titre="Rien enregistré pour l'instant"
-                  texte={
-                    dateAffichee === dateDuJourISO()
-                      ? 'Ajoute ton premier repas du jour !'
-                      : "Aucun repas enregistré ce jour-là."
-                  }
-                />
-              ) : (
-                repasDuJourVisibles.map((r) => (
+            {repasDuJourVisibles.length > 0 && (
+              <div className="mt-16">
+                {repasDuJourVisibles.map((r) => (
                   <LigneRepas key={r.id} repas={r} onClick={() => navigate(`/journal/repas/${r.id}`)} />
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            )}
 
             <button className="link-btn mt-8" onClick={() => navigate('/journal/tendances')}>
               📈 Voir les tendances hebdomadaires →
