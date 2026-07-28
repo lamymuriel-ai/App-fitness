@@ -15,6 +15,8 @@ export interface ResultatImportSante {
   poids: Map<string, number> // clé = jour, valeur en kg
   sommeil: Map<string, number> // clé = jour (nuit attribuée au jour du réveil), valeur en heures
   scoreSommeil: Map<string, number> // clé = jour (nuit attribuée au jour du réveil), valeur 0-100
+  /** Diagnostic : types de records liés au sommeil rencontrés mais non reconnus (clé = type brut, valeur = nb d'occurrences) — utile si TYPE_SCORE_SOMMEIL_CANDIDATS ne correspond à rien. */
+  typesSommeilInconnus: Map<string, number>
   nutrition: Map<string, EntreeAlimentaire> // clé = horodatage exact (un repas = une entrée)
   premiereDate: string | null
   derniereDate: string | null
@@ -127,6 +129,12 @@ const REGEX_RECORD = new RegExp(
   'g'
 )
 const REGEX_CORRELATION_ALIMENT = /<Correlation type="HKCorrelationTypeIdentifierFood"[^>]*?>[\s\S]*?<\/Correlation>/g
+// Diagnostic : l'identifiant HealthKit exact du score de sommeil n'est pas documenté avec
+// certitude (fonctionnalité récente, voir TYPE_SCORE_SOMMEIL_CANDIDATS). Ce regex ne capture
+// que l'attribut `type` de l'ouverture de balise (pas tout le bloc), pour rester très léger
+// même sur un export volumineux — il permet de découvrir le vrai nom si nos candidats
+// ne correspondent à rien dans un fichier réel.
+const REGEX_TYPE_SOMMEIL_BRUT = /<Record type="([^"]*[Ss]leep[^"]*)"/g
 const REGEX_OUVERTURE = /^<Record\b[^>]*?(?:\/>|>)/
 const REGEX_START = /startDate="([^"]+)"/
 const REGEX_END = /endDate="([^"]+)"/
@@ -199,11 +207,15 @@ export class AnalyseurSanteIncremental {
   private readonly scoreSommeilSommeCompte = new Map<string, { somme: number; compte: number }>()
   private readonly nutrition = new Map<string, EntreeAlimentaire>()
   private readonly nomsAliments = new Map<string, string>()
+  private readonly typesSommeilBrutsCompte = new Map<string, number>()
 
   private readonly scannerRecord = new ScannerIncremental(REGEX_RECORD, (m) => this.traiterRecord(m))
   private readonly scannerCorrelation = new ScannerIncremental(REGEX_CORRELATION_ALIMENT, (m) =>
     this.traiterCorrelationAliment(m[0])
   )
+  private readonly scannerTypeSommeilBrut = new ScannerIncremental(REGEX_TYPE_SOMMEIL_BRUT, (m) => {
+    this.typesSommeilBrutsCompte.set(m[1], (this.typesSommeilBrutsCompte.get(m[1]) || 0) + 1)
+  })
 
   private traiterCorrelationAliment(bloc: string) {
     const startMatch = REGEX_START.exec(bloc)
@@ -319,11 +331,16 @@ export class AnalyseurSanteIncremental {
   pousser(texte: string) {
     this.scannerCorrelation.pousser(texte)
     this.scannerRecord.pousser(texte)
+    this.scannerTypeSommeilBrut.pousser(texte)
   }
 
   /** Reliquat total actuellement gardé en mémoire (pour surveillance/tests uniquement). */
   reliquatOctets() {
-    return this.scannerCorrelation.tailleReliquat() + this.scannerRecord.tailleReliquat()
+    return (
+      this.scannerCorrelation.tailleReliquat() +
+      this.scannerRecord.tailleReliquat() +
+      this.scannerTypeSommeilBrut.tailleReliquat()
+    )
   }
 
   /** À appeler une fois tout le contenu poussé, pour obtenir le résultat final agrégé. */
@@ -348,6 +365,12 @@ export class AnalyseurSanteIncremental {
       scoreSommeil.set(jour, Math.round(somme / compte))
     }
 
+    const typesConnus = new Set([TYPE_SOMMEIL, ...TYPE_SCORE_SOMMEIL_CANDIDATS])
+    const typesSommeilInconnus = new Map<string, number>()
+    for (const [type, compte] of this.typesSommeilBrutsCompte) {
+      if (!typesConnus.has(type)) typesSommeilInconnus.set(type, compte)
+    }
+
     const tousLesJours = new Set<string>([
       ...pas.keys(),
       ...poids.keys(),
@@ -362,6 +385,7 @@ export class AnalyseurSanteIncremental {
       poids,
       sommeil,
       scoreSommeil,
+      typesSommeilInconnus,
       nutrition: this.nutrition,
       premiereDate: joursTries[0] || null,
       derniereDate: joursTries[joursTries.length - 1] || null,
