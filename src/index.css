@@ -267,13 +267,16 @@ button {
   transition: width 0.4s ease;
 }
 
-.progress-fill.pink { background: linear-gradient(90deg, var(--pink), var(--pink-deep)); }
-.progress-fill.blue { background: linear-gradient(90deg, var(--blue), var(--blue-deep)); }
-.progress-fill.yellow { background: linear-gradient(90deg, var(--yellow), var(--yellow-deep)); }
-.progress-fill.green { background: linear-gradient(90deg, #9ee0ac, var(--success)); }
-.progress-fill.purple { background: linear-gradient(90deg, var(--purple), var(--purple-deep)); }
-.progress-fill.navy { background: linear-gradient(90deg, var(--navy), var(--navy-deep)); }
-.progress-fill.orange { background: linear-gradient(90deg, var(--orange), var(--orange-deep)); }
+/* Écarts volontairement plus marqués qu'entre les variables --X/--X-deep de base
+   (utilisées ailleurs pour des fonds de carte/pastilles plus discrets) : sur une barre
+   fine, un dégradé trop proche entre les deux teintes ne se voit quasiment pas. */
+.progress-fill.pink { background: linear-gradient(90deg, #ffe0ee, #e8447a); }
+.progress-fill.blue { background: linear-gradient(90deg, #dcefff, #2f7dc9); }
+.progress-fill.yellow { background: linear-gradient(90deg, #fff3c2, #d9a300); }
+.progress-fill.green { background: linear-gradient(90deg, #d3f5db, #2f8a4f); }
+.progress-fill.purple { background: linear-gradient(90deg, #ede0fa, #7a45c2); }
+.progress-fill.navy { background: linear-gradient(90deg, #c3cdee, #1f2850); }
+.progress-fill.orange { background: linear-gradient(90deg, #ffd9b3, #c73f1e); }
 
 .progress-label-row {
   display: flex;
