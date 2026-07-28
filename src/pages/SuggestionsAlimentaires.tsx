@@ -4,8 +4,7 @@ import { useAppData } from '../context/AppDataContext'
 import { totauxRepas } from '../utils/nutrition'
 import { calculerBudgetRestant, genererSuggestions } from '../utils/suggestionsAlimentaires'
 import type { MomentRepas } from '../data/alimentsReference'
-import { dateDuJourISO, typeRepasSuggere } from '../utils/date'
-import type { ValeursRepasForm } from '../components/FormulaireRepas'
+import { dateDuJourISO } from '../utils/date'
 
 const LABEL_MOMENT: Record<MomentRepas, string> = {
   petit_dejeuner: '🌅 Petit-déj',
@@ -49,19 +48,6 @@ export default function SuggestionsAlimentaires() {
     () => genererSuggestions(budgetRestant, moyenneMicrosSemaine, objectifs.micros, 5, filtreMoment || undefined),
     [budgetRestant, moyenneMicrosSemaine, objectifs.micros, filtreMoment]
   )
-
-  function ajouterCetAliment(suggestion: (typeof suggestions)[number]) {
-    const valeursInitiales: ValeursRepasForm = {
-      nom: `${suggestion.aliment.nom} (${suggestion.portion_g} g)`,
-      type: typeRepasSuggere(),
-      calories: Math.round(suggestion.calories),
-      proteines_g: Math.round(suggestion.proteines_g * 10) / 10,
-      lipides_g: Math.round(suggestion.lipides_g * 10) / 10,
-      glucides_g: Math.round(suggestion.glucides_g * 10) / 10,
-      micros: suggestion.micros,
-    }
-    navigate(`/journal/ajouter/manuel?date=${aujourdHui}`, { state: { valeursInitiales } })
-  }
 
   return (
     <div className="screen">
@@ -123,16 +109,13 @@ export default function SuggestionsAlimentaires() {
                 <span key={raison} className="pill blue">{raison}</span>
               ))}
             </div>
-            <button className="btn btn-secondary btn-sm mt-8" onClick={() => ajouterCetAliment(s)}>
-              + Ajouter au journal
-            </button>
           </div>
         ))
       )}
 
       <p className="small muted mt-8">
         Repère informatif basé sur des valeurs nutritionnelles générales — pas une recommandation
-        personnalisée. Les quantités proposées restent modifiables avant d'enregistrer.
+        personnalisée.
       </p>
     </div>
   )

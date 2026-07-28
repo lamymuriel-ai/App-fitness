@@ -5,10 +5,6 @@ import { BottomNav } from './components/BottomNav'
 import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
 import Journal from './pages/Journal'
-import AjouterRepas from './pages/AjouterRepas'
-import AjouterRepasPhoto from './pages/AjouterRepasPhoto'
-import AjouterRepasScan from './pages/AjouterRepasScan'
-import AjouterRepasManuel from './pages/AjouterRepasManuel'
 import DetailRepas from './pages/DetailRepas'
 import Tendances from './pages/Tendances'
 import SuggestionsAlimentaires from './pages/SuggestionsAlimentaires'
@@ -50,10 +46,6 @@ function RoutesApp() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/" element={<Dashboard />} />
         <Route path="/journal" element={<Journal />} />
-        <Route path="/journal/ajouter" element={<AjouterRepas />} />
-        <Route path="/journal/ajouter/photo" element={<AjouterRepasPhoto />} />
-        <Route path="/journal/ajouter/scan" element={<AjouterRepasScan />} />
-        <Route path="/journal/ajouter/manuel" element={<AjouterRepasManuel />} />
         <Route path="/journal/repas/:id" element={<DetailRepas />} />
         <Route path="/journal/tendances" element={<Tendances />} />
         <Route path="/journal/suggestions" element={<SuggestionsAlimentaires />} />
