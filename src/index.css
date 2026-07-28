@@ -15,6 +15,9 @@
   --navy: #8fa3d9;
   --navy-soft: #e2e7f7;
   --navy-deep: #34407a;
+  --orange: #ffb37a;
+  --orange-soft: #ffe8d6;
+  --orange-deep: #e0522e;
 
   --bg: #fffaf6;
   --card-bg: #ffffff;
@@ -270,6 +273,7 @@ button {
 .progress-fill.green { background: linear-gradient(90deg, #9ee0ac, var(--success)); }
 .progress-fill.purple { background: linear-gradient(90deg, var(--purple), var(--purple-deep)); }
 .progress-fill.navy { background: linear-gradient(90deg, var(--navy), var(--navy-deep)); }
+.progress-fill.orange { background: linear-gradient(90deg, var(--orange), var(--orange-deep)); }
 
 .progress-label-row {
   display: flex;

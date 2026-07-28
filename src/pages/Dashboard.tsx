@@ -113,7 +113,7 @@ export default function Dashboard() {
             {Math.round(totaux.calories)}/{objectifs.calories}kcal ·{' '}
             <span style={{ color: 'var(--pink-deep)' }}>{Math.round(budgetRestant.calories)} restantes</span>
           </p>
-          <BarreProgression valeur={totaux.calories} objectif={objectifs.calories} couleur="pink" />
+          <BarreProgression valeur={totaux.calories} objectif={objectifs.calories} couleur="orange" />
           <div style={{ marginTop: 10 }}>
             <BarreMacros
               proteines_g={totaux.proteines_g}

@@ -117,7 +117,7 @@ export default function Journal() {
                 {Math.round(totauxJour.calories)}/{objectifs.calories}kcal ·{' '}
                 <span style={{ color: 'var(--pink-deep)' }}>{Math.round(budgetRestant.calories)} restantes</span>
               </p>
-              <BarreProgression valeur={totauxJour.calories} objectif={objectifs.calories} couleur="pink" />
+              <BarreProgression valeur={totauxJour.calories} objectif={objectifs.calories} couleur="orange" />
               <div style={{ marginTop: 10 }}>
                 <BarreMacros
                   proteines_g={totauxJour.proteines_g}
