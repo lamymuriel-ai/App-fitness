@@ -17,31 +17,84 @@ export function BarreProgression({
   )
 }
 
+function LigneMacro({
+  label,
+  couleurTexte,
+  couleurBarre,
+  valeur,
+  objectif,
+}: {
+  label: string
+  couleurTexte: string
+  couleurBarre: 'pink' | 'blue' | 'yellow'
+  valeur: number
+  objectif: number
+}) {
+  const restant = Math.max(0, Math.round(objectif - valeur))
+  return (
+    <div>
+      <div className="row-between" style={{ gap: 6, minWidth: 0 }}>
+        <span
+          style={{
+            fontWeight: 700,
+            fontSize: '0.8rem',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            minWidth: 0,
+          }}
+        >
+          <span style={{ color: couleurTexte }}>{label}</span> {Math.round(valeur)}/{Math.round(objectif)}g
+        </span>
+        <span className="muted" style={{ fontSize: '0.78rem', fontWeight: 700, flexShrink: 0 }}>
+          {restant}g restant
+        </span>
+      </div>
+      <div style={{ marginTop: 3 }}>
+        <BarreProgression valeur={valeur} objectif={objectif} couleur={couleurBarre} />
+      </div>
+    </div>
+  )
+}
+
 export function BarreMacros({
   proteines_g,
   lipides_g,
   glucides_g,
+  objectifProteines_g,
+  objectifLipides_g,
+  objectifGlucides_g,
 }: {
   proteines_g: number
   lipides_g: number
   glucides_g: number
+  objectifProteines_g: number
+  objectifLipides_g: number
+  objectifGlucides_g: number
 }) {
-  const totalCal = proteines_g * 4 + lipides_g * 9 + glucides_g * 4
-  const pctP = totalCal > 0 ? (proteines_g * 4 * 100) / totalCal : 0
-  const pctL = totalCal > 0 ? (lipides_g * 9 * 100) / totalCal : 0
-  const pctG = totalCal > 0 ? (glucides_g * 4 * 100) / totalCal : 0
   return (
-    <div>
-      <div className="macro-bar">
-        <div className="macro-protein" style={{ width: `${pctP}%` }} />
-        <div className="macro-fat" style={{ width: `${pctL}%` }} />
-        <div className="macro-carbs" style={{ width: `${pctG}%` }} />
-      </div>
-      <div className="macro-legend">
-        <span style={{ color: 'var(--pink-deep)' }}>Prot. {Math.round(proteines_g)}g</span>
-        <span style={{ color: '#a3821f' }}>Lip. {Math.round(lipides_g)}g</span>
-        <span style={{ color: 'var(--blue-deep)' }}>Gluc. {Math.round(glucides_g)}g</span>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <LigneMacro
+        label="Prot."
+        couleurTexte="var(--pink-deep)"
+        couleurBarre="pink"
+        valeur={proteines_g}
+        objectif={objectifProteines_g}
+      />
+      <LigneMacro
+        label="Lip."
+        couleurTexte="#a3821f"
+        couleurBarre="yellow"
+        valeur={lipides_g}
+        objectif={objectifLipides_g}
+      />
+      <LigneMacro
+        label="Gluc."
+        couleurTexte="var(--blue-deep)"
+        couleurBarre="blue"
+        valeur={glucides_g}
+        objectif={objectifGlucides_g}
+      />
     </div>
   )
 }

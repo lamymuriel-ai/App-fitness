@@ -75,6 +75,9 @@ export default function Dashboard() {
               proteines_g={totaux.proteines_g}
               lipides_g={totaux.lipides_g}
               glucides_g={totaux.glucides_g}
+              objectifProteines_g={objectifs.proteines_g}
+              objectifLipides_g={objectifs.lipides_g}
+              objectifGlucides_g={objectifs.glucides_g}
             />
           </div>
         </div>

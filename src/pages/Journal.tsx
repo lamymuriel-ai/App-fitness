@@ -124,6 +124,9 @@ export default function Journal() {
                   proteines_g={totauxJour.proteines_g}
                   lipides_g={totauxJour.lipides_g}
                   glucides_g={totauxJour.glucides_g}
+                  objectifProteines_g={objectifs.proteines_g}
+                  objectifLipides_g={objectifs.lipides_g}
+                  objectifGlucides_g={objectifs.glucides_g}
                 />
               </div>
             </div>

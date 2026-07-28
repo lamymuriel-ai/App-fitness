@@ -282,43 +282,6 @@ button {
   font-size: 0.95rem;
 }
 
-/* Macro bar (segmented) */
-.macro-bar {
-  display: flex;
-  height: 22px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: #f2eaee;
-}
-.macro-bar > div { height: 100%; }
-.macro-protein { background: var(--pink-deep); }
-.macro-fat { background: var(--yellow-deep); }
-.macro-carbs { background: var(--blue-deep); }
-
-.macro-legend {
-  display: flex;
-  justify-content: space-between;
-  gap: 6px;
-  margin-top: 10px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--text-soft);
-}
-/* flex-shrink (pas flex:1) : chaque item garde sa largeur naturelle et ne se
-   réduit que proportionnellement à ce qu'il lui faut vraiment, plutôt que
-   d'être forcé à un tiers égal (ce qui écrasait "Protéines"/"Glucides", plus
-   longs que "Lipides", même quand tout tenait largement dans la carte). Le
-   troncage avec points de suspension reste un filet de sécurité pour des
-   valeurs vraiment extrêmes plutôt que de déborder de la carte et de la page.
-*/
-.macro-legend > span {
-  flex: 0 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 /* Bottom nav */
 .bottom-nav {
   position: fixed;
