@@ -82,18 +82,18 @@ export function BarreMacros({
         objectif={objectifProteines_g}
       />
       <LigneMacro
-        label="Lip."
-        couleurTexte="#a3821f"
-        couleurBarre="yellow"
-        valeur={lipides_g}
-        objectif={objectifLipides_g}
-      />
-      <LigneMacro
         label="Gluc."
         couleurTexte="#3f9955"
         couleurBarre="green"
         valeur={glucides_g}
         objectif={objectifGlucides_g}
+      />
+      <LigneMacro
+        label="Lip."
+        couleurTexte="#a3821f"
+        couleurBarre="yellow"
+        valeur={lipides_g}
+        objectif={objectifLipides_g}
       />
     </div>
   )
