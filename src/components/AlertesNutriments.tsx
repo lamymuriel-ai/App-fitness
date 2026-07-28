@@ -19,18 +19,28 @@ export default function AlertesNutriments({
   if (notables.length === 0) return null
 
   return (
-    <div className="card blue">
-      <h3>🔎 À surveiller {periode}</h3>
-      <div className="row gap-8" style={{ flexWrap: 'wrap' }}>
+    <div className="card blue" style={{ padding: 14 }}>
+      <h3 style={{ fontSize: '0.95rem', marginBottom: 8 }}>🔎 À surveiller {periode}</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, minWidth: 0 }}>
         {notables.map((n) => (
-          <span key={n.cle} className={`pill ${n.statut === 'faible' ? 'warning' : 'danger'}`}>
-            {n.emoji} {n.label} {n.statut === 'faible' ? 'faible' : 'élevé'} ({n.pourcentage}%)
+          <span
+            key={n.cle}
+            className={`pill ${n.statut === 'faible' ? 'warning' : 'danger'}`}
+            style={{
+              padding: '4px 8px',
+              fontSize: '0.72rem',
+              minWidth: 0,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {n.emoji} {n.labelCourt} {n.statut === 'faible' ? '↓' : '↑'} {n.pourcentage}%
           </span>
         ))}
       </div>
       <p className="small muted mt-8 mb-0">
-        Repère informatif basé sur des apports de référence générales — pas un diagnostic. En cas de
-        doute, parles-en à un professionnel de santé.
+        Repère informatif, pas un diagnostic — en cas de doute, parles-en à un professionnel de santé.
       </p>
     </div>
   )

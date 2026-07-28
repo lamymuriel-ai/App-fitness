@@ -1,16 +1,6 @@
 import type { Micronutriments } from '../types'
 import { analyserMicronutriments } from '../utils/nutrition'
 
-const LABEL_COURT: Partial<Record<string, string>> = {
-  Magnésium: 'Magnés.',
-  'Vitamine A': 'Vit. A',
-  'Vitamine C': 'Vit. C',
-  'Vitamine D': 'Vit. D',
-  'Vitamine E': 'Vit. E',
-  'Vitamine B6': 'Vit. B6',
-  'Vitamine B12': 'Vit. B12',
-}
-
 export default function GrilleMicronutriments({
   apports,
   reference,
@@ -48,7 +38,7 @@ export default function GrilleMicronutriments({
                   minWidth: 0,
                 }}
               >
-                {n.emoji} {LABEL_COURT[n.label] ?? n.label}
+                {n.emoji} {n.labelCourt}
               </span>
               <span className="muted" style={{ fontSize: '0.72rem', fontWeight: 700, flexShrink: 0 }}>
                 {n.pourcentage}%

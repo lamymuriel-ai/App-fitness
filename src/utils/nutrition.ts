@@ -93,6 +93,7 @@ export type StatutNutriment = 'faible' | 'ok' | 'eleve'
 export interface AnalyseNutriment {
   cle: keyof Micronutriments
   label: string
+  labelCourt: string
   unite: string
   emoji: string
   apport: number
@@ -119,6 +120,7 @@ export function analyserMicronutriments(
     return {
       cle: info.cle,
       label: info.label,
+      labelCourt: info.labelCourt ?? info.label,
       unite: info.unite,
       emoji: info.emoji,
       apport,

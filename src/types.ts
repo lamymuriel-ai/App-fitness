@@ -37,6 +37,8 @@ export const MICRO_VIDE: Micronutriments = {
 export interface MicronutrimentInfo {
   cle: keyof Micronutriments
   label: string
+  /** Version courte du label pour les affichages compacts (grille, pastilles) ; retombe sur `label` si absente. */
+  labelCourt?: string
   unite: string
   reference: number
   emoji: string
