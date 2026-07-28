@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { AppDataProvider, useAppData } from './context/AppDataContext'
 import { BottomNav } from './components/BottomNav'
@@ -31,6 +32,12 @@ function Chargement() {
 function RoutesApp() {
   const { chargement, profil } = useAppData()
   const location = useLocation()
+
+  // Sans ça, changer d'onglet reprend le scroll là où la page précédente
+  // l'avait laissé au lieu de repartir en haut, ce qui est déroutant.
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [location.pathname])
 
   if (chargement) return <Chargement />
 

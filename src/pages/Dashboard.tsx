@@ -61,10 +61,20 @@ export default function Dashboard() {
 
   return (
     <div>
-      <div className="app-header">
-        <div className="eyebrow">{formatDateLong(aujourdHui)}</div>
-        <h1>{profil.prenom ? `Salut ${profil.prenom} 🌸` : 'Bonjour 🌸'}</h1>
-        <p className="muted">Semaine {numeroSemaine(profil.dateDebut)} sur {profil.dureeObjectif_semaines}</p>
+      <div className="app-header row-between" style={{ alignItems: 'flex-start' }}>
+        <div>
+          <div className="eyebrow">{formatDateLong(aujourdHui)}</div>
+          <h1>{profil.prenom ? `Salut ${profil.prenom} 🌸` : 'Bonjour 🌸'}</h1>
+          <p className="muted">Semaine {numeroSemaine(profil.dateDebut)} sur {profil.dureeObjectif_semaines}</p>
+        </div>
+        <button
+          className="btn-ghost btn-sm"
+          style={{ fontSize: '1.4rem', padding: 8 }}
+          aria-label="Importer depuis Santé"
+          onClick={() => navigate('/plus/importer-sante')}
+        >
+          🍏
+        </button>
       </div>
 
       <div className="screen" style={{ paddingTop: 0 }}>
