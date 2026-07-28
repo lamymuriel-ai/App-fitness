@@ -14,9 +14,6 @@ export interface ResultatImportSante {
   pas: Map<string, number> // clé = jour (YYYY-MM-DD)
   poids: Map<string, number> // clé = jour, valeur en kg
   sommeil: Map<string, number> // clé = jour (nuit attribuée au jour du réveil), valeur en heures
-  scoreSommeil: Map<string, number> // clé = jour (nuit attribuée au jour du réveil), valeur 0-100
-  /** Diagnostic : types de records liés au sommeil rencontrés mais non reconnus (clé = type brut, valeur = nb d'occurrences) — utile si TYPE_SCORE_SOMMEIL_CANDIDATS ne correspond à rien. */
-  typesSommeilInconnus: Map<string, number>
   nutrition: Map<string, EntreeAlimentaire> // clé = horodatage exact (un repas = une entrée)
   premiereDate: string | null
   derniereDate: string | null
@@ -57,14 +54,6 @@ function nutritionVide(horodatage: string): EntreeAlimentaire {
 const TYPE_PAS = 'HKQuantityTypeIdentifierStepCount'
 const TYPE_POIDS = 'HKQuantityTypeIdentifierBodyMass'
 const TYPE_SOMMEIL = 'HKCategoryTypeIdentifierSleepAnalysis'
-// Le score de sommeil (watchOS 26+) est trop récent pour que son identifiant exact soit
-// documenté avec certitude : on tente les deux noms les plus probables selon la convention
-// Apple (préfixe "Apple" pour les métriques propriétaires, comme AppleStandTime). Si aucun
-// des deux ne correspond aux données réelles, ce champ restera simplement vide.
-const TYPE_SCORE_SOMMEIL_CANDIDATS = [
-  'HKQuantityTypeIdentifierAppleSleepScore',
-  'HKQuantityTypeIdentifierSleepScore',
-]
 
 type ChampNutrition =
   | { cible: 'macro'; champ: 'calories' | 'proteines_g' | 'lipides_g' | 'glucides_g'; unite: 'kcal' | 'g' }
@@ -92,7 +81,6 @@ const TOUS_LES_TYPES_SUIVIS = [
   TYPE_PAS,
   TYPE_POIDS,
   TYPE_SOMMEIL,
-  ...TYPE_SCORE_SOMMEIL_CANDIDATS,
   ...Object.keys(MAPPING_NUTRITION),
 ]
 
@@ -129,12 +117,6 @@ const REGEX_RECORD = new RegExp(
   'g'
 )
 const REGEX_CORRELATION_ALIMENT = /<Correlation type="HKCorrelationTypeIdentifierFood"[^>]*?>[\s\S]*?<\/Correlation>/g
-// Diagnostic : l'identifiant HealthKit exact du score de sommeil n'est pas documenté avec
-// certitude (fonctionnalité récente, voir TYPE_SCORE_SOMMEIL_CANDIDATS). Ce regex ne capture
-// que l'attribut `type` de l'ouverture de balise (pas tout le bloc), pour rester très léger
-// même sur un export volumineux — il permet de découvrir le vrai nom si nos candidats
-// ne correspondent à rien dans un fichier réel.
-const REGEX_TYPE_SOMMEIL_BRUT = /<Record type="([^"]*[Ss]leep[^"]*)"/g
 const REGEX_OUVERTURE = /^<Record\b[^>]*?(?:\/>|>)/
 const REGEX_START = /startDate="([^"]+)"/
 const REGEX_END = /endDate="([^"]+)"/
@@ -204,18 +186,13 @@ export class AnalyseurSanteIncremental {
   private readonly pasParJourEtSource = new Map<string, Map<string, number>>()
   private readonly poidsSommeCompte = new Map<string, { somme: number; compte: number }>()
   private readonly sommeilIntervalles = new Map<string, Array<{ debut: number; fin: number }>>()
-  private readonly scoreSommeilSommeCompte = new Map<string, { somme: number; compte: number }>()
   private readonly nutrition = new Map<string, EntreeAlimentaire>()
   private readonly nomsAliments = new Map<string, string>()
-  private readonly typesSommeilBrutsCompte = new Map<string, number>()
 
   private readonly scannerRecord = new ScannerIncremental(REGEX_RECORD, (m) => this.traiterRecord(m))
   private readonly scannerCorrelation = new ScannerIncremental(REGEX_CORRELATION_ALIMENT, (m) =>
     this.traiterCorrelationAliment(m[0])
   )
-  private readonly scannerTypeSommeilBrut = new ScannerIncremental(REGEX_TYPE_SOMMEIL_BRUT, (m) => {
-    this.typesSommeilBrutsCompte.set(m[1], (this.typesSommeilBrutsCompte.get(m[1]) || 0) + 1)
-  })
 
   private traiterCorrelationAliment(bloc: string) {
     const startMatch = REGEX_START.exec(bloc)
@@ -290,19 +267,6 @@ export class AnalyseurSanteIncremental {
       return
     }
 
-    if (TYPE_SCORE_SOMMEIL_CANDIDATS.includes(type)) {
-      const valeur = Number(valeurMatch[1])
-      if (!Number.isFinite(valeur)) return
-      // Attribué au jour du réveil, comme la durée de sommeil, pour rester cohérent avec elle.
-      const endMatch = REGEX_END.exec(ouverture)
-      const jourFin = (endMatch ? endMatch[1] : horodatage).slice(0, 10)
-      const cumul = this.scoreSommeilSommeCompte.get(jourFin) || { somme: 0, compte: 0 }
-      cumul.somme += valeur
-      cumul.compte += 1
-      this.scoreSommeilSommeCompte.set(jourFin, cumul)
-      return
-    }
-
     const mapping = MAPPING_NUTRITION[type]
     if (mapping) {
       const uniteMatch = REGEX_UNITE.exec(ouverture)
@@ -331,16 +295,11 @@ export class AnalyseurSanteIncremental {
   pousser(texte: string) {
     this.scannerCorrelation.pousser(texte)
     this.scannerRecord.pousser(texte)
-    this.scannerTypeSommeilBrut.pousser(texte)
   }
 
   /** Reliquat total actuellement gardé en mémoire (pour surveillance/tests uniquement). */
   reliquatOctets() {
-    return (
-      this.scannerCorrelation.tailleReliquat() +
-      this.scannerRecord.tailleReliquat() +
-      this.scannerTypeSommeilBrut.tailleReliquat()
-    )
+    return this.scannerCorrelation.tailleReliquat() + this.scannerRecord.tailleReliquat()
   }
 
   /** À appeler une fois tout le contenu poussé, pour obtenir le résultat final agrégé. */
@@ -360,22 +319,10 @@ export class AnalyseurSanteIncremental {
       pas.set(jour, Math.round(Math.max(...parSource.values())))
     }
 
-    const scoreSommeil = new Map<string, number>()
-    for (const [jour, { somme, compte }] of this.scoreSommeilSommeCompte) {
-      scoreSommeil.set(jour, Math.round(somme / compte))
-    }
-
-    const typesConnus = new Set([TYPE_SOMMEIL, ...TYPE_SCORE_SOMMEIL_CANDIDATS])
-    const typesSommeilInconnus = new Map<string, number>()
-    for (const [type, compte] of this.typesSommeilBrutsCompte) {
-      if (!typesConnus.has(type)) typesSommeilInconnus.set(type, compte)
-    }
-
     const tousLesJours = new Set<string>([
       ...pas.keys(),
       ...poids.keys(),
       ...sommeil.keys(),
-      ...scoreSommeil.keys(),
       ...Array.from(this.nutrition.keys()).map((h) => h.slice(0, 10)),
     ])
     const joursTries = Array.from(tousLesJours).sort()
@@ -384,8 +331,6 @@ export class AnalyseurSanteIncremental {
       pas,
       poids,
       sommeil,
-      scoreSommeil,
-      typesSommeilInconnus,
       nutrition: this.nutrition,
       premiereDate: joursTries[0] || null,
       derniereDate: joursTries[joursTries.length - 1] || null,

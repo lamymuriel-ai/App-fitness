@@ -140,7 +140,7 @@ export default function Dashboard() {
                 😴 {entreeJour?.sommeil_h ?? '–'}
                 <span className="muted"> {entreeJour?.sommeil_h !== undefined ? 'h' : 'pas enreg.'}</span>
                 {entreeJour?.sommeil_h !== undefined && (() => {
-                  const score = entreeJour.scoreSommeil ?? Math.min(100, Math.round((entreeJour.sommeil_h / 7) * 100))
+                  const score = Math.min(100, Math.round((entreeJour.sommeil_h / 7) * 100))
                   return <span style={{ color: couleurScoreSommeil(score) }}> · {score}</span>
                 })()}
               </p>

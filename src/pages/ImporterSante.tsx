@@ -38,18 +38,12 @@ function construireRepasImport(nutrition: Map<string, EntreeAlimentaire>): Repas
 }
 
 function construireSuiviJours(resultat: ResultatImportSante): SuiviJournalier[] {
-  const jours = new Set<string>([
-    ...resultat.pas.keys(),
-    ...resultat.poids.keys(),
-    ...resultat.sommeil.keys(),
-    ...resultat.scoreSommeil.keys(),
-  ])
+  const jours = new Set<string>([...resultat.pas.keys(), ...resultat.poids.keys(), ...resultat.sommeil.keys()])
   return Array.from(jours).map((jour) => ({
     date: jour,
     ...(resultat.pas.has(jour) ? { pas: Math.round(resultat.pas.get(jour)!) } : {}),
     ...(resultat.poids.has(jour) ? { poids_kg: resultat.poids.get(jour)! } : {}),
     ...(resultat.sommeil.has(jour) ? { sommeil_h: Math.round(resultat.sommeil.get(jour)! * 10) / 10 } : {}),
-    ...(resultat.scoreSommeil.has(jour) ? { scoreSommeil: Math.round(resultat.scoreSommeil.get(jour)!) } : {}),
   }))
 }
 
@@ -181,28 +175,7 @@ export default function ImporterSante() {
             <StatApercu emoji="⚖️" label="Poids" nb={resultat.poids.size} unite="jour" />
             <StatApercu emoji="😴" label="Sommeil" nb={resultat.sommeil.size} unite="jour" />
             <StatApercu emoji="🍽️" label="Alimentation" nb={resultat.nutrition.size} unite="repas" />
-            {resultat.scoreSommeil.size > 0 && (
-              <StatApercu emoji="💯" label="Score sommeil" nb={resultat.scoreSommeil.size} unite="jour" />
-            )}
           </div>
-
-          {resultat.scoreSommeil.size === 0 && resultat.typesSommeilInconnus.size > 0 && (
-            <div className="alert-banner info mt-16">
-              <span className="icon">🔍</span>
-              <div className="small">
-                <p className="mb-0">
-                  Le score de sommeil n'a pas été reconnu, mais ton fichier contient bien des
-                  données liées au sommeil sous un autre nom. Envoie cette liste pour qu'on
-                  l'ajoute :
-                </p>
-                <div style={{ background: '#f7f3f5', borderRadius: 12, padding: 12, marginTop: 8, fontFamily: 'monospace', fontSize: '0.8rem' }}>
-                  {Array.from(resultat.typesSommeilInconnus.entries()).map(([type, compte]) => (
-                    <div key={type}>{type} ({compte})</div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
 
           <p className="small muted mt-16">
             Pour un jour donné, une valeur déjà enregistrée dans l'appli (poids, pas, sommeil) sera

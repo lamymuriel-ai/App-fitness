@@ -135,8 +135,6 @@ export interface SuiviJournalier {
   poids_kg?: number
   pas?: number
   sommeil_h?: number
-  /** Score de sommeil Apple (0-100, watchOS 26+) importé depuis Santé — absent sur les montres/versions plus anciennes. */
-  scoreSommeil?: number
 }
 
 export interface SuiviHebdomadaire {
