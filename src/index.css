@@ -9,6 +9,12 @@
   --yellow: #ffe680;
   --yellow-soft: #fff6cf;
   --yellow-deep: #f0c53a;
+  --purple: #d9c2f0;
+  --purple-soft: #f2e8fc;
+  --purple-deep: #9b6fd1;
+  --navy: #8fa3d9;
+  --navy-soft: #e2e7f7;
+  --navy-deep: #34407a;
 
   --bg: #fffaf6;
   --card-bg: #ffffff;
@@ -262,6 +268,8 @@ button {
 .progress-fill.blue { background: linear-gradient(90deg, var(--blue), var(--blue-deep)); }
 .progress-fill.yellow { background: linear-gradient(90deg, var(--yellow), var(--yellow-deep)); }
 .progress-fill.green { background: linear-gradient(90deg, #9ee0ac, var(--success)); }
+.progress-fill.purple { background: linear-gradient(90deg, var(--purple), var(--purple-deep)); }
+.progress-fill.navy { background: linear-gradient(90deg, var(--navy), var(--navy-deep)); }
 
 .progress-label-row {
   display: flex;

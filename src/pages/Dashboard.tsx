@@ -133,7 +133,7 @@ export default function Dashboard() {
                 👣 {entreeJour?.pas?.toLocaleString('fr-FR') || 0}
                 <span className="muted"> / {profil.objectifPas.toLocaleString('fr-FR')}</span>
               </p>
-              <BarreProgression valeur={entreeJour?.pas || 0} objectif={profil.objectifPas} couleur="blue" />
+              <BarreProgression valeur={entreeJour?.pas || 0} objectif={profil.objectifPas} couleur="purple" />
             </div>
             <div>
               <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>
@@ -144,7 +144,7 @@ export default function Dashboard() {
                   return <span style={{ color: couleurScoreSommeil(score) }}> · {score}</span>
                 })()}
               </p>
-              <BarreProgression valeur={entreeJour?.sommeil_h || 0} objectif={7} couleur="pink" />
+              <BarreProgression valeur={entreeJour?.sommeil_h || 0} objectif={7} couleur="navy" />
             </div>
           </div>
         </div>

@@ -7,7 +7,7 @@ export function BarreProgression({
 }: {
   valeur: number
   objectif: number
-  couleur?: 'pink' | 'blue' | 'yellow' | 'green'
+  couleur?: 'pink' | 'blue' | 'yellow' | 'green' | 'purple' | 'navy'
 }) {
   const pourcentage = objectif > 0 ? Math.min(100, Math.round((valeur / objectif) * 100)) : 0
   return (
