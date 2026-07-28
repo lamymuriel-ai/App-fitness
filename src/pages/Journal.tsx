@@ -45,6 +45,13 @@ export default function Journal() {
     [repas, dateAffichee]
   )
   const totauxJour = useMemo(() => totauxRepas(repasDuJour), [repasDuJour])
+  // Les repas importés depuis Santé comptent dans les totaux nutritionnels mais
+  // n'apportent rien à afficher individuellement (souvent nombreux et sans intérêt
+  // à parcourir un par un) — on les garde dans les calculs, on les masque de la liste.
+  const repasDuJourVisibles = useMemo(
+    () => repasDuJour.filter((r) => r.methode !== 'import_sante'),
+    [repasDuJour]
+  )
 
   const septDerniersJours = useMemo(() => {
     const auj = new Date(dateDuJourISO())
@@ -144,7 +151,7 @@ export default function Journal() {
             )}
 
             <div className="mt-16">
-              {repasDuJour.length === 0 ? (
+              {repasDuJourVisibles.length === 0 ? (
                 <EtatVide
                   emoji="🍽️"
                   titre="Rien enregistré pour l'instant"
@@ -155,7 +162,9 @@ export default function Journal() {
                   }
                 />
               ) : (
-                repasDuJour.map((r) => <LigneRepas key={r.id} repas={r} onClick={() => navigate(`/journal/repas/${r.id}`)} />)
+                repasDuJourVisibles.map((r) => (
+                  <LigneRepas key={r.id} repas={r} onClick={() => navigate(`/journal/repas/${r.id}`)} />
+                ))
               )}
             </div>
 
@@ -172,6 +181,7 @@ export default function Journal() {
             )}
             {parJour.map(([jour, repasJour]) => {
               const totauxJourHisto = totauxRepas(repasJour)
+              const repasJourVisibles = repasJour.filter((r) => r.methode !== 'import_sante')
               return (
                 <div className="card" key={jour}>
                   <div className="row-between">
@@ -179,7 +189,7 @@ export default function Journal() {
                     <span className="pill pink">{Math.round(totauxJourHisto.calories)} kcal</span>
                   </div>
                   <div className="mt-8">
-                    {repasJour.map((r) => (
+                    {repasJourVisibles.map((r) => (
                       <LigneRepas key={r.id} repas={r} onClick={() => navigate(`/journal/repas/${r.id}`)} compact />
                     ))}
                   </div>

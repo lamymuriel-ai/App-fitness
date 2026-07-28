@@ -57,6 +57,20 @@ export function totauxRepas(repas: Repas[]) {
   )
 }
 
+/** Apport moyen quotidien en micronutriments sur les 7 derniers jours (jusqu'à dateReference incluse). */
+export function calculerMoyenneMicrosSemaine(repas: Repas[], dateReference: string): Micronutriments {
+  const seuil = new Date(`${dateReference}T00:00:00`)
+  seuil.setDate(seuil.getDate() - 6)
+  const septDerniersJours = repas.filter((r) => new Date(r.dateHeure) >= seuil)
+  const totaux = totauxRepas(septDerniersJours)
+  const joursAvecDonnees = Math.max(1, new Set(septDerniersJours.map((r) => r.dateHeure.slice(0, 10))).size)
+  const moyenne = { ...totaux.micros }
+  for (const cle of Object.keys(moyenne) as (keyof Micronutriments)[]) {
+    moyenne[cle] = totaux.micros[cle] / joursAvecDonnees
+  }
+  return moyenne
+}
+
 function vide(): Micronutriments {
   return {
     fer_mg: 0,

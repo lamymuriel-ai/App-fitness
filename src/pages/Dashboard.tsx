@@ -2,11 +2,12 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { BarreProgression, BarreMacros } from '../components/ui'
-import { totauxRepas } from '../utils/nutrition'
-import { calculerBudgetRestant } from '../utils/suggestionsAlimentaires'
+import { totauxRepas, calculerMoyenneMicrosSemaine } from '../utils/nutrition'
+import { calculerBudgetRestant, genererSuggestions } from '../utils/suggestionsAlimentaires'
 import { dateDuJourISO, debutSemaineISO, estAujourdhui, formatDateLong, numeroSemaine } from '../utils/date'
 import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
 import { detecterStagnation } from '../utils/stagnation'
+import { phraseDuJour } from '../data/phrasesEncouragement'
 import AlerteStagnationBanniere from '../components/AlerteStagnationBanniere'
 
 export default function Dashboard() {
@@ -49,6 +50,15 @@ export default function Dashboard() {
   const objectifs = profil.objectifsNutritionnels
   const budgetRestant = useMemo(() => calculerBudgetRestant(totaux, objectifs), [totaux, objectifs])
 
+  const moyenneMicrosSemaine = useMemo(
+    () => calculerMoyenneMicrosSemaine(repas, aujourdHui),
+    [repas, aujourdHui]
+  )
+  const suggestionDuJour = useMemo(() => {
+    const suggestions = genererSuggestions(budgetRestant, moyenneMicrosSemaine, objectifs.micros, 1)
+    return suggestions[0] ?? null
+  }, [budgetRestant, moyenneMicrosSemaine, objectifs.micros])
+
   return (
     <div>
       <div className="app-header">
@@ -59,6 +69,27 @@ export default function Dashboard() {
 
       <div className="screen" style={{ paddingTop: 0 }}>
         {stagnationActive && <AlerteStagnationBanniere alerte={stagnationActive} />}
+
+        <div className="card blue" style={{ padding: 14 }}>
+          <p className="small" style={{ fontStyle: 'italic', margin: 0 }}>💬 {phraseDuJour(aujourdHui)}</p>
+        </div>
+
+        {suggestionDuJour && (
+          <div className="card yellow" style={{ padding: 14 }}>
+            <h3 style={{ fontSize: '0.95rem', marginBottom: 6 }}>🥗 Idée du jour</h3>
+            <p className="small" style={{ fontWeight: 700, marginBottom: 2 }}>
+              {suggestionDuJour.aliment.emoji} {suggestionDuJour.aliment.nom} · {suggestionDuJour.portion_g} g
+            </p>
+            <p className="muted small mb-0">{suggestionDuJour.raisons[0]}</p>
+            <button
+              className="link-btn small"
+              style={{ padding: '4px 0 0' }}
+              onClick={() => navigate('/journal/suggestions')}
+            >
+              Voir plus d'idées →
+            </button>
+          </div>
+        )}
 
         <div className="card pink" style={{ padding: 16 }}>
           <div className="card-title" style={{ marginBottom: 8 }}>
