@@ -10,6 +10,12 @@ import { detecterStagnation } from '../utils/stagnation'
 import { phraseDuJour } from '../data/phrasesEncouragement'
 import AlerteStagnationBanniere from '../components/AlerteStagnationBanniere'
 
+function couleurScoreSommeil(score: number): string {
+  if (score > 90) return 'var(--success)'
+  if (score >= 80) return '#b5711b'
+  return 'var(--danger)'
+}
+
 export default function Dashboard() {
   const { profil, repas, suiviJournalier, seancesLog, alertesStagnation } = useAppData()
   const navigate = useNavigate()
@@ -133,11 +139,10 @@ export default function Dashboard() {
               <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>
                 😴 {entreeJour?.sommeil_h ?? '–'}
                 <span className="muted"> {entreeJour?.sommeil_h !== undefined ? 'h' : 'pas enreg.'}</span>
-                {entreeJour?.sommeil_h !== undefined && (
-                  <span style={{ color: 'var(--pink-deep)' }}>
-                    {' '}· {entreeJour.scoreSommeil ?? Math.min(100, Math.round((entreeJour.sommeil_h / 7) * 100))}%
-                  </span>
-                )}
+                {entreeJour?.sommeil_h !== undefined && (() => {
+                  const score = entreeJour.scoreSommeil ?? Math.min(100, Math.round((entreeJour.sommeil_h / 7) * 100))
+                  return <span style={{ color: couleurScoreSommeil(score) }}> · {score}</span>
+                })()}
               </p>
               <BarreProgression valeur={entreeJour?.sommeil_h || 0} objectif={7} couleur="pink" />
             </div>
