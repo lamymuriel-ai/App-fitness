@@ -102,10 +102,7 @@ export default function Dashboard() {
         )}
 
         <div className="card pink" style={{ padding: 16 }}>
-          <div className="card-title" style={{ marginBottom: 8 }}>
-            <h3 style={{ fontSize: '1rem' }}>🍽️ Calories</h3>
-            <span className="pill pink">{repasDuJour.length} repas</span>
-          </div>
+          <h3 style={{ fontSize: '1rem', marginBottom: 8 }}>🍽️ Calories</h3>
           <p className="small" style={{ fontWeight: 700, marginBottom: 8 }}>
             {Math.round(totaux.calories)}/{objectifs.calories}kcal ·{' '}
             <span style={{ color: 'var(--pink-deep)' }}>{Math.round(budgetRestant.calories)} restantes</span>
