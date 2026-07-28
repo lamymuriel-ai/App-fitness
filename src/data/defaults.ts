@@ -1,8 +1,22 @@
 import type {
   ProfilUtilisatrice,
   MicronutrimentInfo,
+  Micronutriments,
   SeanceTemplate,
 } from '../types'
+
+/**
+ * Compléments pris chaque jour (1 gélule de fer Aroma-Zone, 1 gélule de magnésium
+ * Aroma-Zone — la posologie indiquée est 3 gélules/jour mais 1 seule est prise ici,
+ * d'où le magnésium et la B6 divisés par 3). Valeurs lues sur les étiquettes, à
+ * ajouter systématiquement aux apports du jour en plus de l'alimentation.
+ */
+export const SUPPLEMENTS_QUOTIDIENS: Partial<Micronutriments> = {
+  fer_mg: 14,
+  vitamineC_mg: 80,
+  magnesium_mg: 100,
+  vitamineB6_mg: 0.47,
+}
 
 export const MICRO_REFERENCE: MicronutrimentInfo[] = [
   { cle: 'fer_mg', label: 'Fer', unite: 'mg', reference: 16, emoji: '🩸' },

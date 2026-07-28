@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
-import { totauxRepas } from '../utils/nutrition'
+import { totauxRepas, calculerMoyenneMicrosSemaine, ajouterSupplements } from '../utils/nutrition'
 import { calculerBudgetRestant, genererSuggestions } from '../utils/suggestionsAlimentaires'
 import type { MomentRepas } from '../data/alimentsReference'
 import { dateDuJourISO } from '../utils/date'
@@ -25,22 +25,10 @@ export default function SuggestionsAlimentaires() {
   )
   const totauxJour = useMemo(() => totauxRepas(repasAujourdhui), [repasAujourdhui])
 
-  const septDerniersJours = useMemo(() => {
-    const seuil = new Date(`${aujourdHui}T00:00:00`)
-    seuil.setDate(seuil.getDate() - 6)
-    return repas.filter((r) => new Date(r.dateHeure) >= seuil)
-  }, [repas, aujourdHui])
-  const totauxSemaine = useMemo(() => totauxRepas(septDerniersJours), [septDerniersJours])
-  const joursAvecDonnees = useMemo(() => {
-    const dates = new Set(septDerniersJours.map((r) => r.dateHeure.slice(0, 10)))
-    return Math.max(1, dates.size)
-  }, [septDerniersJours])
-  const moyenneMicrosSemaine = useMemo(() => {
-    const cles = Object.keys(totauxSemaine.micros) as (keyof typeof totauxSemaine.micros)[]
-    const moyenne = { ...totauxSemaine.micros }
-    for (const cle of cles) moyenne[cle] = totauxSemaine.micros[cle] / joursAvecDonnees
-    return moyenne
-  }, [totauxSemaine, joursAvecDonnees])
+  const moyenneMicrosSemaine = useMemo(
+    () => ajouterSupplements(calculerMoyenneMicrosSemaine(repas, aujourdHui)),
+    [repas, aujourdHui]
+  )
 
   const budgetRestant = useMemo(() => calculerBudgetRestant(totauxJour, objectifs), [totauxJour, objectifs])
 

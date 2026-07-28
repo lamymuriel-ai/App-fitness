@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { ajouterJours, formatDateCourt, formatDateLong, formatHeure, dateDuJourISO } from '../utils/date'
-import { totauxRepas } from '../utils/nutrition'
+import { totauxRepas, calculerMoyenneMicrosSemaine, ajouterSupplements } from '../utils/nutrition'
 import { calculerBudgetRestant } from '../utils/suggestionsAlimentaires'
 import { BarreProgression, BarreMacros, EtatVide } from '../components/ui'
 import GrilleMicronutriments from '../components/GrilleMicronutriments'
@@ -53,23 +53,15 @@ export default function Journal() {
     [repasDuJour]
   )
 
-  const septDerniersJours = useMemo(() => {
-    const auj = new Date(dateDuJourISO())
-    const seuil = new Date(auj)
-    seuil.setDate(seuil.getDate() - 6)
-    return repas.filter((r) => new Date(r.dateHeure) >= seuil)
-  }, [repas])
-  const totauxSemaine = useMemo(() => totauxRepas(septDerniersJours), [septDerniersJours])
-  const joursAvecDonnees = useMemo(() => {
-    const dates = new Set(septDerniersJours.map((r) => r.dateHeure.slice(0, 10)))
-    return Math.max(1, dates.size)
-  }, [septDerniersJours])
-  const moyenneMicrosSemaine = useMemo(() => {
-    const cles = Object.keys(totauxSemaine.micros) as (keyof typeof totauxSemaine.micros)[]
-    const moyenne = { ...totauxSemaine.micros }
-    for (const cle of cles) moyenne[cle] = totauxSemaine.micros[cle] / joursAvecDonnees
-    return moyenne
-  }, [totauxSemaine, joursAvecDonnees])
+  const moyenneMicrosSemaine = useMemo(
+    () => calculerMoyenneMicrosSemaine(repas, dateDuJourISO()),
+    [repas]
+  )
+  const microsJourAvecSupplements = useMemo(() => ajouterSupplements(totauxJour.micros), [totauxJour])
+  const moyenneMicrosAvecSupplements = useMemo(
+    () => ajouterSupplements(moyenneMicrosSemaine),
+    [moyenneMicrosSemaine]
+  )
 
   const parJour = useMemo(() => {
     const groupes = new Map<string, Repas[]>()
@@ -139,10 +131,10 @@ export default function Journal() {
             </div>
 
             <div className="card">
-              <GrilleMicronutriments apports={totauxJour.micros} reference={objectifs.micros} titre="Micronutriments du jour" />
+              <GrilleMicronutriments apports={microsJourAvecSupplements} reference={objectifs.micros} titre="Micronutriments du jour" />
             </div>
 
-            <AlertesNutriments apportsMoyens={moyenneMicrosSemaine} reference={objectifs.micros} />
+            <AlertesNutriments apportsMoyens={moyenneMicrosAvecSupplements} reference={objectifs.micros} />
 
             {dateAffichee === dateDuJourISO() && (
               <button className="btn btn-primary mt-8" onClick={() => navigate('/journal/suggestions')}>

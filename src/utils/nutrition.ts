@@ -1,5 +1,5 @@
 import type { Micronutriments, ProfilUtilisatrice, Repas } from '../types'
-import { MICRO_REFERENCE } from '../data/defaults'
+import { MICRO_REFERENCE, SUPPLEMENTS_QUOTIDIENS } from '../data/defaults'
 
 const FACTEURS_ACTIVITE: Record<ProfilUtilisatrice['niveauActivite'], number> = {
   sedentaire: 1.2,
@@ -55,6 +55,15 @@ export function totauxRepas(repas: Repas[]) {
       micros: { ...vide() },
     }
   )
+}
+
+/** Ajoute la contribution fixe des compléments quotidiens (fer, magnésium...) à un apport déjà calculé. */
+export function ajouterSupplements(micros: Micronutriments): Micronutriments {
+  const resultat = { ...micros }
+  for (const cle of Object.keys(SUPPLEMENTS_QUOTIDIENS) as (keyof Micronutriments)[]) {
+    resultat[cle] += SUPPLEMENTS_QUOTIDIENS[cle] ?? 0
+  }
+  return resultat
 }
 
 /** Apport moyen quotidien en micronutriments sur les 7 derniers jours (jusqu'à dateReference incluse). */

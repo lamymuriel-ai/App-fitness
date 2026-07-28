@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { BarreProgression, BarreMacros } from '../components/ui'
-import { totauxRepas, calculerMoyenneMicrosSemaine } from '../utils/nutrition'
+import { totauxRepas, calculerMoyenneMicrosSemaine, ajouterSupplements } from '../utils/nutrition'
 import { calculerBudgetRestant, genererSuggestions } from '../utils/suggestionsAlimentaires'
 import { dateDuJourISO, debutSemaineISO, estAujourdhui, formatDateLong, numeroSemaine } from '../utils/date'
 import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
@@ -51,7 +51,7 @@ export default function Dashboard() {
   const budgetRestant = useMemo(() => calculerBudgetRestant(totaux, objectifs), [totaux, objectifs])
 
   const moyenneMicrosSemaine = useMemo(
-    () => calculerMoyenneMicrosSemaine(repas, aujourdHui),
+    () => ajouterSupplements(calculerMoyenneMicrosSemaine(repas, aujourdHui)),
     [repas, aujourdHui]
   )
   const suggestionDuJour = useMemo(() => {
