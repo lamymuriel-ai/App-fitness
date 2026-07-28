@@ -58,9 +58,7 @@ function LignePastilles({ recap }: { recap: RecapJour }) {
       <Pastille emoji="🍽️" statut={recap.calories} />
       <Pastille emoji="👣" statut={recap.pas} />
       {recap.sport === 'repos' ? (
-        <span className="muted small" style={{ padding: '0 4px' }}>
-          😌 repos
-        </span>
+        <Pastille emoji="😌" statut="ok" />
       ) : (
         <Pastille emoji="💪" statut={recap.sport} />
       )}
@@ -199,7 +197,7 @@ export default function RecapVisuel() {
       )}
 
       <p className="small muted mt-16 mb-0">
-        🟢 dans les objectifs · 🟠 à ajuster · ⚪️ pas de donnée ce jour-là · 😌 repos (pas de séance prévue)
+        🟢 dans les objectifs (ou 😌 repos, pas de séance prévue) · 🟠 à ajuster · ⚪️ pas de donnée ce jour-là
       </p>
     </div>
   )

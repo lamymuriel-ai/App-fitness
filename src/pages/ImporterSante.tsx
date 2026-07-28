@@ -38,12 +38,18 @@ function construireRepasImport(nutrition: Map<string, EntreeAlimentaire>): Repas
 }
 
 function construireSuiviJours(resultat: ResultatImportSante): SuiviJournalier[] {
-  const jours = new Set<string>([...resultat.pas.keys(), ...resultat.poids.keys(), ...resultat.sommeil.keys()])
+  const jours = new Set<string>([
+    ...resultat.pas.keys(),
+    ...resultat.poids.keys(),
+    ...resultat.sommeil.keys(),
+    ...resultat.scoreSommeil.keys(),
+  ])
   return Array.from(jours).map((jour) => ({
     date: jour,
     ...(resultat.pas.has(jour) ? { pas: Math.round(resultat.pas.get(jour)!) } : {}),
     ...(resultat.poids.has(jour) ? { poids_kg: resultat.poids.get(jour)! } : {}),
     ...(resultat.sommeil.has(jour) ? { sommeil_h: Math.round(resultat.sommeil.get(jour)! * 10) / 10 } : {}),
+    ...(resultat.scoreSommeil.has(jour) ? { scoreSommeil: Math.round(resultat.scoreSommeil.get(jour)!) } : {}),
   }))
 }
 
@@ -175,6 +181,9 @@ export default function ImporterSante() {
             <StatApercu emoji="⚖️" label="Poids" nb={resultat.poids.size} unite="jour" />
             <StatApercu emoji="😴" label="Sommeil" nb={resultat.sommeil.size} unite="jour" />
             <StatApercu emoji="🍽️" label="Alimentation" nb={resultat.nutrition.size} unite="repas" />
+            {resultat.scoreSommeil.size > 0 && (
+              <StatApercu emoji="💯" label="Score sommeil" nb={resultat.scoreSommeil.size} unite="jour" />
+            )}
           </div>
           <p className="small muted mt-16">
             Pour un jour donné, une valeur déjà enregistrée dans l'appli (poids, pas, sommeil) sera

@@ -134,7 +134,9 @@ export default function Dashboard() {
                 😴 {entreeJour?.sommeil_h ?? '–'}
                 <span className="muted"> {entreeJour?.sommeil_h !== undefined ? 'h' : 'pas enreg.'}</span>
                 {entreeJour?.sommeil_h !== undefined && (
-                  <span style={{ color: 'var(--pink-deep)' }}> · {Math.min(100, Math.round((entreeJour.sommeil_h / 7) * 100))}%</span>
+                  <span style={{ color: 'var(--pink-deep)' }}>
+                    {' '}· {entreeJour.scoreSommeil ?? Math.min(100, Math.round((entreeJour.sommeil_h / 7) * 100))}%
+                  </span>
                 )}
               </p>
               <BarreProgression valeur={entreeJour?.sommeil_h || 0} objectif={7} couleur="pink" />

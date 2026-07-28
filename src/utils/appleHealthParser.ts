@@ -14,6 +14,7 @@ export interface ResultatImportSante {
   pas: Map<string, number> // clé = jour (YYYY-MM-DD)
   poids: Map<string, number> // clé = jour, valeur en kg
   sommeil: Map<string, number> // clé = jour (nuit attribuée au jour du réveil), valeur en heures
+  scoreSommeil: Map<string, number> // clé = jour (nuit attribuée au jour du réveil), valeur 0-100
   nutrition: Map<string, EntreeAlimentaire> // clé = horodatage exact (un repas = une entrée)
   premiereDate: string | null
   derniereDate: string | null
@@ -54,6 +55,14 @@ function nutritionVide(horodatage: string): EntreeAlimentaire {
 const TYPE_PAS = 'HKQuantityTypeIdentifierStepCount'
 const TYPE_POIDS = 'HKQuantityTypeIdentifierBodyMass'
 const TYPE_SOMMEIL = 'HKCategoryTypeIdentifierSleepAnalysis'
+// Le score de sommeil (watchOS 26+) est trop récent pour que son identifiant exact soit
+// documenté avec certitude : on tente les deux noms les plus probables selon la convention
+// Apple (préfixe "Apple" pour les métriques propriétaires, comme AppleStandTime). Si aucun
+// des deux ne correspond aux données réelles, ce champ restera simplement vide.
+const TYPE_SCORE_SOMMEIL_CANDIDATS = [
+  'HKQuantityTypeIdentifierAppleSleepScore',
+  'HKQuantityTypeIdentifierSleepScore',
+]
 
 type ChampNutrition =
   | { cible: 'macro'; champ: 'calories' | 'proteines_g' | 'lipides_g' | 'glucides_g'; unite: 'kcal' | 'g' }
@@ -81,6 +90,7 @@ const TOUS_LES_TYPES_SUIVIS = [
   TYPE_PAS,
   TYPE_POIDS,
   TYPE_SOMMEIL,
+  ...TYPE_SCORE_SOMMEIL_CANDIDATS,
   ...Object.keys(MAPPING_NUTRITION),
 ]
 
@@ -186,6 +196,7 @@ export class AnalyseurSanteIncremental {
   private readonly pasParJourEtSource = new Map<string, Map<string, number>>()
   private readonly poidsSommeCompte = new Map<string, { somme: number; compte: number }>()
   private readonly sommeilIntervalles = new Map<string, Array<{ debut: number; fin: number }>>()
+  private readonly scoreSommeilSommeCompte = new Map<string, { somme: number; compte: number }>()
   private readonly nutrition = new Map<string, EntreeAlimentaire>()
   private readonly nomsAliments = new Map<string, string>()
 
@@ -267,6 +278,19 @@ export class AnalyseurSanteIncremental {
       return
     }
 
+    if (TYPE_SCORE_SOMMEIL_CANDIDATS.includes(type)) {
+      const valeur = Number(valeurMatch[1])
+      if (!Number.isFinite(valeur)) return
+      // Attribué au jour du réveil, comme la durée de sommeil, pour rester cohérent avec elle.
+      const endMatch = REGEX_END.exec(ouverture)
+      const jourFin = (endMatch ? endMatch[1] : horodatage).slice(0, 10)
+      const cumul = this.scoreSommeilSommeCompte.get(jourFin) || { somme: 0, compte: 0 }
+      cumul.somme += valeur
+      cumul.compte += 1
+      this.scoreSommeilSommeCompte.set(jourFin, cumul)
+      return
+    }
+
     const mapping = MAPPING_NUTRITION[type]
     if (mapping) {
       const uniteMatch = REGEX_UNITE.exec(ouverture)
@@ -319,10 +343,16 @@ export class AnalyseurSanteIncremental {
       pas.set(jour, Math.round(Math.max(...parSource.values())))
     }
 
+    const scoreSommeil = new Map<string, number>()
+    for (const [jour, { somme, compte }] of this.scoreSommeilSommeCompte) {
+      scoreSommeil.set(jour, Math.round(somme / compte))
+    }
+
     const tousLesJours = new Set<string>([
       ...pas.keys(),
       ...poids.keys(),
       ...sommeil.keys(),
+      ...scoreSommeil.keys(),
       ...Array.from(this.nutrition.keys()).map((h) => h.slice(0, 10)),
     ])
     const joursTries = Array.from(tousLesJours).sort()
@@ -331,6 +361,7 @@ export class AnalyseurSanteIncremental {
       pas,
       poids,
       sommeil,
+      scoreSommeil,
       nutrition: this.nutrition,
       premiereDate: joursTries[0] || null,
       derniereDate: joursTries[joursTries.length - 1] || null,
