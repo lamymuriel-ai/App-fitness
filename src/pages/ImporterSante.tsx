@@ -105,28 +105,6 @@ export default function ImporterSante() {
 
       {(etat === 'attente' || etat === 'analyse' || etat === 'erreur') && (
         <>
-          <div className="card blue">
-            <h3>Comment exporter tes données</h3>
-            <ol style={{ paddingLeft: 20, margin: 0 }}>
-              <li>Ouvre l'app <strong>Santé</strong> sur ton iPhone</li>
-              <li>Touche ta photo de profil (en haut à droite)</li>
-              <li><strong>Exporter toutes les données de santé</strong></li>
-              <li>Choisis "Enregistrer dans Fichiers" ou envoie-toi le fichier <code>export.zip</code></li>
-              <li>Sélectionne ce fichier ci-dessous</li>
-            </ol>
-          </div>
-
-          <div className="card">
-            <h3>Ce qui sera importé</h3>
-            <p className="small muted mb-0">
-              👣 Pas · ⚖️ Poids · 😴 Sommeil · 🍽️ Alimentation (calories, macros et certains
-              micronutriments) — uniquement si ces données existent dans Santé (ex. l'alimentation
-              n'y est présente que si une autre app y écrivait déjà tes repas). Les autres
-              catégories (fréquence cardiaque, distance, entraînements…) ne sont pas importées, ce
-              ne sont pas des données suivies par cette appli.
-            </p>
-          </div>
-
           <div className="card center">
             <input
               ref={inputRef}
@@ -160,6 +138,28 @@ export default function ImporterSante() {
               <p className="mb-0 small">{erreur}</p>
             </div>
           )}
+
+          <div className="card blue">
+            <h3>Comment exporter tes données</h3>
+            <ol style={{ paddingLeft: 20, margin: 0 }}>
+              <li>Ouvre l'app <strong>Santé</strong> sur ton iPhone</li>
+              <li>Touche ta photo de profil (en haut à droite)</li>
+              <li><strong>Exporter toutes les données de santé</strong></li>
+              <li>Choisis "Enregistrer dans Fichiers" ou envoie-toi le fichier <code>export.zip</code></li>
+              <li>Sélectionne ce fichier ci-dessus</li>
+            </ol>
+          </div>
+
+          <div className="card">
+            <h3>Ce qui sera importé</h3>
+            <p className="small muted mb-0">
+              👣 Pas · ⚖️ Poids · 😴 Sommeil · 🍽️ Alimentation (calories, macros et certains
+              micronutriments) — uniquement si ces données existent dans Santé (ex. l'alimentation
+              n'y est présente que si une autre app y écrivait déjà tes repas). Les autres
+              catégories (fréquence cardiaque, distance, entraînements…) ne sont pas importées, ce
+              ne sont pas des données suivies par cette appli.
+            </p>
+          </div>
         </>
       )}
 
