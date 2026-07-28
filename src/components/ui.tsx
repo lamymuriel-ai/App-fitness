@@ -7,7 +7,7 @@ export function BarreProgression({
 }: {
   valeur: number
   objectif: number
-  couleur?: 'pink' | 'blue' | 'yellow' | 'green'
+  couleur?: 'pink' | 'blue' | 'yellow' | 'green' | 'purple'
 }) {
   const pourcentage = objectif > 0 ? Math.min(100, Math.round((valeur / objectif) * 100)) : 0
   return (
@@ -26,7 +26,7 @@ function LigneMacro({
 }: {
   label: string
   couleurTexte: string
-  couleurBarre: 'pink' | 'blue' | 'yellow'
+  couleurBarre: 'pink' | 'blue' | 'yellow' | 'purple'
   valeur: number
   objectif: number
 }) {
@@ -76,8 +76,8 @@ export function BarreMacros({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
       <LigneMacro
         label="Prot."
-        couleurTexte="var(--pink-deep)"
-        couleurBarre="pink"
+        couleurTexte="var(--purple-deep)"
+        couleurBarre="purple"
         valeur={proteines_g}
         objectif={objectifProteines_g}
       />
