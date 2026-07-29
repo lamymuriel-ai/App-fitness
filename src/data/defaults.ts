@@ -118,12 +118,13 @@ export const SEANCES_TEMPLATES: SeanceTemplate[] = [
 
 // Programme hebdomadaire indicatif : jours où chaque séance est prévue.
 // 0 = dimanche ... 6 = samedi
+// Lundi et samedi en salle (séances A et B), mercredi à la maison (séance C).
 export const PLANNING_SEMAINE: Record<number, 'A' | 'B' | 'C' | null> = {
   0: null,
   1: 'A',
   2: null,
-  3: 'B',
+  3: 'C',
   4: null,
-  5: 'C',
-  6: null,
+  5: null,
+  6: 'B',
 }
