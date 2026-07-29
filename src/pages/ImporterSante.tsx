@@ -26,6 +26,7 @@ function filtrerJoursRecents(resultat: ResultatImportSante): ResultatImportSante
     poids: filtrer(resultat.poids),
     sommeil: filtrer(resultat.sommeil),
     nutrition: new Map([...resultat.nutrition].filter(([horodatage]) => horodatage.slice(0, 10) >= seuil)),
+    typesNutritionInconnus: resultat.typesNutritionInconnus,
     premiereDate: resultat.premiereDate,
     derniereDate: resultat.derniereDate,
   }
@@ -76,6 +77,7 @@ export default function ImporterSante() {
   const [resume, setResume] = useState({ jours: 0, repas: 0 })
   const [progression, setProgression] = useState(0)
   const [tailleFichierMo, setTailleFichierMo] = useState<number | null>(null)
+  const [typesInconnus, setTypesInconnus] = useState<Map<string, number>>(new Map())
 
   async function surSelectionFichier(e: React.ChangeEvent<HTMLInputElement>) {
     const fichier = e.target.files?.[0]
@@ -100,6 +102,7 @@ export default function ImporterSante() {
         setEtat('erreur')
         return
       }
+      setTypesInconnus(res.typesNutritionInconnus)
       // Importe directement sans étape de confirmation intermédiaire : un import se fait
       // plusieurs fois par jour, autant limiter ça à un seul geste (choisir le fichier).
       await effectuerImport(res)
@@ -207,6 +210,23 @@ export default function ImporterSante() {
             <button className="btn btn-primary" onClick={() => navigate('/suivi')}>
               Voir le suivi
             </button>
+          </div>
+        </div>
+      )}
+
+      {etat === 'termine' && typesInconnus.size > 0 && (
+        <div className="alert-banner info mt-16">
+          <span className="icon">🔍</span>
+          <div className="small">
+            <p className="mb-0">
+              L'oméga-3 n'a pas de nom officiel Apple — s'il manque, il est peut-être écrit par
+              Micron sous un de ces noms non reconnus. Envoie cette liste pour qu'on l'ajoute :
+            </p>
+            <div style={{ background: '#f7f3f5', borderRadius: 12, padding: 12, marginTop: 8, fontFamily: 'monospace', fontSize: '0.8rem' }}>
+              {Array.from(typesInconnus.entries()).map(([type, compte]) => (
+                <div key={type}>{type} ({compte})</div>
+              ))}
+            </div>
           </div>
         </div>
       )}
