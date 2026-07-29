@@ -7,10 +7,29 @@ import {
   type ResultatImportSante,
   type EntreeAlimentaire,
 } from '../utils/appleHealthImport'
-import { typeRepasSuggere } from '../utils/date'
+import { typeRepasSuggere, ajouterJours, dateDuJourISO } from '../utils/date'
 import type { Repas, SuiviJournalier } from '../types'
 
 type Etat = 'attente' | 'analyse' | 'import' | 'termine' | 'erreur'
+
+// L'historique complet est déjà importé une première fois ; les imports suivants (répétés
+// plusieurs fois par jour) n'ont besoin de couvrir que les derniers jours, pour éviter de
+// réécrire à chaque fois des années de données déjà présentes dans l'appli.
+const JOURS_A_IMPORTER = 3
+
+/** Ne garde que les jours des JOURS_A_IMPORTER derniers jours (aujourd'hui inclus). */
+function filtrerJoursRecents(resultat: ResultatImportSante): ResultatImportSante {
+  const seuil = ajouterJours(dateDuJourISO(), -(JOURS_A_IMPORTER - 1))
+  const filtrer = (map: Map<string, number>) => new Map([...map].filter(([jour]) => jour >= seuil))
+  return {
+    pas: filtrer(resultat.pas),
+    poids: filtrer(resultat.poids),
+    sommeil: filtrer(resultat.sommeil),
+    nutrition: new Map([...resultat.nutrition].filter(([horodatage]) => horodatage.slice(0, 10) >= seuil)),
+    premiereDate: resultat.premiereDate,
+    derniereDate: resultat.derniereDate,
+  }
+}
 
 function construireRepasImport(nutrition: Map<string, EntreeAlimentaire>): Repas[] {
   const resultats: Repas[] = []
@@ -66,7 +85,8 @@ export default function ImporterSante() {
     setProgression(0)
     setTailleFichierMo(Math.round((fichier.size / 1024 / 1024) * 10) / 10)
     try {
-      const res = await analyserExportSante(fichier, setProgression)
+      const resComplet = await analyserExportSante(fichier, setProgression)
+      const res = filtrerJoursRecents(resComplet)
       const totalJours = new Set([
         ...res.pas.keys(),
         ...res.poids.keys(),
@@ -74,7 +94,9 @@ export default function ImporterSante() {
         ...res.nutrition.keys(),
       ]).size
       if (totalJours === 0) {
-        setErreur("Aucune donnée exploitable (pas, poids, sommeil ou alimentation) n'a été trouvée dans ce fichier.")
+        setErreur(
+          `Aucune donnée exploitable (pas, poids, sommeil ou alimentation) n'a été trouvée dans les ${JOURS_A_IMPORTER} derniers jours de ce fichier.`
+        )
         setEtat('erreur')
         return
       }
@@ -156,7 +178,8 @@ export default function ImporterSante() {
               micronutriments) — uniquement si ces données existent dans Santé (ex. l'alimentation
               n'y est présente que si une autre app y écrivait déjà tes repas). Les autres
               catégories (fréquence cardiaque, distance, entraînements…) ne sont pas importées, ce
-              ne sont pas des données suivies par cette appli.
+              ne sont pas des données suivies par cette appli. Seuls les {JOURS_A_IMPORTER} derniers
+              jours sont pris en compte (le reste de l'historique est supposé déjà importé).
             </p>
           </div>
         </>
