@@ -7,10 +7,10 @@ import {
   type ResultatImportSante,
   type EntreeAlimentaire,
 } from '../utils/appleHealthImport'
-import { formatDateCourt, typeRepasSuggere } from '../utils/date'
+import { typeRepasSuggere } from '../utils/date'
 import type { Repas, SuiviJournalier } from '../types'
 
-type Etat = 'attente' | 'analyse' | 'apercu' | 'import' | 'termine' | 'erreur'
+type Etat = 'attente' | 'analyse' | 'import' | 'termine' | 'erreur'
 
 function construireRepasImport(nutrition: Map<string, EntreeAlimentaire>): Repas[] {
   const resultats: Repas[] = []
@@ -53,7 +53,6 @@ export default function ImporterSante() {
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [etat, setEtat] = useState<Etat>('attente')
-  const [resultat, setResultat] = useState<ResultatImportSante | null>(null)
   const [erreur, setErreur] = useState<string | null>(null)
   const [resume, setResume] = useState({ jours: 0, repas: 0 })
   const [progression, setProgression] = useState(0)
@@ -79,16 +78,16 @@ export default function ImporterSante() {
         setEtat('erreur')
         return
       }
-      setResultat(res)
-      setEtat('apercu')
+      // Importe directement sans étape de confirmation intermédiaire : un import se fait
+      // plusieurs fois par jour, autant limiter ça à un seul geste (choisir le fichier).
+      await effectuerImport(res)
     } catch (err) {
       setErreur(err instanceof Error ? err.message : 'Fichier illisible.')
       setEtat('erreur')
     }
   }
 
-  async function confirmerImport() {
-    if (!resultat) return
+  async function effectuerImport(resultat: ResultatImportSante) {
     setEtat('import')
     const suivi = construireSuiviJours(resultat)
     const repasImportes = construireRepasImport(resultat.nutrition)
@@ -163,33 +162,6 @@ export default function ImporterSante() {
         </>
       )}
 
-      {etat === 'apercu' && resultat && (
-        <div className="card">
-          <h3>✨ Données trouvées</h3>
-          <p className="muted small mb-0">
-            Période du {resultat.premiereDate && formatDateCourt(resultat.premiereDate)} au{' '}
-            {resultat.derniereDate && formatDateCourt(resultat.derniereDate)}
-          </p>
-          <div className="mt-16" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-            <StatApercu emoji="👣" label="Pas" nb={resultat.pas.size} unite="jour" />
-            <StatApercu emoji="⚖️" label="Poids" nb={resultat.poids.size} unite="jour" />
-            <StatApercu emoji="😴" label="Sommeil" nb={resultat.sommeil.size} unite="jour" />
-            <StatApercu emoji="🍽️" label="Alimentation" nb={resultat.nutrition.size} unite="repas" />
-          </div>
-
-          <p className="small muted mt-16">
-            Pour un jour donné, une valeur déjà enregistrée dans l'appli (poids, pas, sommeil) sera
-            remplacée par celle venant de Santé. Chaque repas importé (ex. depuis Micron ou une
-            autre app connectée à Santé) devient une entrée séparée dans ton journal, avec son nom
-            et son heure quand ils sont disponibles — modifiable ensuite comme n'importe quel repas.
-            Un nouvel import remplace les entrées déjà importées plutôt que de les dupliquer.
-          </p>
-          <button className="btn btn-primary" onClick={confirmerImport}>
-            Importer
-          </button>
-        </div>
-      )}
-
       {etat === 'import' && (
         <div className="card center">
           <p style={{ fontWeight: 800 }}>⏳ Import en cours…</p>
@@ -215,15 +187,6 @@ export default function ImporterSante() {
           </div>
         </div>
       )}
-    </div>
-  )
-}
-
-function StatApercu({ emoji, label, nb, unite }: { emoji: string; label: string; nb: number; unite: string }) {
-  return (
-    <div style={{ background: '#f7f3f5', borderRadius: 14, padding: '10px 12px' }}>
-      <div style={{ fontWeight: 800 }}>{emoji} {label}</div>
-      <div className="muted small">{nb} {unite}{nb !== 1 && !unite.endsWith('s') ? 's' : ''}</div>
     </div>
   )
 }
