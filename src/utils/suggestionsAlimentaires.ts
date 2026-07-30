@@ -100,14 +100,21 @@ export function genererSuggestions(
     const SEUIL_CONTRIBUTION = 0.15 // en dessous, la contribution est jugée trop faible pour être mise en avant
     const POIDS_MAX = 4
 
-    const raisons: string[] = []
+    // On garde la contribution de chaque raison pour les trier ensuite par pertinence
+    // réelle : sans ça, les protéines (vérifiées en premier dans le code) passaient
+    // toujours en tête même quand un micronutriment très faible cette semaine (calcium,
+    // fer...) était en réalité le manque le plus marqué pour cet aliment.
+    const raisonsAvecContribution: { contribution: number; texte: string }[] = []
     let score = 0
 
     if (budgetRestant.proteines_g > 0) {
       const contribution = valeurs.proteines_g / budgetRestant.proteines_g
       if (contribution >= SEUIL_CONTRIBUTION) {
         score += Math.min(contribution, 1) * POIDS_MAX
-        raisons.push(`Riche en protéines (il t'en reste ~${Math.round(budgetRestant.proteines_g)} g à atteindre)`)
+        raisonsAvecContribution.push({
+          contribution,
+          texte: `Riche en protéines (il t'en reste ~${Math.round(budgetRestant.proteines_g)} g à atteindre)`,
+        })
       }
     }
 
@@ -116,13 +123,17 @@ export function genererSuggestions(
       const contribution = (valeurs.micros[info.cle] || 0) / info.reference
       if (contribution >= SEUIL_CONTRIBUTION) {
         score += Math.min(contribution, 1) * POIDS_MAX
-        raisons.push(`${info.emoji} Riche en ${info.label.toLowerCase()} (un peu faible cette semaine)`)
+        raisonsAvecContribution.push({
+          contribution,
+          texte: `${info.emoji} Riche en ${info.label.toLowerCase()} (un peu faible cette semaine)`,
+        })
       }
     }
 
-    if (raisons.length === 0) {
-      raisons.push("Complète ce qu'il te reste pour aujourd'hui")
-    }
+    const raisons =
+      raisonsAvecContribution.length > 0
+        ? raisonsAvecContribution.sort((a, b) => b.contribution - a.contribution).map((r) => r.texte)
+        : ["Complète ce qu'il te reste pour aujourd'hui"]
 
     candidats.push({
       score,

@@ -96,7 +96,11 @@ export default function Dashboard() {
             <p className="small" style={{ fontWeight: 700, marginBottom: 2 }}>
               {suggestionDuJour.aliment.emoji} {suggestionDuJour.aliment.nom} · {suggestionDuJour.portion_g} g
             </p>
-            <p className="muted small mb-0">{suggestionDuJour.raisons[0]}</p>
+            {suggestionDuJour.raisons.map((raison) => (
+              <p key={raison} className="muted small mb-0">
+                {raison}
+              </p>
+            ))}
             <button
               className="link-btn small"
               style={{ padding: '4px 0 0' }}

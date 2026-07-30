@@ -29,8 +29,11 @@ export const MICRO_REFERENCE: MicronutrimentInfo[] = [
   { cle: 'vitamineE_mg', label: 'Vitamine E', labelCourt: 'Vit. E', unite: 'mg', reference: 11, emoji: '🌰' },
   { cle: 'vitamineB6_mg', label: 'Vitamine B6', labelCourt: 'Vit. B6', unite: 'mg', reference: 1.6, emoji: '🧠' },
   { cle: 'vitamineB12_ug', label: 'Vitamine B12', labelCourt: 'Vit. B12', unite: 'µg', reference: 4, emoji: '🔋' },
-  { cle: 'omega3_g', label: 'Oméga-3', unite: 'g', reference: 2, emoji: '🐟' },
   { cle: 'fibres_g', label: 'Fibres', unite: 'g', reference: 30, emoji: '🌾' },
+  // Pas d'oméga-3 ici : Micron ne le synchronise pas vers Santé (confirmé), la valeur
+  // importée est donc toujours 0 — l'inclure ferait remonter un faux manque en
+  // permanence dans les alertes et les suggestions de repas, pour une donnée qu'on ne
+  // mesure en réalité pas du tout.
 ]
 
 export function profilParDefaut(): ProfilUtilisatrice {
