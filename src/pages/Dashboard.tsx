@@ -4,7 +4,7 @@ import { useAppData } from '../context/AppDataContext'
 import { BarreProgression, BarreMacros } from '../components/ui'
 import { totauxRepas, calculerMoyenneMicrosSemaine, ajouterSupplements } from '../utils/nutrition'
 import { calculerBudgetRestant, genererSuggestions } from '../utils/suggestionsAlimentaires'
-import { dateDuJourISO, debutSemaineISO, estAujourdhui, formatDateLong, numeroSemaine } from '../utils/date'
+import { ajouterJours, dateDuJourISO, debutSemaineISO, estAujourdhui, formatDateLong, numeroSemaine } from '../utils/date'
 import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
 import { detecterStagnation } from '../utils/stagnation'
 import { phraseDuJour } from '../data/phrasesEncouragement'
@@ -94,7 +94,7 @@ export default function Dashboard() {
           <button
             className="card pink"
             style={{ padding: 14, width: '100%', textAlign: 'left' }}
-            onClick={() => navigate('/plus/bilan-semaine')}
+            onClick={() => navigate(`/plus/bilan-semaine?semaine=${ajouterJours(debutSemaineISO(aujourdHui), -7)}`)}
           >
             <div className="row-between">
               <p className="small" style={{ fontWeight: 700, margin: 0 }}>

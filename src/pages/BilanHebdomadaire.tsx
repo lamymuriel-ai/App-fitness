@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { BarreProgression, BarreMacros, EtatVide } from '../components/ui'
-import { genererRapportHebdomadaire } from '../utils/rapportHebdomadaire'
+import { genererRapportHebdomadaire, genererAnalyseHebdomadaire } from '../utils/rapportHebdomadaire'
 import { ajouterJours, dateDuJourISO, debutSemaineISO, formatDateCourt } from '../utils/date'
 
 function couleurDelta(delta: number, objectifPerte: boolean): string {
@@ -17,13 +17,13 @@ export default function BilanHebdomadaire() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const semaineCourante = useMemo(() => debutSemaineISO(dateDuJourISO()), [])
-  const semaineParDefaut = useMemo(() => ajouterJours(semaineCourante, -7), [semaineCourante])
-  const semaine = searchParams.get('semaine') || semaineParDefaut
+  const semaine = searchParams.get('semaine') || semaineCourante
 
   const rapport = useMemo(
     () => genererRapportHebdomadaire(semaine, profil, repas, suiviJournalier, suiviHebdomadaire, seancesLog),
     [semaine, profil, repas, suiviJournalier, suiviHebdomadaire, seancesLog]
   )
+  const analyse = useMemo(() => genererAnalyseHebdomadaire(rapport, profil), [rapport, profil])
 
   function changerSemaine(delta: number) {
     setSearchParams({ semaine: ajouterJours(semaine, delta) })
@@ -55,6 +55,17 @@ export default function BilanHebdomadaire() {
         />
       ) : (
         <>
+          <div className="card yellow" style={{ padding: 16 }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: 8 }}>{analyse.titre}</h3>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {analyse.points.map((point) => (
+                <p key={point} className="small" style={{ margin: 0 }}>
+                  {point}
+                </p>
+              ))}
+            </div>
+          </div>
+
           {rapport.poids && (
             <div className="card center" style={{ padding: 16 }}>
               <p className="small muted mb-0">⚖️ Poids en fin de semaine</p>
