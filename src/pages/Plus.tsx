@@ -50,6 +50,16 @@ export default function Plus() {
           </div>
         </button>
 
+        <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/bilan-semaine')}>
+          <div className="row gap-12">
+            <span style={{ fontSize: '2rem' }}>📊</span>
+            <div>
+              <h3 className="mb-0">Bilan de la semaine</h3>
+              <p className="small muted mb-0">Résumé visuel : alimentation, pas, sommeil, poids, séances</p>
+            </div>
+          </div>
+        </button>
+
         <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/exporter')}>
           <div className="row gap-12">
             <span style={{ fontSize: '2rem' }}>📤</span>

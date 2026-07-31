@@ -27,6 +27,10 @@ export default function Dashboard() {
   const entreeJour = suiviJournalier.find((e) => e.date === aujourdHui)
 
   const jourSemaine = new Date().getDay()
+  // Le lundi, on met en avant le bilan de la semaine qui vient de se terminer — c'est la
+  // seule forme d'"automatique" possible ici : une PWA sans backend ne peut rien générer
+  // en tâche de fond, seulement réagir à l'ouverture de l'appli.
+  const estLundi = jourSemaine === 1
   const idSeanceDuJour = PLANNING_SEMAINE[jourSemaine]
   const seanceDuJour = idSeanceDuJour ? SEANCES_TEMPLATES.find((s) => s.id === idSeanceDuJour) : null
   const seanceLogDuJour = seancesLog.find(
@@ -85,6 +89,21 @@ export default function Dashboard() {
 
       <div className="screen" style={{ paddingTop: 0 }}>
         {stagnationActive && <AlerteStagnationBanniere alerte={stagnationActive} />}
+
+        {estLundi && (
+          <button
+            className="card pink"
+            style={{ padding: 14, width: '100%', textAlign: 'left' }}
+            onClick={() => navigate('/plus/bilan-semaine')}
+          >
+            <div className="row-between">
+              <p className="small" style={{ fontWeight: 700, margin: 0 }}>
+                📊 Ton bilan de la semaine dernière est prêt
+              </p>
+              <span>→</span>
+            </div>
+          </button>
+        )}
 
         <div className="card blue" style={{ padding: 14 }}>
           <p className="small" style={{ fontStyle: 'italic', margin: 0 }}>💬 {phraseDuJour(aujourdHui)}</p>
