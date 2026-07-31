@@ -10,42 +10,12 @@ export default function Plus() {
         <h1>Réglages & aide</h1>
       </div>
       <div className="screen" style={{ paddingTop: 0 }}>
-        <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/aide-memoire')}>
-          <div className="row gap-12">
-            <span style={{ fontSize: '2rem' }}>📝</span>
-            <div>
-              <h3 className="mb-0">Aide-mémoire</h3>
-              <p className="small muted mb-0">Erreurs à éviter, rappels de méthode</p>
-            </div>
-          </div>
-        </button>
-
         <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/profil')}>
           <div className="row gap-12">
             <span style={{ fontSize: '2rem' }}>👤</span>
             <div>
               <h3 className="mb-0">Mon profil</h3>
               <p className="small muted mb-0">Objectifs, activité, notes santé</p>
-            </div>
-          </div>
-        </button>
-
-        <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/importer-sante')}>
-          <div className="row gap-12">
-            <span style={{ fontSize: '2rem' }}>🍏</span>
-            <div>
-              <h3 className="mb-0">Importer depuis Santé</h3>
-              <p className="small muted mb-0">Historique complet (pas, poids, sommeil, alimentation) depuis un fichier d'export</p>
-            </div>
-          </div>
-        </button>
-
-        <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/raccourci-ios')}>
-          <div className="row gap-12">
-            <span style={{ fontSize: '2rem' }}>📲</span>
-            <div>
-              <h3 className="mb-0">Raccourci iOS</h3>
-              <p className="small muted mb-0">Envoie tes pas et ton poids du jour en un tap, sans ouvrir Santé</p>
             </div>
           </div>
         </button>
@@ -60,12 +30,42 @@ export default function Plus() {
           </div>
         </button>
 
+        <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/importer-sante')}>
+          <div className="row gap-12">
+            <span style={{ fontSize: '2rem' }}>🍏</span>
+            <div>
+              <h3 className="mb-0">Importer depuis Santé</h3>
+              <p className="small muted mb-0">Historique complet (pas, poids, sommeil, alimentation) depuis un fichier d'export</p>
+            </div>
+          </div>
+        </button>
+
         <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/exporter')}>
           <div className="row gap-12">
             <span style={{ fontSize: '2rem' }}>📤</span>
             <div>
               <h3 className="mb-0">Exporter mes données</h3>
               <p className="small muted mb-0">Petit fichier avec ce que tu as renseigné toi-même, pratique pour une analyse</p>
+            </div>
+          </div>
+        </button>
+
+        <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/aide-memoire')}>
+          <div className="row gap-12">
+            <span style={{ fontSize: '2rem' }}>📝</span>
+            <div>
+              <h3 className="mb-0">Aide-mémoire</h3>
+              <p className="small muted mb-0">Erreurs à éviter, rappels de méthode</p>
+            </div>
+          </div>
+        </button>
+
+        <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/raccourci-ios')}>
+          <div className="row gap-12">
+            <span style={{ fontSize: '2rem' }}>📲</span>
+            <div>
+              <h3 className="mb-0">Raccourci iOS</h3>
+              <p className="small muted mb-0">Envoie tes pas et ton poids du jour en un tap, sans ouvrir Santé</p>
             </div>
           </div>
         </button>
