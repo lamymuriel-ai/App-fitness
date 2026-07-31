@@ -260,3 +260,85 @@ export function genererAnalyseHebdomadaire(
 
   return { titre, points }
 }
+
+/**
+ * Ajustements concrets proposés pour la semaine suivante (calories, micronutriments,
+ * marche, sport, sommeil) à partir du bilan de la semaine écoulée. Un tableau vide
+ * signifie "rien à changer, on garde le même cap" — on ne fabrique jamais un conseil
+ * artificiel juste pour remplir la carte.
+ */
+export function genererConseilsSemaineSuivante(rapport: RapportHebdomadaire, profil: ProfilUtilisatrice): string[] {
+  const conseils: string[] = []
+
+  if (rapport.poids) {
+    const delta = rapport.poids.delta
+    if (profil.objectif === 'perte_poids') {
+      if (delta > 0.3) {
+        conseils.push(
+          "⚖️ Le poids est reparti à la hausse cette semaine : réduis un peu les calories (-100 à 150 kcal/j) ou augmente l'activité (+1000-1500 pas/j) la semaine prochaine."
+        )
+      } else if (delta < -1.2) {
+        conseils.push(
+          '⚖️ La perte a été rapide cette semaine : remonte un peu les calories (+100-150 kcal/j) la semaine prochaine pour rester sur un rythme durable.'
+        )
+      }
+    } else if (profil.objectif === 'prise_masse') {
+      if (delta < -0.3) {
+        conseils.push(
+          "⚖️ Le poids a baissé alors que l'objectif est la prise de masse : augmente un peu les calories (+150-200 kcal/j) la semaine prochaine."
+        )
+      }
+    } else if (Math.abs(delta) > 0.5) {
+      conseils.push(
+        `⚖️ Le poids a bougé de ${delta >= 0 ? '+' : ''}${delta.toFixed(1)} kg cette semaine : ${delta > 0 ? 'réduis légèrement les calories' : 'ajoute un peu de calories'} la semaine prochaine pour revenir vers la stabilité.`
+      )
+    }
+  }
+
+  if (rapport.nbJoursAvecRepas >= 3 && conseils.length === 0) {
+    const pctCalories = (rapport.calories.moyenne / rapport.calories.objectif) * 100
+    if (pctCalories > 115) {
+      conseils.push(`🍽️ Les calories ont dépassé l'objectif cette semaine (${Math.round(pctCalories)}%) : resserre un peu les portions la semaine prochaine.`)
+    }
+  }
+
+  if (rapport.microsFaibles.length > 0) {
+    const items = rapport.microsFaibles
+      .slice(0, 2)
+      .map((m) => `${m.label.toLowerCase()}${SOURCES_MICRO[m.cle] ? ` (${SOURCES_MICRO[m.cle]})` : ''}`)
+      .join(', ')
+    conseils.push(`🔬 Pense à ajouter un peu plus de ${items} la semaine prochaine.`)
+  }
+
+  if (rapport.pas) {
+    const pctPas = (rapport.pas.moyenne / profil.objectifPas) * 100
+    if (pctPas < 70) {
+      conseils.push('👣 Vise un peu plus de marche la semaine prochaine (+1000 pas/j environ) pour te rapprocher de ton objectif.')
+    }
+  }
+
+  const seancesManquees = rapport.seances.planifiees - rapport.seances.faites
+  if (rapport.seances.planifiees > 0 && seancesManquees > 0) {
+    conseils.push(
+      `💪 ${seancesManquees} séance${seancesManquees > 1 ? 's' : ''} manquée${seancesManquees > 1 ? 's' : ''} cette semaine : essaie de toutes les caser la semaine prochaine, quitte à les faire en version courte.`
+    )
+  } else if (
+    rapport.seances.planifiees > 0 &&
+    seancesManquees <= 0 &&
+    rapport.poids &&
+    Math.abs(rapport.poids.delta) < 0.1 &&
+    profil.objectif === 'perte_poids' &&
+    rapport.nbJoursAvecRepas > 0 &&
+    (rapport.calories.moyenne / rapport.calories.objectif) * 100 <= 105
+  ) {
+    conseils.push(
+      "💪 Séances faites et calories dans les clous, mais le poids stagne : tu peux essayer d'ajouter une séance ou d'augmenter un peu les pas la semaine prochaine."
+    )
+  }
+
+  if (rapport.sommeil_h && rapport.sommeil_h.moyenne < 7) {
+    conseils.push('😴 Le sommeil était un peu court cette semaine : essaie de te coucher un peu plus tôt la semaine prochaine si possible.')
+  }
+
+  return conseils
+}

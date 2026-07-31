@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { BarreProgression, BarreMacros, EtatVide } from '../components/ui'
-import { genererRapportHebdomadaire, genererAnalyseHebdomadaire } from '../utils/rapportHebdomadaire'
+import { genererRapportHebdomadaire, genererAnalyseHebdomadaire, genererConseilsSemaineSuivante } from '../utils/rapportHebdomadaire'
 import { ajouterJours, dateDuJourISO, debutSemaineISO, formatDateCourt } from '../utils/date'
 
 function couleurDelta(delta: number, objectifPerte: boolean): string {
@@ -24,6 +24,7 @@ export default function BilanHebdomadaire() {
     [semaine, profil, repas, suiviJournalier, suiviHebdomadaire, seancesLog]
   )
   const analyse = useMemo(() => genererAnalyseHebdomadaire(rapport, profil), [rapport, profil])
+  const conseils = useMemo(() => genererConseilsSemaineSuivante(rapport, profil), [rapport, profil])
 
   function changerSemaine(delta: number) {
     setSearchParams({ semaine: ajouterJours(semaine, delta) })
@@ -155,6 +156,23 @@ export default function BilanHebdomadaire() {
                     </span>
                     <span className="muted small">{m.pourcentage}%</span>
                   </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="card blue" style={{ padding: 16 }}>
+            <h3 style={{ fontSize: '1rem', marginBottom: 8 }}>🎯 Pour la semaine prochaine</h3>
+            {conseils.length === 0 ? (
+              <p className="small" style={{ margin: 0 }}>
+                Tout est cohérent cette semaine, on garde le même cap la semaine prochaine 👍
+              </p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                {conseils.map((conseil) => (
+                  <p key={conseil} className="small" style={{ margin: 0 }}>
+                    {conseil}
+                  </p>
                 ))}
               </div>
             )}
