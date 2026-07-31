@@ -17,6 +17,7 @@ import Plus from './pages/Plus'
 import AideMemoire from './pages/AideMemoire'
 import Profil from './pages/Profil'
 import ImporterSante from './pages/ImporterSante'
+import ExporterDonnees from './pages/ExporterDonnees'
 import ImportRapide from './pages/ImportRapide'
 import RaccourciIOS from './pages/RaccourciIOS'
 
@@ -64,6 +65,7 @@ function RoutesApp() {
         <Route path="/plus/aide-memoire" element={<AideMemoire />} />
         <Route path="/plus/profil" element={<Profil />} />
         <Route path="/plus/importer-sante" element={<ImporterSante />} />
+        <Route path="/plus/exporter" element={<ExporterDonnees />} />
         <Route path="/plus/raccourci-ios" element={<RaccourciIOS />} />
         <Route path="/import-rapide" element={<ImportRapide />} />
         <Route path="*" element={<Navigate to="/" replace />} />

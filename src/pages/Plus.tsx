@@ -50,6 +50,16 @@ export default function Plus() {
           </div>
         </button>
 
+        <button className="card" style={{ width: '100%', textAlign: 'left' }} onClick={() => navigate('/plus/exporter')}>
+          <div className="row gap-12">
+            <span style={{ fontSize: '2rem' }}>📤</span>
+            <div>
+              <h3 className="mb-0">Exporter mes données</h3>
+              <p className="small muted mb-0">Petit fichier avec ce que tu as renseigné toi-même, pratique pour une analyse</p>
+            </div>
+          </div>
+        </button>
+
         <div className="card">
           <div className="alert-banner info" style={{ margin: 0 }}>
             <span className="icon">ℹ️</span>
