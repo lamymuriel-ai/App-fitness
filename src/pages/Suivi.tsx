@@ -72,7 +72,8 @@ export default function Suivi() {
 
   const poidsDepart = profil.poidsDepart_kg
   const dernierMoyenne = pointsMoyenne.length > 0 ? pointsMoyenne[pointsMoyenne.length - 1].poidsMoyen : null
-  const perteActuelle = dernierMoyenne ? Math.round((poidsDepart - dernierMoyenne) * 10) / 10 : 0
+  // Positif = perte (poids de départ plus élevé que le poids actuel), négatif = prise.
+  const ecart = dernierMoyenne !== null ? Math.round((poidsDepart - dernierMoyenne) * 10) / 10 : 0
 
   return (
     <div>
@@ -93,9 +94,9 @@ export default function Suivi() {
               <div style={{ fontWeight: 800, fontSize: '1.3rem' }}>{poidsDepart} kg</div>
             </div>
             <div className="center">
-              <div className="progress-sub">Perdu</div>
-              <div style={{ fontWeight: 900, fontSize: '1.6rem', color: 'var(--pink-deep)' }}>
-                {perteActuelle > 0 ? `-${perteActuelle}` : perteActuelle} kg
+              <div className="progress-sub">{ecart < 0 ? 'Pris' : 'Perdu'}</div>
+              <div style={{ fontWeight: 900, fontSize: '1.6rem', color: ecart < 0 ? 'var(--danger)' : 'var(--pink-deep)' }}>
+                {ecart > 0 ? `-${ecart}` : ecart < 0 ? `+${Math.abs(ecart)}` : '0'} kg
               </div>
             </div>
             <div style={{ textAlign: 'right' }}>
