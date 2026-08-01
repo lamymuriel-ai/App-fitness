@@ -92,8 +92,8 @@ export default function Journal() {
   return (
     <div>
       <div className="app-header">
-        <div className="eyebrow">Journal alimentaire</div>
-        <h1>Nutrition</h1>
+        <div className="eyebrow">Journal</div>
+        <h1>Ta journée</h1>
       </div>
 
       <div className="screen" style={{ paddingTop: 0 }}>
