@@ -176,8 +176,8 @@ function SeanceActiveInner() {
             const ex = template.exercices[iEx]
             if (!exLog.sets.every((s) => s.fait) || exLog.sets.length === 0) return null
             return (
-              <div className="card" key={ex.nom}>
-                <h3 style={{ marginBottom: 8 }}>{ex.nom}</h3>
+              <div className="card" style={{ padding: 12, marginBottom: 8 }} key={ex.nom}>
+                <h3 style={{ fontSize: '0.9rem', marginBottom: 6 }}>{ex.nom}</h3>
                 <div className="segmented" style={{ marginBottom: 0 }}>
                   {OPTIONS_DIFFICULTE.map((option) => (
                     <button
@@ -200,34 +200,38 @@ function SeanceActiveInner() {
         <>
           {template.exercices.map((ex, iEx) => {
             const exLog = log.exercices[iEx]
+            const fait = exLog?.sets.every((s) => s.fait)
             return (
-              <div className="card" key={ex.nom}>
-                <h3>{ex.nom}</h3>
-                <p className="muted small mb-0">
-                  {ex.series} séries × {ex.repsMin === ex.repsMax ? ex.repsMin : `${ex.repsMin}-${ex.repsMax}`}
-                  {ex.note ? ` (${ex.note})` : ' répétitions'}
-                </p>
-
-                {!ex.poidsDuCorps && (
-                  <div className="field mt-8">
-                    <label>Poids utilisé (kg)</label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      value={exLog?.poidsUtilise_kg ?? ''}
-                      onChange={(e) => majPoids(iEx, Number(e.target.value))}
-                      placeholder="Ex. 25"
-                    />
-                    <div className="field-hint">Mémorisé automatiquement pour ta prochaine séance.</div>
+              <div className="card" style={{ padding: 12, marginBottom: 8 }} key={ex.nom}>
+                <div className="row-between" style={{ gap: 10, alignItems: 'center' }}>
+                  <div style={{ minWidth: 0 }}>
+                    <h3 style={{ fontSize: '0.95rem', margin: 0 }}>{ex.nom}</h3>
+                    <p className="muted small mb-0" style={{ fontSize: '0.75rem' }}>
+                      {ex.series}×{ex.repsMin === ex.repsMax ? ex.repsMin : `${ex.repsMin}-${ex.repsMax}`}
+                      {ex.note ? ` (${ex.note})` : ''}
+                    </p>
                   </div>
-                )}
-
-                <button
-                  className={`set-check-single mt-8 ${exLog?.sets.every((s) => s.fait) ? 'done' : ''}`}
-                  onClick={() => basculerExercice(iEx)}
-                >
-                  {exLog?.sets.every((s) => s.fait) ? '✓ Fait' : 'OK'}
-                </button>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
+                    {!ex.poidsDuCorps && (
+                      <input
+                        type="number"
+                        step="0.5"
+                        value={exLog?.poidsUtilise_kg ?? ''}
+                        onChange={(e) => majPoids(iEx, Number(e.target.value))}
+                        placeholder="kg"
+                        title="Poids utilisé — mémorisé automatiquement pour la prochaine séance"
+                        style={{ width: 64, padding: '8px 6px', textAlign: 'center' }}
+                      />
+                    )}
+                    <button
+                      className={`set-check-single ${fait ? 'done' : ''}`}
+                      onClick={() => basculerExercice(iEx)}
+                      style={{ width: 'auto', padding: '10px 16px' }}
+                    >
+                      {fait ? '✓' : 'OK'}
+                    </button>
+                  </div>
+                </div>
               </div>
             )
           })}
