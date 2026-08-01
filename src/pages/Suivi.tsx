@@ -25,12 +25,19 @@ export default function Suivi() {
   const [poidsHebdo, setPoidsHebdo] = useState(entreeJour?.poids_kg?.toString() || profil.poids_kg.toString())
   const [taille, setTaille] = useState('')
   const [ressenti, setRessenti] = useState(3)
+  const [sommeilJour, setSommeilJour] = useState(entreeJour?.sommeil_h?.toString() || '')
 
   async function enregistrerPoidsJour() {
     const p = Number(poidsJour)
     if (!Number.isFinite(p) || p <= 0) return
     await enregistrerSuiviJour({ date: aujourdHui, poids_kg: p })
     await mettreAJourProfil({ ...profil, poids_kg: p })
+  }
+
+  async function enregistrerSommeilJour() {
+    const h = Number(sommeilJour)
+    if (!Number.isFinite(h) || h <= 0) return
+    await enregistrerSuiviJour({ date: aujourdHui, sommeil_h: h })
   }
 
   async function enregistrerCheckinHebdo() {
@@ -116,6 +123,23 @@ export default function Suivi() {
               <input type="number" step="0.1" value={poidsJour} onChange={(e) => setPoidsJour(e.target.value)} placeholder="Poids (kg)" />
             </div>
             <button className="btn btn-secondary btn-sm" onClick={enregistrerPoidsJour}>Enregistrer</button>
+          </div>
+        </div>
+
+        <div className="card">
+          <h3>😴 Sommeil de la nuit dernière</h3>
+          <p className="small muted">Utile les jours où tu ne portes pas ta montre — reprends la valeur donnée par ton téléphone.</p>
+          <div className="field-row" style={{ alignItems: 'flex-end' }}>
+            <div className="field mb-0" style={{ flex: 1 }}>
+              <input
+                type="number"
+                step="0.1"
+                value={sommeilJour}
+                onChange={(e) => setSommeilJour(e.target.value)}
+                placeholder="Durée (h), ex. 7.5"
+              />
+            </div>
+            <button className="btn btn-secondary btn-sm" onClick={enregistrerSommeilJour}>Enregistrer</button>
           </div>
         </div>
 
