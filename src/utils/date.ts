@@ -1,5 +1,15 @@
+/**
+ * Sérialise une date en ISO (YYYY-MM-DD) à partir de ses composants LOCAUX — jamais via
+ * `toISOString()`, qui convertit en UTC et fait donc glisser la date d'un jour en arrière
+ * pour tout fuseau en avance sur UTC (ex. Europe/Paris) : minuit local devient 22h ou 23h
+ * la veille en UTC, donc "aujourd'hui" ou "lundi" se réafficherait comme la veille.
+ */
+function versISOLocale(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function dateDuJourISO(): string {
-  return new Date().toISOString().slice(0, 10)
+  return versISOLocale(new Date())
 }
 
 export function formatDateCourt(iso: string): string {
@@ -38,14 +48,14 @@ export function debutSemaineISO(dateISO = dateDuJourISO()): string {
   const jourSemaine = d.getDay() // 0 = dimanche, 1 = lundi, ...
   const decalage = jourSemaine === 0 ? 6 : jourSemaine - 1
   d.setDate(d.getDate() - decalage)
-  return d.toISOString().slice(0, 10)
+  return versISOLocale(d)
 }
 
 /** Ajoute (ou retranche si négatif) un nombre de jours à une date ISO (YYYY-MM-DD), en heure locale. */
 export function ajouterJours(dateISO: string, n: number): string {
   const d = new Date(`${dateISO}T00:00:00`)
   d.setDate(d.getDate() + n)
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  return versISOLocale(d)
 }
 
 /**

@@ -4,6 +4,7 @@ import type {
   Micronutriments,
   SeanceTemplate,
 } from '../types'
+import { dateDuJourISO } from '../utils/date'
 
 /**
  * Compléments pris chaque jour (1 gélule de fer Aroma-Zone, 1 gélule de magnésium
@@ -37,7 +38,7 @@ export const MICRO_REFERENCE: MicronutrimentInfo[] = [
 ]
 
 export function profilParDefaut(): ProfilUtilisatrice {
-  const aujourdHui = new Date().toISOString().slice(0, 10)
+  const aujourdHui = dateDuJourISO()
   return {
     prenom: '',
     sexe: 'femme',
