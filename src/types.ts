@@ -111,10 +111,13 @@ export interface SetLog {
   reps?: number
 }
 
+export type Difficulte = 'facile' | 'normal' | 'dur'
+
 export interface ExerciceLog {
   nom: string
   poidsUtilise_kg?: number
   sets: SetLog[]
+  difficulte?: Difficulte
 }
 
 export interface SeanceLog {

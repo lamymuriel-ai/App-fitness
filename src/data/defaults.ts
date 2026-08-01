@@ -86,6 +86,7 @@ export const SEANCES_TEMPLATES: SeanceTemplate[] = [
       { nom: 'Presse à cuisses', series: 3, repsMin: 10, repsMax: 12, poidsDuCorps: false },
       { nom: 'Développé couché (machine)', series: 3, repsMin: 10, repsMax: 12, poidsDuCorps: false },
       { nom: 'Extension des jambes', series: 3, repsMin: 10, repsMax: 12, poidsDuCorps: false },
+      { nom: 'Adducteurs (machine)', series: 3, repsMin: 12, repsMax: 15, poidsDuCorps: false },
       { nom: 'Élévations latérales (épaules)', series: 3, repsMin: 10, repsMax: 12, poidsDuCorps: false },
       { nom: 'Gainage — planche', series: 3, repsMin: 30, repsMax: 45, poidsDuCorps: true, note: 'en secondes' },
     ],

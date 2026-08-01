@@ -3,7 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { SEANCES_TEMPLATES } from '../data/defaults'
 import { dateDuJourISO, genererId } from '../utils/date'
-import type { SeanceLog, ExerciceLog } from '../types'
+import type { SeanceLog, ExerciceLog, Difficulte } from '../types'
+
+const AJUSTEMENT_KG = 2.5
+
+const OPTIONS_DIFFICULTE: { valeur: Difficulte; emoji: string; label: string }[] = [
+  { valeur: 'facile', emoji: '😌', label: 'Facile' },
+  { valeur: 'normal', emoji: '🙂', label: 'Normal' },
+  { valeur: 'dur', emoji: '😤', label: 'Dur' },
+]
 
 export default function SeanceActive() {
   const { templateId } = useParams()
@@ -41,11 +49,24 @@ function SeanceActiveInner() {
     }
   })
 
+  const [etapeBilan, setEtapeBilan] = useState(false)
+
   const progression = useMemo(() => {
     const totalSets = log.exercices.reduce((s, e) => s + e.sets.length, 0)
     const setsFaits = log.exercices.reduce((s, e) => s + e.sets.filter((x) => x.fait).length, 0)
     return totalSets > 0 ? Math.round((setsFaits / totalSets) * 100) : 0
   }, [log])
+
+  // Séance précédente du même type dont au moins un exercice a été noté (facile/normal/dur),
+  // pour proposer de recalculer les poids de la séance du jour à partir de ce ressenti.
+  const seancePrecedenteNotee = useMemo(() => {
+    if (!template) return null
+    const precedente = seancesLog
+      .filter((s) => s.seanceTemplateId === template.id && s.termineeA && s.id !== log.id)
+      .sort((a, b) => b.date.localeCompare(a.date))[0]
+    if (!precedente || !precedente.exercices.some((e) => e.difficulte)) return null
+    return precedente
+  }, [seancesLog, template, log.id])
 
   if (!template) {
     return (
@@ -72,12 +93,53 @@ function SeanceActiveInner() {
     await definirPoidsExercice(copie.exercices[iEx].nom, poids)
   }
 
-  async function terminerSeance() {
+  async function recalculerPoids() {
+    if (!seancePrecedenteNotee) return
+    const copie = structuredClone(log)
+    for (const exLog of copie.exercices) {
+      const exPrecedent = seancePrecedenteNotee.exercices.find((e) => e.nom === exLog.nom)
+      if (!exPrecedent?.difficulte || exPrecedent.poidsUtilise_kg === undefined) continue
+      if (exPrecedent.difficulte === 'dur') exLog.poidsUtilise_kg = Math.max(0, exPrecedent.poidsUtilise_kg - AJUSTEMENT_KG)
+      else if (exPrecedent.difficulte === 'facile') exLog.poidsUtilise_kg = exPrecedent.poidsUtilise_kg + AJUSTEMENT_KG
+      else exLog.poidsUtilise_kg = exPrecedent.poidsUtilise_kg
+    }
+    setLog(copie)
+    await enregistrerSeanceLog(copie)
+    await Promise.all(
+      copie.exercices
+        .filter((e) => e.poidsUtilise_kg !== undefined)
+        .map((e) => definirPoidsExercice(e.nom, e.poidsUtilise_kg as number))
+    )
+  }
+
+  async function definirDifficulte(iEx: number, difficulte: Difficulte) {
+    const copie = structuredClone(log)
+    copie.exercices[iEx].difficulte = difficulte
+    setLog(copie)
+    await enregistrerSeanceLog(copie)
+  }
+
+  async function finaliserSeance() {
     const copie = structuredClone(log)
     copie.termineeA = new Date().toISOString()
     setLog(copie)
     await enregistrerSeanceLog(copie)
     navigate('/entrainement', { replace: true })
+  }
+
+  function terminerSeance() {
+    // Si la séance est déjà terminée, on garde une mise à jour directe (pas besoin de
+    // redemander le ressenti d'exercices déjà notés la première fois).
+    if (log.termineeA) {
+      finaliserSeance()
+      return
+    }
+    const auMoinsUnExerciceFait = log.exercices.some((e) => e.sets.length > 0 && e.sets.every((s) => s.fait))
+    if (!auMoinsUnExerciceFait) {
+      finaliserSeance()
+      return
+    }
+    setEtapeBilan(true)
   }
 
   return (
@@ -99,43 +161,82 @@ function SeanceActiveInner() {
         </div>
       </div>
 
-      {template.exercices.map((ex, iEx) => {
-        const exLog = log.exercices[iEx]
-        return (
-          <div className="card" key={ex.nom}>
-            <h3>{ex.nom}</h3>
-            <p className="muted small mb-0">
-              {ex.series} séries × {ex.repsMin === ex.repsMax ? ex.repsMin : `${ex.repsMin}-${ex.repsMax}`}
-              {ex.note ? ` (${ex.note})` : ' répétitions'}
-            </p>
+      {seancePrecedenteNotee && !log.termineeA && !etapeBilan && (
+        <button className="btn btn-outline" onClick={recalculerPoids}>
+          🔄 Recalculer les poids selon la dernière séance
+        </button>
+      )}
 
-            {!ex.poidsDuCorps && (
-              <div className="field mt-8">
-                <label>Poids utilisé (kg)</label>
-                <input
-                  type="number"
-                  step="0.5"
-                  value={exLog?.poidsUtilise_kg ?? ''}
-                  onChange={(e) => majPoids(iEx, Number(e.target.value))}
-                  placeholder="Ex. 25"
-                />
-                <div className="field-hint">Mémorisé automatiquement pour ta prochaine séance.</div>
+      {etapeBilan ? (
+        <>
+          <p className="muted small">
+            C'était comment ? Ça sert à ajuster les poids de la prochaine séance.
+          </p>
+          {log.exercices.map((exLog, iEx) => {
+            const ex = template.exercices[iEx]
+            if (!exLog.sets.every((s) => s.fait) || exLog.sets.length === 0) return null
+            return (
+              <div className="card" key={ex.nom}>
+                <h3 style={{ marginBottom: 8 }}>{ex.nom}</h3>
+                <div className="segmented" style={{ marginBottom: 0 }}>
+                  {OPTIONS_DIFFICULTE.map((option) => (
+                    <button
+                      key={option.valeur}
+                      className={exLog.difficulte === option.valeur ? 'active' : ''}
+                      onClick={() => definirDifficulte(iEx, option.valeur)}
+                    >
+                      {option.emoji} {option.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            )}
+            )
+          })}
+          <button className="btn btn-primary mt-8" onClick={finaliserSeance}>
+            Valider et terminer la séance
+          </button>
+        </>
+      ) : (
+        <>
+          {template.exercices.map((ex, iEx) => {
+            const exLog = log.exercices[iEx]
+            return (
+              <div className="card" key={ex.nom}>
+                <h3>{ex.nom}</h3>
+                <p className="muted small mb-0">
+                  {ex.series} séries × {ex.repsMin === ex.repsMax ? ex.repsMin : `${ex.repsMin}-${ex.repsMax}`}
+                  {ex.note ? ` (${ex.note})` : ' répétitions'}
+                </p>
 
-            <button
-              className={`set-check-single mt-8 ${exLog?.sets.every((s) => s.fait) ? 'done' : ''}`}
-              onClick={() => basculerExercice(iEx)}
-            >
-              {exLog?.sets.every((s) => s.fait) ? '✓ Fait' : 'OK'}
-            </button>
-          </div>
-        )
-      })}
+                {!ex.poidsDuCorps && (
+                  <div className="field mt-8">
+                    <label>Poids utilisé (kg)</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      value={exLog?.poidsUtilise_kg ?? ''}
+                      onChange={(e) => majPoids(iEx, Number(e.target.value))}
+                      placeholder="Ex. 25"
+                    />
+                    <div className="field-hint">Mémorisé automatiquement pour ta prochaine séance.</div>
+                  </div>
+                )}
 
-      <button className="btn btn-primary mt-8" onClick={terminerSeance}>
-        {log.termineeA ? '✓ Séance terminée — mettre à jour' : 'Terminer la séance'}
-      </button>
+                <button
+                  className={`set-check-single mt-8 ${exLog?.sets.every((s) => s.fait) ? 'done' : ''}`}
+                  onClick={() => basculerExercice(iEx)}
+                >
+                  {exLog?.sets.every((s) => s.fait) ? '✓ Fait' : 'OK'}
+                </button>
+              </div>
+            )
+          })}
+
+          <button className="btn btn-primary mt-8" onClick={terminerSeance}>
+            {log.termineeA ? '✓ Séance terminée — mettre à jour' : 'Terminer la séance'}
+          </button>
+        </>
+      )}
     </div>
   )
 }
