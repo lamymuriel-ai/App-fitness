@@ -77,10 +77,10 @@ function SeanceActiveInner() {
     )
   }
 
-  async function basculerExercice(iEx: number) {
+  async function majReps(iEx: number, iSet: number, valeur: number) {
     const copie = structuredClone(log)
-    const dejaFait = copie.exercices[iEx].sets.every((s) => s.fait)
-    copie.exercices[iEx].sets = copie.exercices[iEx].sets.map(() => ({ fait: !dejaFait }))
+    const reps = Number.isFinite(valeur) && valeur > 0 ? valeur : undefined
+    copie.exercices[iEx].sets[iSet] = { fait: reps !== undefined, reps }
     setLog(copie)
     await enregistrerSeanceLog(copie)
   }
@@ -200,37 +200,50 @@ function SeanceActiveInner() {
         <>
           {template.exercices.map((ex, iEx) => {
             const exLog = log.exercices[iEx]
-            const fait = exLog?.sets.every((s) => s.fait)
+            const cibleReps = ex.repsMin === ex.repsMax ? `${ex.repsMin}` : `${ex.repsMin}-${ex.repsMax}`
             return (
               <div className="card" style={{ padding: 12, marginBottom: 8 }} key={ex.nom}>
                 <div className="row-between" style={{ gap: 10, alignItems: 'center' }}>
                   <div style={{ minWidth: 0 }}>
                     <h3 style={{ fontSize: '0.95rem', margin: 0 }}>{ex.nom}</h3>
                     <p className="muted small mb-0" style={{ fontSize: '0.75rem' }}>
-                      {ex.series}×{ex.repsMin === ex.repsMax ? ex.repsMin : `${ex.repsMin}-${ex.repsMax}`}
+                      {ex.series}×{cibleReps}
                       {ex.note ? ` (${ex.note})` : ''}
                     </p>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-                    {!ex.poidsDuCorps && (
-                      <input
-                        type="number"
-                        step="0.5"
-                        value={exLog?.poidsUtilise_kg ?? ''}
-                        onChange={(e) => majPoids(iEx, Number(e.target.value))}
-                        placeholder="kg"
-                        title="Poids utilisé — mémorisé automatiquement pour la prochaine séance"
-                        style={{ width: 64, padding: '8px 6px', textAlign: 'center' }}
-                      />
-                    )}
-                    <button
-                      className={`set-check-single ${fait ? 'done' : ''}`}
-                      onClick={() => basculerExercice(iEx)}
-                      style={{ width: 'auto', padding: '10px 16px' }}
-                    >
-                      {fait ? '✓' : 'OK'}
-                    </button>
-                  </div>
+                  {!ex.poidsDuCorps && (
+                    <input
+                      type="number"
+                      step="0.5"
+                      value={exLog?.poidsUtilise_kg ?? ''}
+                      onChange={(e) => majPoids(iEx, Number(e.target.value))}
+                      placeholder="kg"
+                      title="Poids utilisé — mémorisé automatiquement pour la prochaine séance"
+                      style={{ width: 56, flexShrink: 0, padding: '8px 6px', textAlign: 'center' }}
+                    />
+                  )}
+                </div>
+                <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                  {exLog?.sets.map((set, iSet) => (
+                    <input
+                      key={iSet}
+                      type="number"
+                      value={set.reps ?? ''}
+                      onChange={(e) => majReps(iEx, iSet, Number(e.target.value))}
+                      placeholder={cibleReps}
+                      title={`Répétitions faites, série ${iSet + 1}`}
+                      style={{
+                        flex: 1,
+                        minWidth: 0,
+                        textAlign: 'center',
+                        padding: '8px 4px',
+                        borderRadius: 10,
+                        border: `2px solid ${set.fait ? 'var(--success)' : 'var(--border)'}`,
+                        background: set.fait ? '#eafaf0' : '#fff',
+                        fontWeight: 700,
+                      }}
+                    />
+                  ))}
                 </div>
               </div>
             )

@@ -23,22 +23,32 @@ export default function Entrainement() {
             (s) => s.seanceTemplateId === seance.id && s.date === aujourdHui
           )
           const estAujourdHui = seance.id === idSeanceDuJour
+          const [titreCourt, description] = seance.nom.split(' — ')
           return (
-            <div className={`card ${seance.lieu === 'salle' ? 'blue' : 'yellow'}`} key={seance.id}>
-              <div className="card-title">
-                <h3>{seance.nom}</h3>
-                {estAujourdHui && <span className="pill pink">Aujourd'hui</span>}
+            <div
+              className={`card ${seance.lieu === 'salle' ? 'blue' : 'yellow'}`}
+              style={{ padding: 14, marginBottom: 10 }}
+              key={seance.id}
+            >
+              <div className="row-between" style={{ alignItems: 'center', gap: 10 }}>
+                <div style={{ minWidth: 0 }}>
+                  <div className="row gap-8" style={{ flexWrap: 'wrap' }}>
+                    <h3 style={{ fontSize: '1rem', margin: 0 }}>{titreCourt}</h3>
+                    {estAujourdHui && <span className="pill pink">Aujourd'hui</span>}
+                    {logDuJour?.termineeA && <span className="pill green">✓</span>}
+                  </div>
+                  <p className="muted small mb-0" style={{ fontSize: '0.78rem' }}>
+                    {description} · {seance.moment} · {seance.exercices.length} exercices
+                  </p>
+                </div>
+                <button
+                  className="btn btn-primary btn-sm"
+                  style={{ flexShrink: 0 }}
+                  onClick={() => navigate(`/entrainement/seance/${seance.id}`)}
+                >
+                  {logDuJour?.termineeA ? 'Revoir' : 'Commencer'}
+                </button>
               </div>
-              <p className="muted small">
-                {seance.moment} · {seance.exercices.length} exercices · 3 séries par exercice
-              </p>
-              {logDuJour?.termineeA && <span className="pill green">Terminée aujourd'hui ✓</span>}
-              <button
-                className="btn btn-primary mt-8"
-                onClick={() => navigate(`/entrainement/seance/${seance.id}`)}
-              >
-                {logDuJour?.termineeA ? 'Revoir / continuer' : 'Commencer'}
-              </button>
             </div>
           )
         })}
