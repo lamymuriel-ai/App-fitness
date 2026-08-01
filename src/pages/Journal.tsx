@@ -7,6 +7,7 @@ import { calculerBudgetRestant } from '../utils/suggestionsAlimentaires'
 import { BarreProgression, BarreMacros, EtatVide } from '../components/ui'
 import GrilleMicronutriments from '../components/GrilleMicronutriments'
 import AlertesNutriments from '../components/AlertesNutriments'
+import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
 import type { Repas } from '../types'
 
 const LABEL_TYPE: Record<Repas['type'], string> = {
@@ -32,7 +33,7 @@ function libelleJour(iso: string): string {
 }
 
 export default function Journal() {
-  const { profil, repas, suiviJournalier } = useAppData()
+  const { profil, repas, suiviJournalier, seancesLog } = useAppData()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [onglet, setOnglet] = useState<'jour' | 'historique'>('jour')
@@ -78,6 +79,15 @@ export default function Journal() {
   const budgetRestant = useMemo(() => calculerBudgetRestant(totauxJour, objectifs), [totauxJour, objectifs])
 
   const entreeJourAffichee = suiviJournalier.find((e) => e.date === dateAffichee)
+
+  const seanceFaiteCeJour = useMemo(
+    () => seancesLog.find((s) => s.date === dateAffichee && s.termineeA),
+    [seancesLog, dateAffichee]
+  )
+  const seanceTemplateFaite = seanceFaiteCeJour
+    ? SEANCES_TEMPLATES.find((s) => s.id === seanceFaiteCeJour.seanceTemplateId)
+    : null
+  const idSeancePrevueCeJour = PLANNING_SEMAINE[new Date(`${dateAffichee}T00:00:00`).getDay()]
 
   return (
     <div>
@@ -132,6 +142,22 @@ export default function Journal() {
                   <BarreProgression valeur={entreeJourAffichee?.sommeil_h || 0} objectif={8} couleur="navy" />
                 </div>
               </div>
+            </div>
+
+            <div className="card" style={{ padding: 14 }}>
+              {seanceTemplateFaite ? (
+                <p className="small" style={{ fontWeight: 700, margin: 0 }}>
+                  💪 Séance {seanceTemplateFaite.id} faite
+                  <span className="muted"> · {seanceTemplateFaite.lieu === 'salle' ? 'en salle' : 'à la maison'}</span>
+                </p>
+              ) : idSeancePrevueCeJour ? (
+                <p className="small" style={{ fontWeight: 700, margin: 0 }}>
+                  🏋️ Séance {idSeancePrevueCeJour} prévue
+                  <span className="muted"> · pas encore faite</span>
+                </p>
+              ) : (
+                <p className="small" style={{ fontWeight: 700, margin: 0 }}>😌 Jour de repos</p>
+              )}
             </div>
 
             <div className="card pink" style={{ padding: 16 }}>
