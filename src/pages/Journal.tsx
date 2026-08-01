@@ -32,7 +32,7 @@ function libelleJour(iso: string): string {
 }
 
 export default function Journal() {
-  const { profil, repas } = useAppData()
+  const { profil, repas, suiviJournalier } = useAppData()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const [onglet, setOnglet] = useState<'jour' | 'historique'>('jour')
@@ -77,6 +77,8 @@ export default function Journal() {
   const objectifs = profil.objectifsNutritionnels
   const budgetRestant = useMemo(() => calculerBudgetRestant(totauxJour, objectifs), [totauxJour, objectifs])
 
+  const entreeJourAffichee = suiviJournalier.find((e) => e.date === dateAffichee)
+
   return (
     <div>
       <div className="app-header">
@@ -111,6 +113,25 @@ export default function Journal() {
               <button className="btn-ghost btn-sm" onClick={() => setDateAffichee((d) => ajouterJours(d, 1))}>
                 →
               </button>
+            </div>
+
+            <div className="card" style={{ padding: 14 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+                <div>
+                  <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>
+                    👣 {entreeJourAffichee?.pas?.toLocaleString('fr-FR') || 0}
+                    <span className="muted"> / {profil.objectifPas.toLocaleString('fr-FR')}</span>
+                  </p>
+                  <BarreProgression valeur={entreeJourAffichee?.pas || 0} objectif={profil.objectifPas} couleur="purple" />
+                </div>
+                <div>
+                  <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>
+                    😴 {entreeJourAffichee?.sommeil_h ?? '–'}
+                    <span className="muted"> {entreeJourAffichee?.sommeil_h !== undefined ? 'h' : 'pas enreg.'}</span>
+                  </p>
+                  <BarreProgression valeur={entreeJourAffichee?.sommeil_h || 0} objectif={8} couleur="navy" />
+                </div>
+              </div>
             </div>
 
             <div className="card pink" style={{ padding: 16 }}>
