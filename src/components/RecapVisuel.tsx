@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { calculerRecapJour, type RecapJour, type StatutMetrique } from '../utils/recapJournalier'
-import { ajouterJours, dateDuJourISO, debutSemaineISO, formatDateCourt, formatDateLong } from '../utils/date'
+import { ajouterJours, dateDuJourISO, debutSemaineISO, formatDateCourt } from '../utils/date'
 
 const COULEURS_STATUT: Record<StatutMetrique, { bg: string; fg: string }> = {
   ok: { bg: '#e4f7e8', fg: '#3f9955' },
@@ -67,10 +68,10 @@ function LignePastilles({ recap }: { recap: RecapJour }) {
 }
 
 export default function RecapVisuel() {
+  const navigate = useNavigate()
   const { profil, suiviJournalier, repas, seancesLog } = useAppData()
   const [mode, setMode] = useState<'semaine' | 'mois'>('semaine')
   const [dateReference, setDateReference] = useState(dateDuJourISO())
-  const [jourSelectionne, setJourSelectionne] = useState<string | null>(null)
 
   const joursSemaine = useMemo(() => {
     const lundi = debutSemaineISO(dateReference)
@@ -89,12 +90,14 @@ export default function RecapVisuel() {
   }, [mode, joursSemaine, grilleMois, profil, suiviJournalier, repas, seancesLog])
 
   function reculer() {
-    setJourSelectionne(null)
     setDateReference((d) => (mode === 'semaine' ? ajouterJours(d, -7) : ajouterMois(d, -1)))
   }
   function avancer() {
-    setJourSelectionne(null)
     setDateReference((d) => (mode === 'semaine' ? ajouterJours(d, 7) : ajouterMois(d, 1)))
+  }
+
+  function voirJournee(jour: string) {
+    navigate(`/journal?date=${jour}`)
   }
 
   const labelPeriode =
@@ -129,16 +132,20 @@ export default function RecapVisuel() {
             const recap = recapsParJour.get(jour)!
             const c = COULEURS_STATUT[recap.global]
             return (
-              <div
+              <button
                 key={jour}
+                onClick={() => voirJournee(jour)}
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
+                  width: '100%',
                   padding: '8px 10px',
                   background: c.bg,
+                  border: 'none',
                   borderRadius: 10,
                   marginBottom: 6,
+                  textAlign: 'left',
                 }}
               >
                 <div>
@@ -148,7 +155,7 @@ export default function RecapVisuel() {
                   <div className="small muted">{formatDateCourt(jour)}</div>
                 </div>
                 <LignePastilles recap={recap} />
-              </div>
+              </button>
             )
           })}
         </div>
@@ -169,11 +176,11 @@ export default function RecapVisuel() {
               return (
                 <button
                   key={jour}
-                  onClick={() => setJourSelectionne(jour)}
+                  onClick={() => voirJournee(jour)}
                   style={{
                     aspectRatio: '1',
                     borderRadius: 8,
-                    border: jourSelectionne === jour ? '2px solid var(--pink-deep)' : '2px solid transparent',
+                    border: '2px solid transparent',
                     background: c.bg,
                     color: c.fg,
                     fontWeight: 700,
@@ -185,14 +192,6 @@ export default function RecapVisuel() {
               )
             })}
           </div>
-          {jourSelectionne && (
-            <div className="mt-16">
-              <div style={{ fontWeight: 700, marginBottom: 8, textTransform: 'capitalize' }}>
-                {formatDateLong(jourSelectionne)}
-              </div>
-              <LignePastilles recap={recapsParJour.get(jourSelectionne)!} />
-            </div>
-          )}
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { ajouterJours, formatDateCourt, formatDateLong, formatHeure, dateDuJourISO } from '../utils/date'
 import { totauxRepas, calculerMoyenneMicrosSemaine, ajouterSupplements } from '../utils/nutrition'
@@ -34,8 +34,9 @@ function libelleJour(iso: string): string {
 export default function Journal() {
   const { profil, repas } = useAppData()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [onglet, setOnglet] = useState<'jour' | 'historique'>('jour')
-  const [dateAffichee, setDateAffichee] = useState(dateDuJourISO())
+  const [dateAffichee, setDateAffichee] = useState(searchParams.get('date') || dateDuJourISO())
 
   const repasDuJour = useMemo(
     () =>
