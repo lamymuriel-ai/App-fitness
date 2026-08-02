@@ -53,7 +53,14 @@ export default function Suivi() {
     await mettreAJourProfil({ ...profil, poids_kg: p })
   }
 
-  const pointsMoyenne = useMemo(() => moyenneMobile7Jours(suiviJournalier), [suiviJournalier])
+  // On ne garde que l'historique depuis le début du plan : un import Santé peut remonter
+  // à bien avant, et ces jours-là ne doivent pas peser dans la moyenne mobile ni dans le
+  // calcul "Perdu/Pris" (cohérent avec detecterStagnation, qui filtre déjà pareil).
+  const suiviDepuisDebutPlan = useMemo(
+    () => suiviJournalier.filter((e) => e.date >= profil.dateDebut),
+    [suiviJournalier, profil.dateDebut]
+  )
+  const pointsMoyenne = useMemo(() => moyenneMobile7Jours(suiviDepuisDebutPlan), [suiviDepuisDebutPlan])
   const donneesPoids = useMemo(
     () => pointsMoyenne.map((p) => ({ date: p.date, moyenne: p.poidsMoyen })),
     [pointsMoyenne]
