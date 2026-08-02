@@ -31,15 +31,25 @@ export function estAujourdhui(iso: string): boolean {
   return iso.slice(0, 10) === dateDuJourISO()
 }
 
-export function joursDepuis(iso: string): number {
-  const debut = new Date(iso).getTime()
-  const maintenant = Date.now()
-  return Math.floor((maintenant - debut) / (1000 * 60 * 60 * 24))
-}
-
-export function numeroSemaine(dateDebutISO: string): number {
-  const jours = joursDepuis(dateDebutISO)
-  return Math.max(1, Math.floor(jours / 7) + 1)
+/**
+ * Numéro de la semaine du plan (1 = première semaine), aligné sur les semaines
+ * calendaires lundi-dimanche utilisées partout ailleurs dans l'appli (Récap visuel,
+ * bilan hebdomadaire...). Si le plan démarre un jour autre que lundi, les quelques jours
+ * avant le premier lundi complet sont absorbés dans la semaine 1 plutôt que de basculer
+ * en semaine 2 après seulement 7 jours calendaires (ex. démarrer un dimanche ne doit pas
+ * afficher "semaine 2" dès le dimanche suivant, alors qu'aucune semaine lundi-dimanche
+ * complète n'est encore terminée).
+ */
+export function numeroSemaine(dateDebutISO: string, dateReferenceISO = dateDuJourISO()): number {
+  const lundiDebut = debutSemaineISO(dateDebutISO)
+  const lundiSemaine1 = dateDebutISO === lundiDebut ? lundiDebut : ajouterJours(lundiDebut, 7)
+  const lundiReference = debutSemaineISO(dateReferenceISO)
+  if (lundiReference <= lundiSemaine1) return 1
+  const joursEntre = Math.round(
+    (new Date(`${lundiReference}T00:00:00`).getTime() - new Date(`${lundiSemaine1}T00:00:00`).getTime()) /
+      (1000 * 60 * 60 * 24)
+  )
+  return 1 + Math.round(joursEntre / 7)
 }
 
 /** Lundi de la semaine calendaire contenant la date donnée (par défaut aujourd'hui), au format ISO (YYYY-MM-DD). */
