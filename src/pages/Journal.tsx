@@ -214,10 +214,17 @@ export default function Journal() {
               const repasJourVisibles = repasJour.filter((r) => r.methode !== 'import_sante')
               return (
                 <div className="card" key={jour}>
-                  <div className="row-between">
+                  <button
+                    className="row-between"
+                    style={{ width: '100%', background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer' }}
+                    onClick={() => {
+                      setDateAffichee(jour)
+                      setOnglet('jour')
+                    }}
+                  >
                     <h3 style={{ marginBottom: 0 }}>{formatDateCourt(jour)}</h3>
                     <span className="pill pink">{Math.round(totauxJourHisto.calories)} kcal</span>
-                  </div>
+                  </button>
                   <div className="mt-8">
                     {repasJourVisibles.map((r) => (
                       <LigneRepas key={r.id} repas={r} onClick={() => navigate(`/journal/repas/${r.id}`)} compact />
