@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { SEANCES_TEMPLATES } from '../data/defaults'
 import { dateDuJourISO, genererId } from '../utils/date'
+import { FeuilleModale } from '../components/ui'
 import type { SeanceLog, ExerciceLog, Difficulte } from '../types'
 
 const AJUSTEMENT_KG = 2.5
@@ -50,6 +51,7 @@ function SeanceActiveInner() {
   })
 
   const [etapeBilan, setEtapeBilan] = useState(false)
+  const [infoOuverte, setInfoOuverte] = useState<number | null>(null)
 
   const progression = useMemo(() => {
     const totalSets = log.exercices.reduce((s, e) => s + e.sets.length, 0)
@@ -205,7 +207,17 @@ function SeanceActiveInner() {
               <div className="card" style={{ padding: 12, marginBottom: 8 }} key={ex.nom}>
                 <div className="row-between" style={{ gap: 10, alignItems: 'center' }}>
                   <div style={{ minWidth: 0 }}>
-                    <h3 style={{ fontSize: '0.95rem', margin: 0 }}>{ex.nom}</h3>
+                    <div className="row gap-8" style={{ alignItems: 'center' }}>
+                      <h3 style={{ fontSize: '0.95rem', margin: 0 }}>{ex.nom}</h3>
+                      <button
+                        className="btn-ghost btn-sm"
+                        style={{ padding: '2px 8px', fontSize: '0.85rem', flexShrink: 0 }}
+                        onClick={() => setInfoOuverte(iEx)}
+                        aria-label={`Explications pour ${ex.nom}`}
+                      >
+                        ⓘ
+                      </button>
+                    </div>
                     <p className="muted small mb-0" style={{ fontSize: '0.75rem' }}>
                       {ex.series}×{cibleReps}
                       {ex.note ? ` (${ex.note})` : ''}
@@ -254,6 +266,18 @@ function SeanceActiveInner() {
           </button>
         </>
       )}
+
+      <FeuilleModale ouverte={infoOuverte !== null} onFermer={() => setInfoOuverte(null)}>
+        {infoOuverte !== null && (
+          <div>
+            <h3 style={{ marginTop: 0 }}>{template.exercices[infoOuverte].nom}</h3>
+            <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>Comment faire</p>
+            <p className="small muted">{template.exercices[infoOuverte].description}</p>
+            <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>Si pas de machine / trop dur</p>
+            <p className="small muted mb-0">{template.exercices[infoOuverte].alternative}</p>
+          </div>
+        )}
+      </FeuilleModale>
     </div>
   )
 }

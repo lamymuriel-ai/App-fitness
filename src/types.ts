@@ -96,6 +96,10 @@ export interface ExerciceTemplate {
   repsMax: number
   poidsDuCorps: boolean
   note?: string
+  /** Explication de l'exercice/machine (à quoi ça ressemble, comment le régler). */
+  description: string
+  /** Solution de repli si la machine n'existe pas dans la salle (ou variante plus facile/dure pour un exercice à la maison). */
+  alternative: string
 }
 
 export interface SeanceTemplate {
