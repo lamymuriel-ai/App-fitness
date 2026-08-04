@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { SEANCES_TEMPLATES } from '../data/defaults'
-import { dateDuJourISO, genererId } from '../utils/date'
+import { dateDuJourISO, debutSemaineISO, genererId } from '../utils/date'
 import { FeuilleModale } from '../components/ui'
 import type { SeanceLog, ExerciceLog, Difficulte } from '../types'
 
@@ -26,10 +26,14 @@ function SeanceActiveInner() {
 
   const template = SEANCES_TEMPLATES.find((s) => s.id === templateId)
   const aujourdHui = dateDuJourISO()
+  const debutSemaine = debutSemaineISO(aujourdHui)
 
-  const logExistant = seancesLog.find(
-    (s) => s.seanceTemplateId === templateId && s.date === aujourdHui
-  )
+  // On reprend la séance de ce type la plus récente CETTE SEMAINE (pas seulement celle
+  // d'aujourd'hui) : sinon "Revoir" depuis la page Entraînement recréerait une séance vide
+  // du jour au lieu de rouvrir celle déjà faite plus tôt dans la semaine.
+  const logExistant = seancesLog
+    .filter((s) => s.seanceTemplateId === templateId && s.date >= debutSemaine)
+    .sort((a, b) => b.date.localeCompare(a.date))[0]
 
   const [log, setLog] = useState<SeanceLog>(() => {
     if (logExistant) return logExistant

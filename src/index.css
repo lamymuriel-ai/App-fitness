@@ -127,6 +127,7 @@ button {
 .card.pink { background: linear-gradient(160deg, var(--pink-soft), #fff); }
 .card.blue { background: linear-gradient(160deg, var(--blue-soft), #fff); }
 .card.yellow { background: linear-gradient(160deg, var(--yellow-soft), #fff); }
+.card.green { background: linear-gradient(160deg, #e4f7e8, #fff); }
 
 .card-title {
   display: flex;
