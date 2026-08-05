@@ -150,8 +150,28 @@ export function genererSuggestions(
     })
   }
 
-  return candidats
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limite)
-    .map((c) => c.suggestion)
+  candidats.sort((a, b) => b.score - a.score)
+
+  // On diversifie les catégories plutôt que de garder le pur classement par score : sinon
+  // plusieurs poissons (souvent tous riches en vitamine D/B12 à la fois) peuvent occuper
+  // toute la liste dès que ces micronutriments sont un peu faibles dans la semaine, au
+  // détriment de la variété. Un deuxième passage complète avec les meilleurs candidats
+  // restants si toutes les catégories disponibles ont été épuisées avant d'atteindre la limite.
+  const retenus: SuggestionAliment[] = []
+  const categoriesVues = new Set<string>()
+  for (const { suggestion } of candidats) {
+    if (retenus.length >= limite) break
+    if (categoriesVues.has(suggestion.aliment.categorie)) continue
+    categoriesVues.add(suggestion.aliment.categorie)
+    retenus.push(suggestion)
+  }
+  if (retenus.length < limite) {
+    for (const { suggestion } of candidats) {
+      if (retenus.length >= limite) break
+      if (retenus.includes(suggestion)) continue
+      retenus.push(suggestion)
+    }
+  }
+
+  return retenus
 }
