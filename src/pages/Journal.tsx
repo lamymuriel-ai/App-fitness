@@ -38,6 +38,7 @@ export default function Journal() {
   const [searchParams] = useSearchParams()
   const [onglet, setOnglet] = useState<'jour' | 'historique'>('jour')
   const [dateAffichee, setDateAffichee] = useState(searchParams.get('date') || dateDuJourISO())
+  const [montrerImportes, setMontrerImportes] = useState(false)
 
   const repasDuJour = useMemo(
     () =>
@@ -52,6 +53,10 @@ export default function Journal() {
   // à parcourir un par un) — on les garde dans les calculs, on les masque de la liste.
   const repasDuJourVisibles = useMemo(
     () => repasDuJour.filter((r) => r.methode !== 'import_sante'),
+    [repasDuJour]
+  )
+  const repasDuJourImportes = useMemo(
+    () => repasDuJour.filter((r) => r.methode === 'import_sante'),
     [repasDuJour]
   )
 
@@ -195,6 +200,21 @@ export default function Journal() {
                 {repasDuJourVisibles.map((r) => (
                   <LigneRepas key={r.id} repas={r} onClick={() => navigate(`/journal/repas/${r.id}`)} />
                 ))}
+              </div>
+            )}
+
+            {repasDuJourImportes.length > 0 && (
+              <div className="mt-8">
+                <button className="link-btn small" style={{ padding: 0 }} onClick={() => setMontrerImportes((v) => !v)}>
+                  {montrerImportes ? '▲' : '▼'} {repasDuJourImportes.length} repas importé{repasDuJourImportes.length > 1 ? 's' : ''} de Santé (masqués par défaut)
+                </button>
+                {montrerImportes && (
+                  <div className="mt-8">
+                    {repasDuJourImportes.map((r) => (
+                      <LigneRepas key={r.id} repas={r} onClick={() => navigate(`/journal/repas/${r.id}`)} />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
