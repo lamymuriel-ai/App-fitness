@@ -9,6 +9,7 @@ import type {
 import { PLANNING_SEMAINE } from '../data/defaults'
 import { totauxRepas, ajouterSupplements, analyserMicronutriments } from './nutrition'
 import { ajouterJours } from './date'
+import { moyenneMobile7Jours } from './stagnation'
 
 export interface RapportHebdomadaire {
   semaineDebut: string
@@ -76,21 +77,28 @@ export function genererRapportHebdomadaire(
       ? { moyenne: sommeilValeurs.reduce((a, b) => a + b, 0) / sommeilValeurs.length, nbJours: sommeilValeurs.length }
       : null
 
-  // Poids : on combine le suivi journalier (souvent quotidien via l'import Santé) et le
-  // suivi hebdomadaire (check-in manuel) pour repérer le premier et le dernier poids connu
-  // de la semaine, peu importe d'où il vient.
-  const pointsPoids = [
-    ...suiviSemaine
-      .filter((e) => e.poids_kg !== undefined)
-      .map((e) => ({ date: e.date, poids_kg: e.poids_kg as number })),
-    ...suiviHebdomadaire.filter((e) => dansLaSemaine(e.date)).map((e) => ({ date: e.date, poids_kg: e.poids_kg })),
-  ].sort((a, b) => a.date.localeCompare(b.date))
+  // Poids : on compare la moyenne mobile 7 jours juste avant la semaine à celle en fin de
+  // semaine — pas les pesées brutes de début/fin de semaine. Une pesée isolée varie
+  // facilement de plus d'1 kg d'un jour à l'autre (eau, digestion, heure de la pesée) ; le
+  // reste de l'appli (page Suivi) le dit explicitement ("c'est la moyenne sur 7 jours qui
+  // compte, pas la valeur isolée") et le bilan hebdomadaire doit rester cohérent avec ça,
+  // sinon un delta basé sur deux points bruts peut annoncer une "prise" trompeuse alors que
+  // la tendance réelle est à la baisse.
+  const pointsMoyennePoids = moyenneMobile7Jours(
+    [...suiviJournalier, ...suiviHebdomadaire.map((e) => ({ date: e.date, poids_kg: e.poids_kg }))].filter(
+      (e) => e.date >= profil.dateDebut
+    )
+  )
+  const dernierPointAvant = (dateLimite: string) =>
+    [...pointsMoyennePoids].reverse().find((p) => p.date <= dateLimite) ?? null
+  const pointDebut = dernierPointAvant(semaineDebut)
+  const pointFin = dernierPointAvant(semaineFin)
   const poids =
-    pointsPoids.length > 0
+    pointDebut && pointFin && pointDebut.poidsMoyen !== null && pointFin.poidsMoyen !== null
       ? {
-          debut: pointsPoids[0].poids_kg,
-          fin: pointsPoids[pointsPoids.length - 1].poids_kg,
-          delta: pointsPoids[pointsPoids.length - 1].poids_kg - pointsPoids[0].poids_kg,
+          debut: pointDebut.poidsMoyen,
+          fin: pointFin.poidsMoyen,
+          delta: Math.round((pointFin.poidsMoyen - pointDebut.poidsMoyen) * 10) / 10,
         }
       : null
 
