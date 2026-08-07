@@ -91,12 +91,12 @@ function SeanceActiveInner() {
     await enregistrerSeanceLog(copie)
   }
 
-  async function majPoids(iEx: number, poids: number) {
+  async function majPoids(iEx: number, poids: number | undefined) {
     const copie = structuredClone(log)
     copie.exercices[iEx].poidsUtilise_kg = poids
     setLog(copie)
     await enregistrerSeanceLog(copie)
-    await definirPoidsExercice(copie.exercices[iEx].nom, poids)
+    if (poids !== undefined) await definirPoidsExercice(copie.exercices[iEx].nom, poids)
   }
 
   async function recalculerPoids() {
@@ -232,7 +232,8 @@ function SeanceActiveInner() {
                       type="number"
                       step="0.5"
                       value={exLog?.poidsUtilise_kg ?? ''}
-                      onChange={(e) => majPoids(iEx, Number(e.target.value))}
+                      onChange={(e) => majPoids(iEx, e.target.value === '' ? undefined : Number(e.target.value))}
+                      onFocus={(e) => e.target.select()}
                       placeholder="kg"
                       title="Poids utilisé — mémorisé automatiquement pour la prochaine séance"
                       style={{ width: 56, flexShrink: 0, padding: '8px 6px', textAlign: 'center' }}
@@ -246,6 +247,7 @@ function SeanceActiveInner() {
                       type="number"
                       value={set.reps ?? ''}
                       onChange={(e) => majReps(iEx, iSet, Number(e.target.value))}
+                      onFocus={(e) => e.target.select()}
                       placeholder={cibleReps}
                       title={`Répétitions faites, série ${iSet + 1}`}
                       style={{
