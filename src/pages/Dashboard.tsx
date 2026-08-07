@@ -10,6 +10,13 @@ import { detecterStagnation } from '../utils/stagnation'
 import { phraseDuJour } from '../data/phrasesEncouragement'
 import AlerteStagnationBanniere from '../components/AlerteStagnationBanniere'
 
+/** Index stable pour la journée (change chaque jour, sans dépendre du fuseau horaire). */
+function indexRotationJournaliere(dateISO: string, taille: number): number {
+  const [annee, mois, jour] = dateISO.split('-').map(Number)
+  const joursDepuisEpoque = Math.floor(Date.UTC(annee, mois - 1, jour) / 86400000)
+  return joursDepuisEpoque % taille
+}
+
 function couleurScoreSommeil(score: number): string {
   if (score > 90) return 'var(--success)'
   if (score >= 80) return '#b5711b'
@@ -65,9 +72,13 @@ export default function Dashboard() {
     [repas, aujourdHui]
   )
   const suggestionDuJour = useMemo(() => {
-    const suggestions = genererSuggestions(budgetRestant, moyenneMicrosSemaine, objectifs.micros, 1)
-    return suggestions[0] ?? null
-  }, [budgetRestant, moyenneMicrosSemaine, objectifs.micros])
+    const suggestions = genererSuggestions(budgetRestant, moyenneMicrosSemaine, objectifs.micros, 5)
+    if (suggestions.length === 0) return null
+    // Fait tourner le choix parmi les meilleures idées (déjà diversifiées par catégorie) au lieu
+    // de toujours prendre la mieux notée : sinon, tant que les manques de la semaine ne changent
+    // pas, c'est le même aliment qui revient chaque jour (ex. toujours du saumon).
+    return suggestions[indexRotationJournaliere(aujourdHui, suggestions.length)]
+  }, [budgetRestant, moyenneMicrosSemaine, objectifs.micros, aujourdHui])
 
   return (
     <div>
