@@ -36,15 +36,26 @@ function SeanceActiveInner() {
     .sort((a, b) => b.date.localeCompare(a.date))[0]
 
   const [log, setLog] = useState<SeanceLog>(() => {
-    if (logExistant) return logExistant
     if (!template) {
+      if (logExistant) return logExistant
       return { id: genererId(), seanceTemplateId: 'A', date: aujourdHui, termineeA: null, exercices: [] }
     }
-    const exercices: ExerciceLog[] = template.exercices.map((ex) => ({
-      nom: ex.nom,
-      poidsUtilise_kg: ex.poidsDuCorps ? undefined : poidsParExercice[ex.nom],
-      sets: Array.from({ length: ex.series }, () => ({ fait: false })),
-    }))
+    // Recompose à partir du template courant plutôt que de renvoyer logExistant tel quel :
+    // si un exercice a été ajouté/retiré du programme depuis que cette séance a été commencée
+    // (ex. gainage ajouté à la séance B), une correspondance par position (log.exercices[i])
+    // décalerait tout ou ferait disparaître le nouvel exercice. On associe donc chaque
+    // exercice du template à sa donnée existante par nom, et on crée une entrée vide pour
+    // les nouveaux — le reste de la saisie déjà faite est conservé.
+    const exercices: ExerciceLog[] = template.exercices.map((ex) => {
+      const existant = logExistant?.exercices.find((e) => e.nom === ex.nom)
+      if (existant) return existant
+      return {
+        nom: ex.nom,
+        poidsUtilise_kg: ex.poidsDuCorps ? undefined : poidsParExercice[ex.nom],
+        sets: Array.from({ length: ex.series }, () => ({ fait: false })),
+      }
+    })
+    if (logExistant) return { ...logExistant, exercices }
     return {
       id: genererId(),
       seanceTemplateId: template.id,
