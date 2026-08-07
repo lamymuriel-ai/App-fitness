@@ -125,6 +125,9 @@ export const SEANCES_TEMPLATES: SeanceTemplate[] = [
       { nom: 'Crunch (machine ou au sol)', series: 3, repsMin: 12, repsMax: 15, poidsDuCorps: false,
         description: "Sur machine : assise, tu plies le buste vers l'avant en contractant les abdos. Au sol : allongée, genoux pliés, tu décolles les épaules du sol en contractant les abdos (pas de traction sur la nuque).",
         alternative: 'Crunch au sol à poids du corps, 3×15-20 — aucune machine nécessaire.' },
+      { nom: 'Gainage — planche', series: 3, repsMin: 30, repsMax: 30, poidsDuCorps: true, note: 'en secondes',
+        description: "Appui sur les avant-bras et les pointes de pieds, corps aligné (pas de dos creusé ni de fesses trop hautes). Tiens la position le temps indiqué.",
+        alternative: 'Planche sur les genoux (plus facile) si la position complète est trop dure.' },
     ],
   },
   {
