@@ -1,7 +1,9 @@
 import type { ProfilUtilisatrice, Repas, SeanceLog, SuiviJournalier } from '../types'
 import { PLANNING_SEMAINE } from '../data/defaults'
 import { totauxRepas } from './nutrition'
-import { dateDuJourISO } from './date'
+import { ajouterJours, dateDuJourISO, debutSemaineISO } from './date'
+
+const NB_SEANCES_PAR_SEMAINE = Object.values(PLANNING_SEMAINE).filter(Boolean).length
 
 export type StatutMetrique = 'ok' | 'attention' | 'absent'
 export type StatutSport = StatutMetrique | 'repos'
@@ -42,6 +44,16 @@ function statutSport(date: string, seancesLog: SeanceLog[]): StatutSport {
   // séance prévue ce jour précis a été cochée.
   const seanceFaite = seancesLog.some((s) => s.date === date && s.termineeA)
   if (seanceFaite) return 'ok'
+
+  // Une fois les séances de la semaine toutes faites (même décalées par rapport au
+  // planning habituel), le reste de la semaine est du repos — pas la peine de continuer
+  // à réclamer une séance "prévue" ce jour-là si l'objectif de la semaine est déjà atteint.
+  const lundiSemaine = debutSemaineISO(date)
+  const nbSeancesFaitesSemaine = seancesLog.filter(
+    (s) => s.termineeA && s.date >= lundiSemaine && s.date <= ajouterJours(lundiSemaine, 6)
+  ).length
+  if (nbSeancesFaitesSemaine >= NB_SEANCES_PAR_SEMAINE) return 'repos'
+
   const jourSemaine = new Date(`${date}T00:00:00`).getDay()
   const idSeancePrevue = PLANNING_SEMAINE[jourSemaine]
   if (!idSeancePrevue) return 'repos'
