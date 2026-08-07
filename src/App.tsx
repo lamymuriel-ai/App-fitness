@@ -11,7 +11,6 @@ import Tendances from './pages/Tendances'
 import SuggestionsAlimentaires from './pages/SuggestionsAlimentaires'
 import Entrainement from './pages/Entrainement'
 import SeanceActive from './pages/SeanceActive'
-import HistoriqueEntrainement from './pages/HistoriqueEntrainement'
 import Suivi from './pages/Suivi'
 import Plus from './pages/Plus'
 import AideMemoire from './pages/AideMemoire'
@@ -60,7 +59,6 @@ function RoutesApp() {
         <Route path="/journal/suggestions" element={<SuggestionsAlimentaires />} />
         <Route path="/entrainement" element={<Entrainement />} />
         <Route path="/entrainement/seance/:templateId" element={<SeanceActive />} />
-        <Route path="/entrainement/historique" element={<HistoriqueEntrainement />} />
         <Route path="/suivi" element={<Suivi />} />
         <Route path="/plus" element={<Plus />} />
         <Route path="/plus/aide-memoire" element={<AideMemoire />} />
