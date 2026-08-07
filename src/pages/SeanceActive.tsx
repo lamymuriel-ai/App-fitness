@@ -91,6 +91,16 @@ function SeanceActiveInner() {
     await enregistrerSeanceLog(copie)
   }
 
+  // Pour un exercice tenu (ex. gainage), on ne compte pas des répétitions : un simple clic
+  // marque la série faite pour la durée cible, plutôt que de faire taper ce chiffre à la main.
+  async function basculerSetChrono(iEx: number, iSet: number, dureeCible: number) {
+    const copie = structuredClone(log)
+    const set = copie.exercices[iEx].sets[iSet]
+    copie.exercices[iEx].sets[iSet] = set.fait ? { fait: false } : { fait: true, reps: dureeCible }
+    setLog(copie)
+    await enregistrerSeanceLog(copie)
+  }
+
   async function majPoids(iEx: number, poids: number | undefined) {
     const copie = structuredClone(log)
     copie.exercices[iEx].poidsUtilise_kg = poids
@@ -241,27 +251,49 @@ function SeanceActiveInner() {
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                  {exLog?.sets.map((set, iSet) => (
-                    <input
-                      key={iSet}
-                      type="number"
-                      value={set.reps ?? ''}
-                      onChange={(e) => majReps(iEx, iSet, Number(e.target.value))}
-                      onFocus={(e) => e.target.select()}
-                      placeholder={cibleReps}
-                      title={`Répétitions faites, série ${iSet + 1}`}
-                      style={{
-                        flex: 1,
-                        minWidth: 0,
-                        textAlign: 'center',
-                        padding: '8px 4px',
-                        borderRadius: 10,
-                        border: `2px solid ${set.fait ? 'var(--success)' : 'var(--border)'}`,
-                        background: set.fait ? '#eafaf0' : '#fff',
-                        fontWeight: 700,
-                      }}
-                    />
-                  ))}
+                  {ex.note === 'en secondes'
+                    ? exLog?.sets.map((set, iSet) => (
+                        <button
+                          key={iSet}
+                          type="button"
+                          onClick={() => basculerSetChrono(iEx, iSet, ex.repsMax)}
+                          title={`Série ${iSet + 1} tenue ${ex.repsMax}s`}
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            textAlign: 'center',
+                            padding: '8px 4px',
+                            borderRadius: 10,
+                            border: `2px solid ${set.fait ? 'var(--success)' : 'var(--border)'}`,
+                            background: set.fait ? '#eafaf0' : '#fff',
+                            fontWeight: 700,
+                            color: set.fait ? 'var(--success)' : 'var(--text-soft)',
+                          }}
+                        >
+                          {set.fait ? `✓ ${set.reps}s` : 'Fait ?'}
+                        </button>
+                      ))
+                    : exLog?.sets.map((set, iSet) => (
+                        <input
+                          key={iSet}
+                          type="number"
+                          value={set.reps ?? ''}
+                          onChange={(e) => majReps(iEx, iSet, Number(e.target.value))}
+                          onFocus={(e) => e.target.select()}
+                          placeholder={cibleReps}
+                          title={`Répétitions faites, série ${iSet + 1}`}
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            textAlign: 'center',
+                            padding: '8px 4px',
+                            borderRadius: 10,
+                            border: `2px solid ${set.fait ? 'var(--success)' : 'var(--border)'}`,
+                            background: set.fait ? '#eafaf0' : '#fff',
+                            fontWeight: 700,
+                          }}
+                        />
+                      ))}
                 </div>
               </div>
             )
