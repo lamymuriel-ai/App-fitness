@@ -126,10 +126,13 @@ export interface ExerciceLog {
 
 export interface SeanceLog {
   id: string
-  seanceTemplateId: 'A' | 'B' | 'C'
+  seanceTemplateId: 'A' | 'B' | 'C' | 'autre'
   date: string // ISO
   termineeA: string | null // ISO datetime de fin, null si en cours
   exercices: ExerciceLog[]
+  /** Nom de l'activité de remplacement (natation, vélo...), seulement si seanceTemplateId === 'autre'. */
+  nomActivite?: string
+  duree_min?: number
 }
 
 export interface PoidsExercice {

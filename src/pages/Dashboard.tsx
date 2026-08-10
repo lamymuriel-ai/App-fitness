@@ -50,6 +50,9 @@ export default function Dashboard() {
   const seanceLogDuJour = seancesLog.find(
     (s) => s.date === aujourdHui && s.seanceTemplateId === idSeanceDuJour
   )
+  const autreActiviteDuJour = seancesLog.find(
+    (s) => s.date === aujourdHui && s.seanceTemplateId === 'autre' && s.termineeA
+  )
 
   const debutSemaine = useMemo(() => debutSemaineISO(aujourdHui), [aujourdHui])
   const seancesCetteSemaine = useMemo(
@@ -213,6 +216,15 @@ export default function Dashboard() {
           <div className="card" style={{ padding: 14 }}>
             <p className="small" style={{ fontWeight: 700, marginBottom: 0 }}>
               😌 Jour de repos <span className="muted">· profites-en pour bouger un peu</span>
+            </p>
+          </div>
+        )}
+
+        {autreActiviteDuJour && (
+          <div className="card green" style={{ padding: 14 }}>
+            <p className="small" style={{ fontWeight: 700, margin: 0 }}>
+              🏊 {autreActiviteDuJour.nomActivite} faite aujourd'hui
+              {autreActiviteDuJour.duree_min ? ` · ${autreActiviteDuJour.duree_min} min` : ''}
             </p>
           </div>
         )}

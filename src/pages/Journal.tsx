@@ -150,7 +150,12 @@ export default function Journal() {
             </div>
 
             <div className="card" style={{ padding: 14 }}>
-              {seanceTemplateFaite ? (
+              {seanceFaiteCeJour?.seanceTemplateId === 'autre' ? (
+                <p className="small" style={{ fontWeight: 700, margin: 0 }}>
+                  🏊 {seanceFaiteCeJour.nomActivite} faite
+                  {seanceFaiteCeJour.duree_min && <span className="muted"> · {seanceFaiteCeJour.duree_min} min</span>}
+                </p>
+              ) : seanceTemplateFaite ? (
                 <p className="small" style={{ fontWeight: 700, margin: 0 }}>
                   💪 Séance {seanceTemplateFaite.id} faite
                   <span className="muted"> · {seanceTemplateFaite.lieu === 'salle' ? 'en salle' : 'à la maison'}</span>

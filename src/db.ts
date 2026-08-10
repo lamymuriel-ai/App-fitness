@@ -124,6 +124,11 @@ export async function sauvegarderSeanceLog(seance: SeanceLog) {
   await db.put('seancesLog', seance)
 }
 
+export async function supprimerSeanceLog(id: string) {
+  const db = await getDb()
+  await db.delete('seancesLog', id)
+}
+
 export async function chargerPoidsParExercice(): Promise<PoidsExercice> {
   const db = await getDb()
   const all = await db.getAll('poidsParExercice')

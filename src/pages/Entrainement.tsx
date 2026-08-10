@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import { useAppData } from '../context/AppDataContext'
 import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
-import { dateDuJourISO, debutSemaineISO, formatDateCourt, formatDateLong } from '../utils/date'
+import { dateDuJourISO, debutSemaineISO, formatDateCourt, formatDateLong, genererId } from '../utils/date'
 import { EtatVide } from '../components/ui'
 import type { SeanceLog } from '../types'
 
@@ -13,15 +13,38 @@ function repsTotalExercice(ex: SeanceLog['exercices'][number]): number {
 
 export default function Entrainement() {
   const navigate = useNavigate()
-  const { seancesLog } = useAppData()
+  const { seancesLog, enregistrerSeanceLog, supprimerSeanceLog } = useAppData()
   const [onglet, setOnglet] = useState<'seances' | 'historique'>('seances')
   const [sousOnglet, setSousOnglet] = useState<'seances' | 'progression'>('seances')
   const [semainesOuvertes, setSemainesOuvertes] = useState<Set<string>>(new Set())
   const [seancesOuvertes, setSeancesOuvertes] = useState<Set<string>>(new Set())
+  const [formulaireAutreOuvert, setFormulaireAutreOuvert] = useState(false)
+  const [nomAutreActivite, setNomAutreActivite] = useState('')
+  const [dureeAutreActivite, setDureeAutreActivite] = useState('')
 
   const aujourdHui = dateDuJourISO()
   const debutSemaine = debutSemaineISO(aujourdHui)
   const idSeanceDuJour = PLANNING_SEMAINE[new Date().getDay()]
+
+  const autreActiviteDuJour = seancesLog.find(
+    (s) => s.date === aujourdHui && s.seanceTemplateId === 'autre' && s.termineeA
+  )
+
+  async function enregistrerAutreActivite() {
+    if (!nomAutreActivite.trim()) return
+    await enregistrerSeanceLog({
+      id: genererId(),
+      seanceTemplateId: 'autre',
+      date: aujourdHui,
+      termineeA: new Date().toISOString(),
+      exercices: [],
+      nomActivite: nomAutreActivite.trim(),
+      duree_min: dureeAutreActivite ? Number(dureeAutreActivite) : undefined,
+    })
+    setFormulaireAutreOuvert(false)
+    setNomAutreActivite('')
+    setDureeAutreActivite('')
+  }
 
   const terminees = useMemo(
     () =>
@@ -165,6 +188,62 @@ export default function Entrainement() {
             )
           })}
 
+        {onglet === 'seances' &&
+          (autreActiviteDuJour ? (
+            <div className="card green" style={{ padding: 14, marginBottom: 10 }}>
+              <div className="row-between" style={{ alignItems: 'center', gap: 10 }}>
+                <p className="small" style={{ fontWeight: 700, margin: 0 }}>
+                  🏊 {autreActiviteDuJour.nomActivite} faite aujourd'hui
+                  {autreActiviteDuJour.duree_min ? ` · ${autreActiviteDuJour.duree_min} min` : ''}
+                </p>
+                <button
+                  className="btn-ghost btn-sm"
+                  onClick={() => supprimerSeanceLog(autreActiviteDuJour.id)}
+                  aria-label="Supprimer cette activité"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ) : formulaireAutreOuvert ? (
+            <div className="card" style={{ padding: 14, marginBottom: 10 }}>
+              <h3 style={{ fontSize: '0.95rem', marginBottom: 8 }}>🏊 Autre activité aujourd'hui</h3>
+              <div className="field-row" style={{ alignItems: 'flex-end' }}>
+                <div className="field" style={{ flex: 2 }}>
+                  <label>Activité</label>
+                  <input
+                    type="text"
+                    value={nomAutreActivite}
+                    onChange={(e) => setNomAutreActivite(e.target.value)}
+                    placeholder="Natation, vélo, randonnée..."
+                  />
+                </div>
+                <div className="field" style={{ flex: 1 }}>
+                  <label>Durée (min)</label>
+                  <input
+                    type="number"
+                    value={dureeAutreActivite}
+                    onChange={(e) => setDureeAutreActivite(e.target.value)}
+                    onFocus={(e) => e.target.select()}
+                    placeholder="Optionnel"
+                  />
+                </div>
+              </div>
+              <div className="row gap-8 mt-8">
+                <button className="btn btn-secondary btn-sm" onClick={enregistrerAutreActivite}>
+                  Enregistrer
+                </button>
+                <button className="btn-ghost btn-sm" onClick={() => setFormulaireAutreOuvert(false)}>
+                  Annuler
+                </button>
+              </div>
+            </div>
+          ) : (
+            <button className="link-btn" onClick={() => setFormulaireAutreOuvert(true)}>
+              🏊 Pas de salle aujourd'hui ? Enregistrer une autre activité →
+            </button>
+          ))}
+
         {onglet === 'historique' &&
           (terminees.length === 0 ? (
             <EtatVide emoji="💪" titre="Pas encore de séance terminée" texte="Tes séances passées apparaîtront ici." />
@@ -211,10 +290,16 @@ export default function Entrainement() {
                                     onClick={() => toggleSeance(log.id)}
                                   >
                                     <span>
-                                      <strong>{template?.nom || log.seanceTemplateId}</strong>{' '}
+                                      <strong>
+                                        {log.seanceTemplateId === 'autre' ? `🏊 ${log.nomActivite}` : template?.nom || log.seanceTemplateId}
+                                      </strong>{' '}
                                       <span className="muted small">{formatDateCourt(log.date)}</span>
                                     </span>
-                                    <span className="pill green">{setsFaits}/{setsTotal} séries</span>
+                                    {log.seanceTemplateId === 'autre' ? (
+                                      log.duree_min && <span className="pill green">{log.duree_min} min</span>
+                                    ) : (
+                                      <span className="pill green">{setsFaits}/{setsTotal} séries</span>
+                                    )}
                                   </button>
 
                                   {detailOuvert && (

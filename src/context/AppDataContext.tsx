@@ -26,6 +26,7 @@ interface AppDataContextValue {
   ajouterRepasEnMasse: (repasArray: Repas[]) => Promise<void>
   supprimerRepasParId: (id: string) => Promise<void>
   enregistrerSeanceLog: (seance: SeanceLog) => Promise<void>
+  supprimerSeanceLog: (id: string) => Promise<void>
   definirPoidsExercice: (nom: string, poids_kg: number) => Promise<void>
   enregistrerSuiviJour: (entree: SuiviJournalier) => Promise<void>
   enregistrerSuiviJourEnMasse: (entrees: SuiviJournalier[]) => Promise<void>
@@ -121,6 +122,11 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
           return [...prev, seance]
         })
         await db.sauvegarderSeanceLog(seance)
+      },
+
+      async supprimerSeanceLog(id) {
+        setSeancesLog((prev) => prev.filter((s) => s.id !== id))
+        await db.supprimerSeanceLog(id)
       },
 
       async definirPoidsExercice(nom, poids_kg) {
