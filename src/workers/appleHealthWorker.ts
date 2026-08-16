@@ -25,23 +25,6 @@ const TAILLE_MAX_VERIF_ENTETE = 4096
 // quel que soit le navigateur.
 const TAILLE_MORCEAU_LECTURE = 32 * 1024
 
-// On tourne déjà dans un Worker (pas le fil principal), donc rendre la main à la
-// boucle d'événements après CHAQUE morceau de 32 Ko ne sert à rien pour la
-// réactivité de l'UI — et il n'y a pas de bouton d'annulation qui aurait besoin
-// de ce point de contrôle régulier. `setTimeout(0)` a un coût minimum réel
-// (souvent 1 à plusieurs ms) côté navigateur ; répété des dizaines de milliers de
-// fois sur un gros fichier, cette seule pause artificielle pouvait représenter la
-// majorité du temps d'import. On ne cède la main que de loin en loin, pour que la
-// barre de progression reste vivante sans payer ce coût à chaque morceau.
-const INTERVALLE_MIN_CEDE_MAIN_MS = 50
-let dernierCedeMain = 0
-async function cederLaMainSiNecessaire(): Promise<void> {
-  const maintenant = performance.now()
-  if (maintenant - dernierCedeMain < INTERVALLE_MIN_CEDE_MAIN_MS) return
-  dernierCedeMain = maintenant
-  await new Promise((resolve) => setTimeout(resolve, 0))
-}
-
 async function* lireParMorceaux(
   file: File,
   debut = 0,
@@ -117,7 +100,7 @@ async function analyserZipEnFlux(
       lu += chunk.byteLength
       traiterTexteDecompresse(decoder.decode(chunk, { stream: !estDernier }))
       surProgression(total > 0 ? lu / total : 0)
-      await cederLaMainSiNecessaire()
+      await new Promise((resolve) => setTimeout(resolve, 0))
     }
     if (!enteteVerifiee) {
       throw new Error("Ce fichier ne ressemble pas à un export de l'app Santé (export.xml attendu).")
@@ -144,7 +127,7 @@ async function analyserZipEnFlux(
     lu += chunk.byteLength
     inflateur.push(chunk, estDernier)
     surProgression(total > 0 ? lu / total : 0)
-    await cederLaMainSiNecessaire()
+    await new Promise((resolve) => setTimeout(resolve, 0))
   }
 
   if (erreurInflate) {
@@ -178,14 +161,14 @@ async function analyserXmlBrutEnFlux(
         throw new Error("Ce fichier ne ressemble pas à un export de l'app Santé (export.xml attendu).")
       } else {
         surProgression(total > 0 ? lu / total : 0)
-        await cederLaMainSiNecessaire()
+        await new Promise((resolve) => setTimeout(resolve, 0))
         continue
       }
     }
 
     analyseur.pousser(texte)
     surProgression(total > 0 ? lu / total : 0)
-    await cederLaMainSiNecessaire()
+    await new Promise((resolve) => setTimeout(resolve, 0))
   }
 
   if (!enteteVerifiee) {

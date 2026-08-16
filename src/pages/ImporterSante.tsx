@@ -26,7 +26,6 @@ function filtrerJoursRecents(resultat: ResultatImportSante): ResultatImportSante
     poids: filtrer(resultat.poids),
     sommeil: filtrer(resultat.sommeil),
     nutrition: new Map([...resultat.nutrition].filter(([horodatage]) => horodatage.slice(0, 10) >= seuil)),
-    typesNutritionInconnus: resultat.typesNutritionInconnus,
     premiereDate: resultat.premiereDate,
     derniereDate: resultat.derniereDate,
   }

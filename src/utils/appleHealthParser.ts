@@ -15,8 +15,6 @@ export interface ResultatImportSante {
   poids: Map<string, number> // clé = jour, valeur en kg
   sommeil: Map<string, number> // clé = jour (nuit attribuée au jour du réveil), valeur en heures
   nutrition: Map<string, EntreeAlimentaire> // clé = horodatage exact (un repas = une entrée)
-  /** Diagnostic : types "HKQuantityTypeIdentifierDietary…" rencontrés mais non reconnus (clé = type brut, valeur = nb d'occurrences) — utile ex. pour retrouver le vrai nom utilisé pour l'oméga-3, absent de la liste officielle Apple. */
-  typesNutritionInconnus: Map<string, number>
   premiereDate: string | null
   derniereDate: string | null
 }
@@ -119,11 +117,6 @@ const REGEX_RECORD = new RegExp(
   'g'
 )
 const REGEX_CORRELATION_ALIMENT = /<Correlation type="HKCorrelationTypeIdentifierFood"[^>]*?>[\s\S]*?<\/Correlation>/g
-// Diagnostic : la liste officielle des nutriments HealthKit n'a pas d'identifiant dédié à
-// l'oméga-3 — les apps tierces qui le calculent (ex. Micron) doivent forcément l'écrire sous
-// un autre nom "Dietary…". Ce regex ne capture que l'attribut `type` de l'ouverture de
-// balise (pas tout le bloc), pour rester léger même sur un export volumineux.
-const REGEX_TYPE_DIETARY_BRUT = /<Record type="(HKQuantityTypeIdentifierDietary[^"]*)"/g
 const REGEX_OUVERTURE = /^<Record\b[^>]*?(?:\/>|>)/
 const REGEX_START = /startDate="([^"]+)"/
 const REGEX_END = /endDate="([^"]+)"/
@@ -195,15 +188,11 @@ export class AnalyseurSanteIncremental {
   private readonly sommeilIntervalles = new Map<string, Array<{ debut: number; fin: number }>>()
   private readonly nutrition = new Map<string, EntreeAlimentaire>()
   private readonly nomsAliments = new Map<string, string>()
-  private readonly typesDietaryBrutsCompte = new Map<string, number>()
 
   private readonly scannerRecord = new ScannerIncremental(REGEX_RECORD, (m) => this.traiterRecord(m))
   private readonly scannerCorrelation = new ScannerIncremental(REGEX_CORRELATION_ALIMENT, (m) =>
     this.traiterCorrelationAliment(m[0])
   )
-  private readonly scannerTypeDietaryBrut = new ScannerIncremental(REGEX_TYPE_DIETARY_BRUT, (m) => {
-    this.typesDietaryBrutsCompte.set(m[1], (this.typesDietaryBrutsCompte.get(m[1]) || 0) + 1)
-  })
 
   private traiterCorrelationAliment(bloc: string) {
     const startMatch = REGEX_START.exec(bloc)
@@ -306,16 +295,11 @@ export class AnalyseurSanteIncremental {
   pousser(texte: string) {
     this.scannerCorrelation.pousser(texte)
     this.scannerRecord.pousser(texte)
-    this.scannerTypeDietaryBrut.pousser(texte)
   }
 
   /** Reliquat total actuellement gardé en mémoire (pour surveillance/tests uniquement). */
   reliquatOctets() {
-    return (
-      this.scannerCorrelation.tailleReliquat() +
-      this.scannerRecord.tailleReliquat() +
-      this.scannerTypeDietaryBrut.tailleReliquat()
-    )
+    return this.scannerCorrelation.tailleReliquat() + this.scannerRecord.tailleReliquat()
   }
 
   /** À appeler une fois tout le contenu poussé, pour obtenir le résultat final agrégé. */
@@ -335,11 +319,6 @@ export class AnalyseurSanteIncremental {
       pas.set(jour, Math.round(Math.max(...parSource.values())))
     }
 
-    const typesNutritionInconnus = new Map<string, number>()
-    for (const [type, compte] of this.typesDietaryBrutsCompte) {
-      if (!MAPPING_NUTRITION[type]) typesNutritionInconnus.set(type, compte)
-    }
-
     const tousLesJours = new Set<string>([
       ...pas.keys(),
       ...poids.keys(),
@@ -353,7 +332,6 @@ export class AnalyseurSanteIncremental {
       poids,
       sommeil,
       nutrition: this.nutrition,
-      typesNutritionInconnus,
       premiereDate: joursTries[0] || null,
       derniereDate: joursTries[joursTries.length - 1] || null,
     }
