@@ -124,6 +124,7 @@ const REGEX_VALEUR = /value="([^"]+)"/
 const REGEX_UNITE = /unit="([^"]+)"/
 const REGEX_SOURCE = /sourceName="([^"]*)"/
 const REGEX_NOM = /<MetadataEntry key="HKFoodType" value="([^"]*)"/
+const REGEX_STARTDATES_IMBRIQUEES = /<Record\b[^>]*?startDate="([^"]+)"/g
 
 /**
  * Un « scanner » incrémental générique : on lui pousse du texte au fil de l'eau (par
@@ -195,10 +196,18 @@ export class AnalyseurSanteIncremental {
   )
 
   private traiterCorrelationAliment(bloc: string) {
-    const startMatch = REGEX_START.exec(bloc)
     const nomMatch = REGEX_NOM.exec(bloc)
-    if (startMatch && nomMatch && nomMatch[1]) {
-      this.nomsAliments.set(startMatch[1], nomMatch[1])
+    if (!nomMatch || !nomMatch[1]) return
+    // On associe le nom à la date de la corrélation ELLE-MÊME, mais aussi à celle de
+    // CHACUN des <Record> imbriqués (protéines, lipides, calories...) : leur startDate ne
+    // correspond pas toujours exactement à celui de la corrélation parente (précision,
+    // arrondi d'écriture selon l'app source), et traiterRecord() ne cherche le nom que
+    // sous l'horodatage exact de CE record précis — sans ça, un nom pourtant présent dans
+    // le fichier pouvait ne jamais s'associer et le repas retombait sur le libellé générique.
+    REGEX_STARTDATES_IMBRIQUEES.lastIndex = 0
+    let m: RegExpExecArray | null
+    while ((m = REGEX_STARTDATES_IMBRIQUEES.exec(bloc)) !== null) {
+      this.nomsAliments.set(m[1], nomMatch[1])
     }
   }
 

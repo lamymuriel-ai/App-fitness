@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { SEANCES_TEMPLATES } from '../data/defaults'
 import { dateDuJourISO, debutSemaineISO, genererId } from '../utils/date'
@@ -22,6 +22,8 @@ export default function SeanceActive() {
 function SeanceActiveInner() {
   const { templateId } = useParams()
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const modeAllege = searchParams.get('allegee') === '1'
   const { seancesLog, enregistrerSeanceLog, poidsParExercice, definirPoidsExercice } = useAppData()
 
   const template = SEANCES_TEMPLATES.find((s) => s.id === templateId)
@@ -49,10 +51,13 @@ function SeanceActiveInner() {
     const exercices: ExerciceLog[] = template.exercices.map((ex) => {
       const existant = logExistant?.exercices.find((e) => e.nom === ex.nom)
       if (existant) return existant
+      // Reprise en douceur après une longue absence : une série de moins par exercice,
+      // sans jamais descendre sous 2 (en dessous, l'exercice perd son intérêt).
+      const nbSeries = modeAllege ? Math.max(2, ex.series - 1) : ex.series
       return {
         nom: ex.nom,
         poidsUtilise_kg: ex.poidsDuCorps ? undefined : poidsParExercice[ex.nom],
-        sets: Array.from({ length: ex.series }, () => ({ fait: false })),
+        sets: Array.from({ length: nbSeries }, () => ({ fait: false })),
       }
     })
     if (logExistant) return { ...logExistant, exercices }
@@ -167,6 +172,11 @@ function SeanceActiveInner() {
         On fait les 3 séries d'un exercice à la suite (avec repos entre chaque série), puis on
         passe au suivant — ce n'est pas un circuit.
       </p>
+      {modeAllege && !logExistant && (
+        <p className="small" style={{ fontWeight: 700, color: 'var(--pink-deep)', margin: '-8px 0 8px' }}>
+          🌱 Reprise en douceur : une série de moins par exercice aujourd'hui.
+        </p>
+      )}
 
       <div className="card">
         <div className="progress-label-row">

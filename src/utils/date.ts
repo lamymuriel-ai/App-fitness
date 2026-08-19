@@ -61,6 +61,14 @@ export function debutSemaineISO(dateISO = dateDuJourISO()): string {
   return versISOLocale(d)
 }
 
+/** Nombre de jours entre deux dates ISO (YYYY-MM-DD), positif si `dateFinISO` est après `dateDebutISO`. */
+export function joursEntre(dateDebutISO: string, dateFinISO: string): number {
+  return Math.round(
+    (new Date(`${dateFinISO}T00:00:00`).getTime() - new Date(`${dateDebutISO}T00:00:00`).getTime()) /
+      (1000 * 60 * 60 * 24)
+  )
+}
+
 /** Ajoute (ou retranche si négatif) un nombre de jours à une date ISO (YYYY-MM-DD), en heure locale. */
 export function ajouterJours(dateISO: string, n: number): string {
   const d = new Date(`${dateISO}T00:00:00`)

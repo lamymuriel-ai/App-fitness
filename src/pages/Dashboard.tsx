@@ -8,6 +8,7 @@ import { ajouterJours, dateDuJourISO, debutSemaineISO, estAujourdhui, formatDate
 import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
 import { detecterStagnation } from '../utils/stagnation'
 import { phraseDuJour } from '../data/phrasesEncouragement'
+import { calculerStreakSemaines } from '../utils/streak'
 import AlerteStagnationBanniere from '../components/AlerteStagnationBanniere'
 
 /**
@@ -53,6 +54,8 @@ export default function Dashboard() {
   const autreActiviteDuJour = seancesLog.find(
     (s) => s.date === aujourdHui && s.seanceTemplateId === 'autre' && s.termineeA
   )
+
+  const streakSemaines = useMemo(() => calculerStreakSemaines(seancesLog, aujourdHui), [seancesLog, aujourdHui])
 
   const debutSemaine = useMemo(() => debutSemaineISO(aujourdHui), [aujourdHui])
   const seancesCetteSemaine = useMemo(
@@ -234,6 +237,11 @@ export default function Dashboard() {
             <h3 style={{ fontSize: '0.95rem', margin: 0 }}>📅 Cette semaine</h3>
             <span className="pill yellow">{nbSeancesFaites}/{seancesCetteSemaine.length}</span>
           </div>
+          {streakSemaines >= 1 && (
+            <p className="small" style={{ fontWeight: 700, color: 'var(--pink-deep)', margin: '2px 0 8px' }}>
+              🔥 {streakSemaines} semaine{streakSemaines > 1 ? 's' : ''} d'affilée à l'objectif !
+            </p>
+          )}
           <div style={{ display: 'flex', gap: 12 }}>
             {seancesCetteSemaine.map(({ seance, faite }) => (
               <div

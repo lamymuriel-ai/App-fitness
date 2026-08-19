@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import { useAppData } from '../context/AppDataContext'
 import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
-import { dateDuJourISO, debutSemaineISO, formatDateCourt, formatDateLong, genererId } from '../utils/date'
+import { dateDuJourISO, debutSemaineISO, formatDateCourt, formatDateLong, genererId, joursEntre } from '../utils/date'
 import { EtatVide } from '../components/ui'
 import type { SeanceLog } from '../types'
 
@@ -21,6 +21,7 @@ export default function Entrainement() {
   const [formulaireAutreOuvert, setFormulaireAutreOuvert] = useState(false)
   const [nomAutreActivite, setNomAutreActivite] = useState('')
   const [dureeAutreActivite, setDureeAutreActivite] = useState('')
+  const [modeAllegeActif, setModeAllegeActif] = useState(false)
 
   const aujourdHui = dateDuJourISO()
   const debutSemaine = debutSemaineISO(aujourdHui)
@@ -29,6 +30,21 @@ export default function Entrainement() {
   const autreActiviteDuJour = seancesLog.find(
     (s) => s.date === aujourdHui && s.seanceTemplateId === 'autre' && s.termineeA
   )
+
+  // Repère une reprise après une longue coupure (voyage, blessure...) pour proposer de
+  // repartir en douceur, plutôt que de la remettre face aux mêmes séries qu'avant la
+  // pause — seuil de 10 jours, et seulement s'il y a un historique (sinon rien à comparer
+  // pour une utilisatrice qui commence tout juste).
+  const SEUIL_ABSENCE_JOURS = 10
+  const derniereSeanceTerminee = useMemo(
+    () =>
+      [...seancesLog]
+        .filter((s) => s.termineeA)
+        .sort((a, b) => b.date.localeCompare(a.date))[0],
+    [seancesLog]
+  )
+  const absenceProlongee =
+    !!derniereSeanceTerminee && joursEntre(derniereSeanceTerminee.date, aujourdHui) >= SEUIL_ABSENCE_JOURS
 
   async function enregistrerAutreActivite() {
     if (!nomAutreActivite.trim()) return
@@ -150,6 +166,33 @@ export default function Entrainement() {
           </button>
         </div>
 
+        {onglet === 'seances' && absenceProlongee && !modeAllegeActif && (
+          <div className="card yellow" style={{ padding: 14, marginBottom: 10 }}>
+            <p className="small" style={{ fontWeight: 700, margin: 0 }}>
+              😌 Pas de séance depuis un moment — pas de souci, tu peux reprendre en douceur.
+            </p>
+            <p className="small muted" style={{ margin: '4px 0 8px' }}>
+              2 séries au lieu de 3 sur ta prochaine séance, pour repartir tranquillement.
+            </p>
+            <button className="btn btn-secondary btn-sm" onClick={() => setModeAllegeActif(true)}>
+              Activer la reprise en douceur
+            </button>
+          </div>
+        )}
+
+        {onglet === 'seances' && modeAllegeActif && (
+          <div className="card" style={{ padding: 14, marginBottom: 10 }}>
+            <div className="row-between" style={{ alignItems: 'center' }}>
+              <p className="small" style={{ fontWeight: 700, margin: 0 }}>
+                🌱 Reprise en douceur activée (2 séries au lieu de 3)
+              </p>
+              <button className="btn-ghost btn-sm" onClick={() => setModeAllegeActif(false)}>
+                Désactiver
+              </button>
+            </div>
+          </div>
+        )}
+
         {onglet === 'seances' &&
           SEANCES_TEMPLATES.map((seance) => {
             // Faite un autre jour cette semaine (pas seulement aujourd'hui) : ça reste "Revoir"
@@ -179,7 +222,9 @@ export default function Entrainement() {
                   <button
                     className="btn btn-primary btn-sm"
                     style={{ flexShrink: 0 }}
-                    onClick={() => navigate(`/entrainement/seance/${seance.id}`)}
+                    onClick={() =>
+                      navigate(`/entrainement/seance/${seance.id}${modeAllegeActif ? '?allegee=1' : ''}`)
+                    }
                   >
                     {faiteCetteSemaine ? 'Revoir' : 'Commencer'}
                   </button>
