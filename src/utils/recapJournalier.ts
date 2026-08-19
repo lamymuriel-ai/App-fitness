@@ -65,7 +65,11 @@ function statutSport(date: string, seancesLog: SeanceLog[]): StatutSport {
 
 function statutGlobal(statuts: StatutMetrique[]): StatutMetrique {
   const avecDonnees = statuts.filter((s) => s !== 'absent')
-  if (avecDonnees.length === 0) return 'absent'
+  // Il faut au moins la moitié des métriques suivies ce jour-là avec une vraie donnée
+  // pour juger la journée dans son ensemble — sinon une seule métrique positive (ex. la
+  // séance de sport faite) suffisait à afficher toute la journée en vert, même quand le
+  // sommeil, les calories et les pas n'avaient tout simplement pas été renseignés.
+  if (avecDonnees.length === 0 || avecDonnees.length < statuts.length / 2) return 'absent'
   return avecDonnees.some((s) => s === 'attention') ? 'attention' : 'ok'
 }
 
