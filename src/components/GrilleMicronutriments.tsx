@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import type { Micronutriments } from '../types'
 import { analyserMicronutriments } from '../utils/nutrition'
+import InfoBulleMicronutriment from './InfoBulleMicronutriment'
 
 export default function GrilleMicronutriments({
   apports,
@@ -11,20 +13,25 @@ export default function GrilleMicronutriments({
   titre?: string
 }) {
   const analyse = analyserMicronutriments(apports, reference)
+  const [cleOuverte, setCleOuverte] = useState<keyof Micronutriments | null>(null)
+  const nutrimentOuvert = analyse.find((n) => n.cle === cleOuverte) ?? null
 
   return (
     <div>
       <h3>{titre}</h3>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, minWidth: 0 }}>
         {analyse.map((n) => (
-          <div
+          <button
             key={n.cle}
+            onClick={() => setCleOuverte(n.cle)}
             style={{
               background: n.statut === 'faible' ? '#fdecd8' : n.statut === 'eleve' ? '#fbe3e7' : '#f7f3f5',
+              border: 'none',
               borderRadius: 14,
               padding: '8px 10px',
               minWidth: 0,
               overflow: 'hidden',
+              textAlign: 'left',
             }}
           >
             <div className="row-between" style={{ gap: 4, minWidth: 0 }}>
@@ -56,9 +63,11 @@ export default function GrilleMicronutriments({
             >
               {Math.round(n.apport * 10) / 10}{n.unite} / {n.reference}{n.unite}
             </div>
-          </div>
+          </button>
         ))}
       </div>
+
+      <InfoBulleMicronutriment nutriment={nutrimentOuvert} onFermer={() => setCleOuverte(null)} />
     </div>
   )
 }

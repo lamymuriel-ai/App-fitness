@@ -1,9 +1,11 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { BarreProgression, BarreMacros, EtatVide } from '../components/ui'
+import InfoBulleMicronutriment from '../components/InfoBulleMicronutriment'
 import { genererRapportHebdomadaire, genererAnalyseHebdomadaire, genererConseilsSemaineSuivante } from '../utils/rapportHebdomadaire'
 import { ajouterJours, dateDuJourISO, debutSemaineISO, formatDateCourt } from '../utils/date'
+import type { Micronutriments } from '../types'
 
 function couleurDelta(delta: number, objectifPerte: boolean): string {
   if (Math.abs(delta) < 0.05) return 'var(--text-soft)'
@@ -15,6 +17,7 @@ export default function BilanHebdomadaire() {
   const navigate = useNavigate()
   const { profil, repas, suiviJournalier, suiviHebdomadaire, seancesLog } = useAppData()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [cleOuverte, setCleOuverte] = useState<keyof Micronutriments | null>(null)
 
   const semaineCourante = useMemo(() => debutSemaineISO(dateDuJourISO()), [])
   const semaine = searchParams.get('semaine') || semaineCourante
@@ -146,20 +149,26 @@ export default function BilanHebdomadaire() {
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                 {rapport.microsFaibles.map((m) => (
-                  <div
+                  <button
                     key={m.cle}
+                    onClick={() => setCleOuverte(m.cle)}
                     className="row-between"
-                    style={{ background: '#fdecd8', borderRadius: 10, padding: '6px 10px' }}
+                    style={{ background: '#fdecd8', border: 'none', borderRadius: 10, padding: '6px 10px', width: '100%' }}
                   >
                     <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>
                       {m.emoji} {m.label}
                     </span>
                     <span className="muted small">{m.pourcentage}%</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             )}
           </div>
+
+          <InfoBulleMicronutriment
+            nutriment={rapport.microsAnalyse.find((n) => n.cle === cleOuverte) ?? null}
+            onFermer={() => setCleOuverte(null)}
+          />
 
           <div className="card blue" style={{ padding: 16 }}>
             <h3 style={{ fontSize: '1rem', marginBottom: 8 }}>🎯 Pour la semaine prochaine</h3>

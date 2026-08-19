@@ -42,6 +42,8 @@ export interface MicronutrimentInfo {
   unite: string
   reference: number
   emoji: string
+  /** Aliments courants riches en ce nutriment, en langage naturel (ex. "viande rouge, lentilles, épinards"). */
+  sources: string
 }
 
 export interface ObjectifsNutritionnels {

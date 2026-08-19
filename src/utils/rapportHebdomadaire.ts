@@ -7,7 +7,7 @@ import type {
   Micronutriments,
 } from '../types'
 import { PLANNING_SEMAINE } from '../data/defaults'
-import { totauxRepas, ajouterSupplements, analyserMicronutriments } from './nutrition'
+import { totauxRepas, ajouterSupplements, analyserMicronutriments, type AnalyseNutriment } from './nutrition'
 import { ajouterJours } from './date'
 import { moyenneMobile7Jours } from './stagnation'
 
@@ -19,7 +19,8 @@ export interface RapportHebdomadaire {
   proteines_g: { moyenne: number; objectif: number }
   lipides_g: { moyenne: number; objectif: number }
   glucides_g: { moyenne: number; objectif: number }
-  microsFaibles: { cle: keyof Micronutriments; label: string; emoji: string; pourcentage: number }[]
+  microsFaibles: { cle: keyof Micronutriments; label: string; emoji: string; sources: string; pourcentage: number }[]
+  microsAnalyse: AnalyseNutriment[]
   pas: { moyenne: number; nbJours: number } | null
   sommeil_h: { moyenne: number; nbJours: number } | null
   poids: { debut: number; fin: number; delta: number } | null
@@ -59,9 +60,10 @@ export function genererRapportHebdomadaire(
   for (const cle of Object.keys(moyenneMicros) as (keyof Micronutriments)[]) {
     moyenneMicros[cle] = totaux.micros[cle] / nbJoursPourMoyenne
   }
-  const microsFaibles = analyserMicronutriments(ajouterSupplements(moyenneMicros), objectifs.micros)
+  const microsAnalyse = analyserMicronutriments(ajouterSupplements(moyenneMicros), objectifs.micros)
+  const microsFaibles = microsAnalyse
     .filter((n) => n.statut === 'faible')
-    .map((n) => ({ cle: n.cle, label: n.label, emoji: n.emoji, pourcentage: n.pourcentage }))
+    .map((n) => ({ cle: n.cle, label: n.label, emoji: n.emoji, sources: n.sources, pourcentage: n.pourcentage }))
 
   const suiviSemaine = suiviJournalier.filter((e) => dansLaSemaine(e.date))
 
@@ -114,25 +116,12 @@ export function genererRapportHebdomadaire(
     lipides_g,
     glucides_g,
     microsFaibles,
+    microsAnalyse,
     pas,
     sommeil_h,
     poids,
     seances: { faites: seancesFaites, planifiees },
   }
-}
-
-const SOURCES_MICRO: Partial<Record<keyof Micronutriments, string>> = {
-  fer_mg: 'viande rouge, lentilles, épinards',
-  calcium_mg: 'produits laitiers, fromage blanc, amandes',
-  magnesium_mg: 'oléagineux, chocolat noir, légumineuses',
-  zinc_mg: 'viande, œufs, graines de courge',
-  vitamineA_ug: 'carottes, patate douce, épinards',
-  vitamineC_mg: 'agrumes, kiwi, poivron',
-  vitamineD_ug: 'poisson gras, œufs, un peu de soleil',
-  vitamineE_mg: 'huiles végétales, amandes, avocat',
-  vitamineB6_mg: 'volaille, poisson, pommes de terre',
-  vitamineB12_ug: 'viande, poisson, œufs, produits laitiers',
-  fibres_g: 'légumes, légumineuses, céréales complètes',
 }
 
 export interface AnalyseHebdomadaire {
@@ -222,7 +211,7 @@ export function genererAnalyseHebdomadaire(
   } else if (rapport.microsFaibles.length > 0) {
     const items = rapport.microsFaibles
       .slice(0, 3)
-      .map((m) => `${m.label.toLowerCase()}${SOURCES_MICRO[m.cle] ? ` (${SOURCES_MICRO[m.cle]})` : ''}`)
+      .map((m) => `${m.label.toLowerCase()} (${m.sources})`)
       .join(', ')
     points.push(`🔬 Quelques micronutriments un peu faibles cette semaine : ${items}.`)
   }
@@ -313,7 +302,7 @@ export function genererConseilsSemaineSuivante(rapport: RapportHebdomadaire, pro
   if (rapport.microsFaibles.length > 0) {
     const items = rapport.microsFaibles
       .slice(0, 2)
-      .map((m) => `${m.label.toLowerCase()}${SOURCES_MICRO[m.cle] ? ` (${SOURCES_MICRO[m.cle]})` : ''}`)
+      .map((m) => `${m.label.toLowerCase()} (${m.sources})`)
       .join(', ')
     conseils.push(`🔬 Pense à ajouter un peu plus de ${items} la semaine prochaine.`)
   }

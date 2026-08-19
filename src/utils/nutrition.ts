@@ -105,6 +105,7 @@ export interface AnalyseNutriment {
   labelCourt: string
   unite: string
   emoji: string
+  sources: string
   apport: number
   reference: number
   pourcentage: number
@@ -132,6 +133,7 @@ export function analyserMicronutriments(
       labelCourt: info.labelCourt ?? info.label,
       unite: info.unite,
       emoji: info.emoji,
+      sources: info.sources,
       apport,
       reference,
       pourcentage,

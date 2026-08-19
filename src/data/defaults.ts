@@ -20,17 +20,17 @@ export const SUPPLEMENTS_QUOTIDIENS: Partial<Micronutriments> = {
 }
 
 export const MICRO_REFERENCE: MicronutrimentInfo[] = [
-  { cle: 'fer_mg', label: 'Fer', unite: 'mg', reference: 16, emoji: '🩸' },
-  { cle: 'calcium_mg', label: 'Calcium', unite: 'mg', reference: 950, emoji: '🦴' },
-  { cle: 'magnesium_mg', label: 'Magnésium', labelCourt: 'Magnés.', unite: 'mg', reference: 360, emoji: '⚡' },
-  { cle: 'zinc_mg', label: 'Zinc', unite: 'mg', reference: 11, emoji: '🛡️' },
-  { cle: 'vitamineA_ug', label: 'Vitamine A', labelCourt: 'Vit. A', unite: 'µg', reference: 650, emoji: '👁️' },
-  { cle: 'vitamineC_mg', label: 'Vitamine C', labelCourt: 'Vit. C', unite: 'mg', reference: 110, emoji: '🍊' },
-  { cle: 'vitamineD_ug', label: 'Vitamine D', labelCourt: 'Vit. D', unite: 'µg', reference: 15, emoji: '☀️' },
-  { cle: 'vitamineE_mg', label: 'Vitamine E', labelCourt: 'Vit. E', unite: 'mg', reference: 11, emoji: '🌰' },
-  { cle: 'vitamineB6_mg', label: 'Vitamine B6', labelCourt: 'Vit. B6', unite: 'mg', reference: 1.6, emoji: '🧠' },
-  { cle: 'vitamineB12_ug', label: 'Vitamine B12', labelCourt: 'Vit. B12', unite: 'µg', reference: 4, emoji: '🔋' },
-  { cle: 'fibres_g', label: 'Fibres', unite: 'g', reference: 30, emoji: '🌾' },
+  { cle: 'fer_mg', label: 'Fer', unite: 'mg', reference: 16, emoji: '🩸', sources: 'viande rouge, lentilles, épinards' },
+  { cle: 'calcium_mg', label: 'Calcium', unite: 'mg', reference: 950, emoji: '🦴', sources: 'produits laitiers, fromage blanc, amandes' },
+  { cle: 'magnesium_mg', label: 'Magnésium', labelCourt: 'Magnés.', unite: 'mg', reference: 360, emoji: '⚡', sources: 'oléagineux, chocolat noir, légumineuses' },
+  { cle: 'zinc_mg', label: 'Zinc', unite: 'mg', reference: 11, emoji: '🛡️', sources: 'viande, œufs, graines de courge' },
+  { cle: 'vitamineA_ug', label: 'Vitamine A', labelCourt: 'Vit. A', unite: 'µg', reference: 650, emoji: '👁️', sources: 'carottes, patate douce, épinards' },
+  { cle: 'vitamineC_mg', label: 'Vitamine C', labelCourt: 'Vit. C', unite: 'mg', reference: 110, emoji: '🍊', sources: 'agrumes, kiwi, poivron' },
+  { cle: 'vitamineD_ug', label: 'Vitamine D', labelCourt: 'Vit. D', unite: 'µg', reference: 15, emoji: '☀️', sources: 'poisson gras, œufs, un peu de soleil' },
+  { cle: 'vitamineE_mg', label: 'Vitamine E', labelCourt: 'Vit. E', unite: 'mg', reference: 11, emoji: '🌰', sources: 'huiles végétales, amandes, avocat' },
+  { cle: 'vitamineB6_mg', label: 'Vitamine B6', labelCourt: 'Vit. B6', unite: 'mg', reference: 1.6, emoji: '🧠', sources: 'volaille, poisson, pommes de terre' },
+  { cle: 'vitamineB12_ug', label: 'Vitamine B12', labelCourt: 'Vit. B12', unite: 'µg', reference: 4, emoji: '🔋', sources: 'viande, poisson, œufs, produits laitiers' },
+  { cle: 'fibres_g', label: 'Fibres', unite: 'g', reference: 30, emoji: '🌾', sources: 'légumes, légumineuses, céréales complètes' },
   // Pas d'oméga-3 ici : Micron ne le synchronise pas vers Santé (confirmé), la valeur
   // importée est donc toujours 0 — l'inclure ferait remonter un faux manque en
   // permanence dans les alertes et les suggestions de repas, pour une donnée qu'on ne
