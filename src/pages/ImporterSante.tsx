@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import {
   analyserExportSante,
-  parserHorodatageApple,
   type ResultatImportSante,
   type EntreeAlimentaire,
 } from '../utils/appleHealthImport'
@@ -31,18 +30,28 @@ function filtrerJoursRecents(resultat: ResultatImportSante): ResultatImportSante
   }
 }
 
+// Jour + heure locaux tels qu'enregistrés par Santé, ex. "2026-07-20 19:30:00 +0200" -> jour
+// "2026-07-20", heure 19, minute 30 — le décalage horaire en fin de chaîne est ignoré.
+const REGEX_JOUR_HEURE_LOCALE = /^(\d{4}-\d{2}-\d{2}) (\d{2}):(\d{2}):/
+
 function construireRepasImport(nutrition: Map<string, EntreeAlimentaire>): Repas[] {
   const resultats: Repas[] = []
   for (const [horodatage, valeurs] of nutrition) {
-    const epochMs = parserHorodatageApple(horodatage)
-    if (epochMs === null) continue // horodatage illisible, on ignore plutôt que de deviner
-    // Heure locale telle qu'enregistrée (ex. "2026-07-20 19:30:00 +0200" -> 19), pas celle du fuseau
-    // du navigateur qui affiche l'appli : le type de repas doit refléter l'heure réelle du repas.
-    const heureMatch = /^\d{4}-\d{2}-\d{2} (\d{2}):/.exec(horodatage)
-    const heureLocale = heureMatch ? Number(heureMatch[1]) : new Date(epochMs).getUTCHours()
+    const m = REGEX_JOUR_HEURE_LOCALE.exec(horodatage)
+    if (!m) continue // horodatage illisible, on ignore plutôt que de deviner
+    const [, jour, heureStr, minuteStr] = m
+    const heureLocale = Number(heureStr)
+    // On construit la date/heure à partir des composants locaux tels qu'enregistrés par
+    // Santé, sans passer par le décalage GMT de la chaîne d'origine : le jour associé au
+    // repas doit rester celui du jour où il a été mangé (ex. "2026-07-21 00:30:00 +0200"
+    // reste associé au 21), pas glisser au jour précédent une fois reconverti en UTC par
+    // `toISOString()` — ce qui est exactement ce qui se passerait via `epochMs`, dont le
+    // calcul repose sur l'offset GMT plutôt que sur les composants locaux affichés.
+    const d = new Date(`${jour}T00:00:00`)
+    d.setHours(heureLocale, Number(minuteStr), 0, 0)
     resultats.push({
       id: `sante-import-${horodatage}`,
-      dateHeure: new Date(epochMs).toISOString(),
+      dateHeure: d.toISOString(),
       type: typeRepasSuggere(heureLocale),
       nom: valeurs.nom || 'Repas importé (Santé)',
       methode: 'import_sante',
