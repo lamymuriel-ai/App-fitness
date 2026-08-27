@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import FormulaireRepas from '../components/FormulaireRepas'
+import { versDateHeureLocaleISO } from '../utils/date'
 
 function versDateLocale(iso: string): string {
   const d = new Date(iso)
@@ -13,11 +14,13 @@ function versHeureLocale(iso: string): string {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
+// Sérialise en ISO LOCAL (jamais `toISOString()`, qui convertit en UTC et ferait glisser un
+// repas proche de minuit sur la veille — voir versDateHeureLocaleISO).
 function construireDateHeureISO(date: string, heure: string): string {
   const [h, m] = heure.split(':').map(Number)
   const d = new Date(`${date}T00:00:00`)
   d.setHours(h, m, 0, 0)
-  return d.toISOString()
+  return versDateHeureLocaleISO(d)
 }
 
 export default function DetailRepas() {

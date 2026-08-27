@@ -6,7 +6,7 @@ import {
   type ResultatImportSante,
   type EntreeAlimentaire,
 } from '../utils/appleHealthImport'
-import { typeRepasSuggere, ajouterJours, dateDuJourISO } from '../utils/date'
+import { typeRepasSuggere, ajouterJours, dateDuJourISO, versDateHeureLocaleISO } from '../utils/date'
 import type { Repas, SuiviJournalier } from '../types'
 
 type Etat = 'attente' | 'analyse' | 'import' | 'termine' | 'erreur'
@@ -42,16 +42,15 @@ function construireRepasImport(nutrition: Map<string, EntreeAlimentaire>): Repas
     const [, jour, heureStr, minuteStr] = m
     const heureLocale = Number(heureStr)
     // On construit la date/heure à partir des composants locaux tels qu'enregistrés par
-    // Santé, sans passer par le décalage GMT de la chaîne d'origine : le jour associé au
-    // repas doit rester celui du jour où il a été mangé (ex. "2026-07-21 00:30:00 +0200"
-    // reste associé au 21), pas glisser au jour précédent une fois reconverti en UTC par
-    // `toISOString()` — ce qui est exactement ce qui se passerait via `epochMs`, dont le
-    // calcul repose sur l'offset GMT plutôt que sur les composants locaux affichés.
+    // Santé (ex. "2026-07-21 00:30:00 +0200" -> jour 21, 00:30), puis on sérialise en ISO
+    // LOCAL (versDateHeureLocaleISO), jamais via `toISOString()` : cette dernière convertit
+    // en UTC, ce qui ferait glisser un repas proche de minuit sur la veille dès qu'un autre
+    // écran de l'appli lit `dateHeure.slice(0, 10)` pour en déduire le jour.
     const d = new Date(`${jour}T00:00:00`)
     d.setHours(heureLocale, Number(minuteStr), 0, 0)
     resultats.push({
       id: `sante-import-${horodatage}`,
-      dateHeure: d.toISOString(),
+      dateHeure: versDateHeureLocaleISO(d),
       type: typeRepasSuggere(heureLocale),
       nom: valeurs.nom || 'Repas importé (Santé)',
       methode: 'import_sante',

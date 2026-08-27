@@ -12,6 +12,24 @@ export function dateDuJourISO(): string {
   return versISOLocale(new Date())
 }
 
+/**
+ * Sérialise une date+heure en ISO LOCAL (sans "Z" ni décalage) — même principe que
+ * `versISOLocale`, jamais via `toISOString()`. Un `dateHeure` de repas doit rester associé au
+ * même jour calendaire quel que soit le fuseau : `toISOString()` convertit en UTC, donc un repas
+ * pris peu après minuit (ex. 00h30, fuseau en avance sur UTC) glisserait sur la veille dès que
+ * du code lit `dateHeure.slice(0, 10)` pour en déduire le jour (Journal, Dashboard, tendances...).
+ * Une chaîne sans décalage est réinterprétée comme heure locale par `new Date(...)` (spécifiée
+ * par ECMA-262 pour les formes date-heure, contrairement aux formes date seule qui sont UTC),
+ * donc le round-trip stockage → relecture reste cohérent sur un même appareil.
+ */
+export function versDateHeureLocaleISO(d: Date): string {
+  const heure = String(d.getHours()).padStart(2, '0')
+  const minute = String(d.getMinutes()).padStart(2, '0')
+  const seconde = String(d.getSeconds()).padStart(2, '0')
+  const ms = String(d.getMilliseconds()).padStart(3, '0')
+  return `${versISOLocale(d)}T${heure}:${minute}:${seconde}.${ms}`
+}
+
 export function formatDateCourt(iso: string): string {
   const d = new Date(iso)
   return d.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })
@@ -80,14 +98,14 @@ export function ajouterJours(dateISO: string, n: number): string {
  * Construit un horodatage pour "maintenant", mais sur le jour ISO donné plutôt
  * qu'aujourd'hui — utile quand on ajoute un repas en consultant un autre jour que
  * celui du jour même (sinon il serait daté d'aujourd'hui et disparaîtrait du jour
- * qu'on est en train de regarder). Sans date fournie, équivaut à `new Date().toISOString()`.
+ * qu'on est en train de regarder). Sans date fournie, équivaut à l'heure actuelle.
  */
 export function combinerDateEtHeureActuelle(dateISO?: string | null): string {
-  if (!dateISO) return new Date().toISOString()
   const maintenant = new Date()
+  if (!dateISO) return versDateHeureLocaleISO(maintenant)
   const d = new Date(`${dateISO}T00:00:00`)
   d.setHours(maintenant.getHours(), maintenant.getMinutes(), maintenant.getSeconds(), maintenant.getMilliseconds())
-  return d.toISOString()
+  return versDateHeureLocaleISO(d)
 }
 
 export function typeRepasSuggere(heure = new Date().getHours()): 'petit_dejeuner' | 'dejeuner' | 'diner' | 'collation' {
