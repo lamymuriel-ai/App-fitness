@@ -50,10 +50,18 @@ function SeanceActiveInner() {
     // les nouveaux — le reste de la saisie déjà faite est conservé.
     const exercices: ExerciceLog[] = template.exercices.map((ex) => {
       const existant = logExistant?.exercices.find((e) => e.nom === ex.nom)
-      if (existant) return existant
       // Reprise en douceur après une longue absence : une série de moins par exercice,
       // sans jamais descendre sous 2 (en dessous, l'exercice perd son intérêt).
       const nbSeries = modeAllege ? Math.max(2, ex.series - 1) : ex.series
+      if (existant) {
+        // Si le nombre de séries du template a changé depuis que cette séance a été
+        // commencée (ex. programme passé de 3 à 5 séries), on ajuste le nombre de cases
+        // à la valeur actuelle du template plutôt que de garder figé l'ancien nombre —
+        // en conservant ce qui était déjà saisi dans les cases existantes.
+        if (existant.sets.length === nbSeries) return existant
+        const sets = Array.from({ length: nbSeries }, (_, i) => existant.sets[i] ?? { fait: false })
+        return { ...existant, sets }
+      }
       return {
         nom: ex.nom,
         poidsUtilise_kg: ex.poidsDuCorps ? undefined : poidsParExercice[ex.nom],
@@ -169,8 +177,8 @@ function SeanceActiveInner() {
       <button className="btn-ghost btn" onClick={() => navigate(-1)}>← Retour</button>
       <h1>{template.nom}</h1>
       <p className="muted">
-        On fait les 3 séries d'un exercice à la suite (avec repos entre chaque série), puis on
-        passe au suivant — ce n'est pas un circuit.
+        On fait toutes les séries d'un exercice à la suite (avec repos entre chaque série), puis
+        on passe au suivant — ce n'est pas un circuit.
       </p>
       {modeAllege && !logExistant && (
         <p className="small" style={{ fontWeight: 700, color: 'var(--pink-deep)', margin: '-8px 0 8px' }}>
