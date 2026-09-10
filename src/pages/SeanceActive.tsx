@@ -14,33 +14,55 @@ const OPTIONS_DIFFICULTE: { valeur: Difficulte; emoji: string; label: string }[]
   { valeur: 'dur', emoji: '😤', label: 'Dur' },
 ]
 
+const REGEX_DATE_ISO = /^\d{4}-\d{2}-\d{2}$/
+
 export default function SeanceActive() {
   const { templateId } = useParams()
-  return <SeanceActiveInner key={templateId} />
+  const [searchParams] = useSearchParams()
+  const dateParam = searchParams.get('date')
+  // La date choisie fait partie de la clé : la changer doit remonter le composant à zéro
+  // (nouvelle recherche de log existant, nouvelle initialisation) exactement comme un
+  // changement de templateId, plutôt que de laisser du state d'une autre date traîner.
+  return <SeanceActiveInner key={`${templateId}-${dateParam || ''}`} />
 }
 
 function SeanceActiveInner() {
   const { templateId } = useParams()
   const navigate = useNavigate()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
   const modeAllege = searchParams.get('allegee') === '1'
   const { seancesLog, enregistrerSeanceLog, poidsParExercice, definirPoidsExercice } = useAppData()
 
   const template = SEANCES_TEMPLATES.find((s) => s.id === templateId)
   const aujourdHui = dateDuJourISO()
   const debutSemaine = debutSemaineISO(aujourdHui)
+  const dateParam = searchParams.get('date')
+  const dateChoisie = dateParam && REGEX_DATE_ISO.test(dateParam) ? dateParam : null
+  // Date effective de la séance : celle explicitement choisie (pour saisir une séance
+  // passée), sinon aujourd'hui comme avant.
+  const dateSeance = dateChoisie || aujourdHui
 
-  // On reprend la séance de ce type la plus récente CETTE SEMAINE (pas seulement celle
-  // d'aujourd'hui) : sinon "Revoir" depuis la page Entraînement recréerait une séance vide
-  // du jour au lieu de rouvrir celle déjà faite plus tôt dans la semaine.
-  const logExistant = seancesLog
-    .filter((s) => s.seanceTemplateId === templateId && s.date >= debutSemaine)
-    .sort((a, b) => b.date.localeCompare(a.date))[0]
+  // Sans date explicite : on reprend la séance de ce type la plus récente CETTE SEMAINE (pas
+  // seulement celle d'aujourd'hui), pour que "Revoir" depuis la page Entraînement rouvre bien
+  // la séance déjà faite plus tôt dans la semaine plutôt que d'en recréer une vide. Avec une
+  // date explicite (saisie d'une séance passée), on cherche un log existant pile ce jour-là.
+  const logExistant = dateChoisie
+    ? seancesLog.find((s) => s.seanceTemplateId === templateId && s.date === dateChoisie)
+    : seancesLog
+        .filter((s) => s.seanceTemplateId === templateId && s.date >= debutSemaine)
+        .sort((a, b) => b.date.localeCompare(a.date))[0]
+
+  function changerDate(nouvelleDate: string) {
+    const params = new URLSearchParams(searchParams)
+    if (nouvelleDate === aujourdHui) params.delete('date')
+    else params.set('date', nouvelleDate)
+    setSearchParams(params, { replace: true })
+  }
 
   const [log, setLog] = useState<SeanceLog>(() => {
     if (!template) {
       if (logExistant) return logExistant
-      return { id: genererId(), seanceTemplateId: 'A', date: aujourdHui, termineeA: null, exercices: [] }
+      return { id: genererId(), seanceTemplateId: 'A', date: dateSeance, termineeA: null, exercices: [] }
     }
     // Recompose à partir du template courant plutôt que de renvoyer logExistant tel quel :
     // si un exercice a été ajouté/retiré du programme depuis que cette séance a été commencée
@@ -72,7 +94,7 @@ function SeanceActiveInner() {
     return {
       id: genererId(),
       seanceTemplateId: template.id,
-      date: aujourdHui,
+      date: dateSeance,
       termineeA: null,
       exercices,
     }
@@ -180,6 +202,22 @@ function SeanceActiveInner() {
         On fait toutes les séries d'un exercice à la suite (avec repos entre chaque série), puis
         on passe au suivant — ce n'est pas un circuit.
       </p>
+
+      <div className="field" style={{ maxWidth: 180 }}>
+        <label>Date de la séance</label>
+        <input
+          type="date"
+          value={dateSeance}
+          max={aujourdHui}
+          onChange={(e) => e.target.value && changerDate(e.target.value)}
+        />
+      </div>
+      {dateChoisie && dateChoisie !== aujourdHui && (
+        <p className="small muted mt-0" style={{ marginTop: -8, marginBottom: 12 }}>
+          Tu saisis une séance passée — elle sera enregistrée sur cette date, pas aujourd'hui.
+        </p>
+      )}
+
       {modeAllege && !logExistant && (
         <p className="small" style={{ fontWeight: 700, color: 'var(--pink-deep)', margin: '-8px 0 8px' }}>
           🌱 Reprise en douceur : une série de moins par exercice aujourd'hui.
