@@ -21,6 +21,7 @@ export default function Entrainement() {
   const [formulaireAutreOuvert, setFormulaireAutreOuvert] = useState(false)
   const [nomAutreActivite, setNomAutreActivite] = useState('')
   const [dureeAutreActivite, setDureeAutreActivite] = useState('')
+  const [dateAutreActivite, setDateAutreActivite] = useState(() => dateDuJourISO())
   const [modeAllegeActif, setModeAllegeActif] = useState(false)
 
   const aujourdHui = dateDuJourISO()
@@ -51,7 +52,7 @@ export default function Entrainement() {
     await enregistrerSeanceLog({
       id: genererId(),
       seanceTemplateId: 'autre',
-      date: aujourdHui,
+      date: dateAutreActivite,
       termineeA: new Date().toISOString(),
       exercices: [],
       nomActivite: nomAutreActivite.trim(),
@@ -60,6 +61,7 @@ export default function Entrainement() {
     setFormulaireAutreOuvert(false)
     setNomAutreActivite('')
     setDureeAutreActivite('')
+    setDateAutreActivite(aujourdHui)
   }
 
   const terminees = useMemo(
@@ -252,7 +254,7 @@ export default function Entrainement() {
             </div>
           ) : formulaireAutreOuvert ? (
             <div className="card" style={{ padding: 14, marginBottom: 10 }}>
-              <h3 style={{ fontSize: '0.95rem', marginBottom: 8 }}>🏊 Autre activité aujourd'hui</h3>
+              <h3 style={{ fontSize: '0.95rem', marginBottom: 8 }}>🏊 Autre activité</h3>
               <div className="field-row" style={{ alignItems: 'flex-end' }}>
                 <div className="field" style={{ flex: 2 }}>
                   <label>Activité</label>
@@ -260,7 +262,7 @@ export default function Entrainement() {
                     type="text"
                     value={nomAutreActivite}
                     onChange={(e) => setNomAutreActivite(e.target.value)}
-                    placeholder="Natation, vélo, randonnée..."
+                    placeholder="Natation, vélo, kickboxing..."
                   />
                 </div>
                 <div className="field" style={{ flex: 1 }}>
@@ -273,6 +275,15 @@ export default function Entrainement() {
                     placeholder="Optionnel"
                   />
                 </div>
+              </div>
+              <div className="field mb-0">
+                <label>Date</label>
+                <input
+                  type="date"
+                  value={dateAutreActivite}
+                  max={aujourdHui}
+                  onChange={(e) => e.target.value && setDateAutreActivite(e.target.value)}
+                />
               </div>
               <div className="row gap-8 mt-8">
                 <button className="btn btn-secondary btn-sm" onClick={enregistrerAutreActivite}>
