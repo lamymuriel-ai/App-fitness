@@ -114,7 +114,7 @@ export const SEANCES_TEMPLATES: SeanceTemplate[] = [
         description: "Assise face à la machine, cuisses calées sous les rouleaux, tu tires une barre au-dessus de la tête vers le haut de la poitrine, coudes vers le bas. Cherche \"lat pulldown\".",
         alternative: 'Tirage avec une bande élastique fixée en hauteur, ou rowing buste penché avec des haltères, 5×10-12.' },
       { nom: 'Rowing (machine assise)', series: 5, repsMin: 10, repsMax: 12, poidsDuCorps: false,
-        description: "Assise, pieds calés, tu tires deux poignées vers toi en ramenant les coudes en arrière, dos droit. Cherche \"seated row\".",
+        description: "Assise, pieds calés, tu tires deux poignées vers toi en ramenant les coudes en arrière, dos droit. Cherche \"seated row\" ou \"low row\" (même machine, souvent le même nom chez Technogym).",
         alternative: 'Rowing buste penché à l\'haltère (un genou et une main posés sur un banc, tire l\'haltère vers la hanche), 5×10-12 par bras.' },
       { nom: 'Leg curl (ischio-jambiers)', series: 5, repsMin: 10, repsMax: 12, poidsDuCorps: false,
         description: "Allongée ou assise selon la machine, un rouleau rembourré derrière les chevilles. Plie les genoux pour ramener le rouleau vers les fesses, puis reviens lentement. Souvent à côté du leg extension.",
