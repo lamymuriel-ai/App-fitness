@@ -4,6 +4,7 @@ const ITEMS = [
   { to: '/', label: 'Aujourd’hui', icon: '🏠' },
   { to: '/journal', label: 'Journal', icon: '🍽️' },
   { to: '/entrainement', label: 'Sport', icon: '💪' },
+  { to: '/recette', label: 'Recette', icon: '📖' },
   { to: '/suivi', label: 'Suivi', icon: '📈' },
   { to: '/plus', label: 'Plus', icon: '✨' },
 ]

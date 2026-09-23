@@ -6,6 +6,7 @@ import { BottomNav } from './components/BottomNav'
 import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
 import Journal from './pages/Journal'
+import Recette from './pages/Recette'
 import DetailRepas from './pages/DetailRepas'
 import Tendances from './pages/Tendances'
 import SuggestionsAlimentaires from './pages/SuggestionsAlimentaires'
@@ -54,6 +55,7 @@ function RoutesApp() {
         <Route path="/onboarding" element={<Onboarding />} />
         <Route path="/" element={<Dashboard />} />
         <Route path="/journal" element={<Journal />} />
+        <Route path="/recette" element={<Recette />} />
         <Route path="/journal/repas/:id" element={<DetailRepas />} />
         <Route path="/journal/tendances" element={<Tendances />} />
         <Route path="/journal/suggestions" element={<SuggestionsAlimentaires />} />
