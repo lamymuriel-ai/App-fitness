@@ -9,6 +9,7 @@ import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
 import { detecterStagnation } from '../utils/stagnation'
 import { phraseDuJour } from '../data/phrasesEncouragement'
 import { calculerStreakSemaines } from '../utils/streak'
+import { seanceEstReussie } from '../utils/seance'
 import AlerteStagnationBanniere from '../components/AlerteStagnationBanniere'
 
 /**
@@ -62,7 +63,9 @@ export default function Dashboard() {
     () =>
       SEANCES_TEMPLATES.map((s) => ({
         seance: s,
-        faite: seancesLog.some((log) => log.seanceTemplateId === s.id && log.date >= debutSemaine && log.termineeA),
+        faite: seancesLog.some(
+          (log) => log.seanceTemplateId === s.id && log.date >= debutSemaine && seanceEstReussie(log)
+        ),
       })),
     [seancesLog, debutSemaine]
   )
@@ -205,7 +208,7 @@ export default function Dashboard() {
               <p className="small" style={{ fontWeight: 700, marginBottom: 0 }}>
                 💪 Séance {seanceDuJour.id} <span className="muted">· {seanceDuJour.moment}, {seanceDuJour.lieu === 'salle' ? 'en salle' : 'à la maison'}</span>
               </p>
-              {seanceLogDuJour?.termineeA && <span className="pill green">✓</span>}
+              {seanceLogDuJour && seanceEstReussie(seanceLogDuJour) && <span className="pill green">✓</span>}
             </div>
             <button
               className="btn btn-yellow btn-sm mt-8"

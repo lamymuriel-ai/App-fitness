@@ -10,6 +10,7 @@ import { PLANNING_SEMAINE } from '../data/defaults'
 import { totauxRepas, ajouterSupplements, analyserMicronutriments, type AnalyseNutriment } from './nutrition'
 import { ajouterJours } from './date'
 import { moyenneMobile7Jours } from './stagnation'
+import { seanceEstReussie } from './seance'
 
 export interface RapportHebdomadaire {
   semaineDebut: string
@@ -104,7 +105,7 @@ export function genererRapportHebdomadaire(
         }
       : null
 
-  const seancesFaites = seancesLog.filter((s) => dansLaSemaine(s.date) && s.termineeA).length
+  const seancesFaites = seancesLog.filter((s) => dansLaSemaine(s.date) && seanceEstReussie(s)).length
   const planifiees = Object.values(PLANNING_SEMAINE).filter((v) => v !== null).length
 
   return {

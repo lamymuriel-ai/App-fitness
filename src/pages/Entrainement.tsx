@@ -5,6 +5,7 @@ import { useAppData } from '../context/AppDataContext'
 import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
 import { dateDuJourISO, debutSemaineISO, formatDateCourt, formatDateLong, genererId, joursEntre } from '../utils/date'
 import { EtatVide } from '../components/ui'
+import { seanceEstReussie } from '../utils/seance'
 import type { SeanceLog } from '../types'
 
 function repsTotalExercice(ex: SeanceLog['exercices'][number]): number {
@@ -40,7 +41,7 @@ export default function Entrainement() {
   const derniereSeanceTerminee = useMemo(
     () =>
       [...seancesLog]
-        .filter((s) => s.termineeA)
+        .filter(seanceEstReussie)
         .sort((a, b) => b.date.localeCompare(a.date))[0],
     [seancesLog]
   )
@@ -198,9 +199,11 @@ export default function Entrainement() {
         {onglet === 'seances' &&
           SEANCES_TEMPLATES.map((seance) => {
             // Faite un autre jour cette semaine (pas seulement aujourd'hui) : ça reste "Revoir"
-            // tant qu'on n'est pas reparti sur une nouvelle semaine calendaire.
+            // tant qu'on n'est pas reparti sur une nouvelle semaine calendaire. "Faite" exige
+            // que toutes les séries soient cochées (seanceEstReussie) — sinon une séance
+            // juste ouverte puis "Terminer" cliqué sans rien cocher comptait comme faite.
             const faiteCetteSemaine = seancesLog.some(
-              (s) => s.seanceTemplateId === seance.id && s.date >= debutSemaine && s.termineeA
+              (s) => s.seanceTemplateId === seance.id && s.date >= debutSemaine && seanceEstReussie(s)
             )
             const estAujourdHui = seance.id === idSeanceDuJour
             const [titreCourt, description] = seance.nom.split(' — ')

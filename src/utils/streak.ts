@@ -1,6 +1,7 @@
 import type { SeanceLog } from '../types'
 import { PLANNING_SEMAINE } from '../data/defaults'
 import { ajouterJours, dateDuJourISO, debutSemaineISO } from './date'
+import { seanceEstReussie } from './seance'
 
 const NB_SEANCES_PAR_SEMAINE = Object.values(PLANNING_SEMAINE).filter(Boolean).length
 
@@ -14,7 +15,7 @@ const NB_SEANCES_PAR_SEMAINE = Object.values(PLANNING_SEMAINE).filter(Boolean).l
 export function calculerStreakSemaines(seancesLog: SeanceLog[], dateReference = dateDuJourISO()): number {
   function nbSeancesSemaine(lundi: string): number {
     const dimanche = ajouterJours(lundi, 6)
-    return seancesLog.filter((s) => s.termineeA && s.date >= lundi && s.date <= dimanche).length
+    return seancesLog.filter((s) => seanceEstReussie(s) && s.date >= lundi && s.date <= dimanche).length
   }
 
   let lundi = debutSemaineISO(dateReference)

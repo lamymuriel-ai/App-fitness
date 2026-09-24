@@ -2,6 +2,7 @@ import type { ProfilUtilisatrice, Repas, SeanceLog, SuiviJournalier } from '../t
 import { PLANNING_SEMAINE } from '../data/defaults'
 import { totauxRepas } from './nutrition'
 import { ajouterJours, dateDuJourISO, debutSemaineISO } from './date'
+import { seanceEstReussie } from './seance'
 
 const NB_SEANCES_PAR_SEMAINE = Object.values(PLANNING_SEMAINE).filter(Boolean).length
 
@@ -42,7 +43,7 @@ function statutSport(date: string, seancesLog: SeanceLog[]): StatutSport {
   // Une séance réellement faite ce jour-là compte, même un jour où rien n'était prévu
   // (planning déplacé, séance de rattrapage...) — on ne se limite pas à vérifier si LA
   // séance prévue ce jour précis a été cochée.
-  const seanceFaite = seancesLog.some((s) => s.date === date && s.termineeA)
+  const seanceFaite = seancesLog.some((s) => s.date === date && seanceEstReussie(s))
   if (seanceFaite) return 'ok'
 
   // Une fois les séances de la semaine toutes faites (même décalées par rapport au
@@ -50,7 +51,7 @@ function statutSport(date: string, seancesLog: SeanceLog[]): StatutSport {
   // à réclamer une séance "prévue" ce jour-là si l'objectif de la semaine est déjà atteint.
   const lundiSemaine = debutSemaineISO(date)
   const nbSeancesFaitesSemaine = seancesLog.filter(
-    (s) => s.termineeA && s.date >= lundiSemaine && s.date <= ajouterJours(lundiSemaine, 6)
+    (s) => seanceEstReussie(s) && s.date >= lundiSemaine && s.date <= ajouterJours(lundiSemaine, 6)
   ).length
   if (nbSeancesFaitesSemaine >= NB_SEANCES_PAR_SEMAINE) return 'repos'
 

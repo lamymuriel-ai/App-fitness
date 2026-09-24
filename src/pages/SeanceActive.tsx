@@ -3,6 +3,7 @@ import { useParams, useNavigate, useSearchParams } from 'react-router-dom'
 import { useAppData } from '../context/AppDataContext'
 import { SEANCES_TEMPLATES } from '../data/defaults'
 import { dateDuJourISO, debutSemaineISO, genererId } from '../utils/date'
+import { seanceEstReussie } from '../utils/seance'
 import { FeuilleModale } from '../components/ui'
 import type { SeanceLog, ExerciceLog, Difficulte } from '../types'
 
@@ -339,7 +340,7 @@ function SeanceActiveInner() {
           })}
 
           <button className="btn btn-primary mt-8" onClick={terminerSeance}>
-            {log.termineeA ? '✓ Séance terminée — mettre à jour' : 'Terminer la séance'}
+            {seanceEstReussie(log) ? '✓ Séance terminée — mettre à jour' : 'Terminer la séance'}
           </button>
         </>
       )}

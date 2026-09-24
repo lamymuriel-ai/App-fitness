@@ -8,6 +8,7 @@ import { BarreProgression, BarreMacros, EtatVide } from '../components/ui'
 import GrilleMicronutriments from '../components/GrilleMicronutriments'
 import AlertesNutriments from '../components/AlertesNutriments'
 import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
+import { seanceEstReussie } from '../utils/seance'
 import type { Repas } from '../types'
 
 const LABEL_TYPE: Record<Repas['type'], string> = {
@@ -86,7 +87,7 @@ export default function Journal() {
   const entreeJourAffichee = suiviJournalier.find((e) => e.date === dateAffichee)
 
   const seanceFaiteCeJour = useMemo(
-    () => seancesLog.find((s) => s.date === dateAffichee && s.termineeA),
+    () => seancesLog.find((s) => s.date === dateAffichee && seanceEstReussie(s)),
     [seancesLog, dateAffichee]
   )
   const seanceTemplateFaite = seanceFaiteCeJour
