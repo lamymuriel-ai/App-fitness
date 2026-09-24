@@ -17,32 +17,38 @@ export default function DetailRecette() {
 
   return (
     <div className="screen">
-      <button className="btn-ghost btn" onClick={() => navigate('/recette')}>← Retour</button>
+      <button className="btn-ghost btn-sm" onClick={() => navigate('/recette')}>← Retour</button>
 
-      <div className="card pink">
-        <h1 style={{ marginBottom: 6, fontSize: '1.5rem' }}>
+      <div className="card pink" style={{ padding: '10px 12px', marginBottom: 8, marginTop: 6 }}>
+        <h1 style={{ fontSize: '1.05rem', marginBottom: 1 }}>
           {recette.emoji} {recette.nom}
         </h1>
-        <p className="mb-0" style={{ fontSize: '1.05rem' }}>{recette.description}</p>
+        <p className="muted mb-0" style={{ fontSize: '0.78rem' }}>{recette.description}</p>
       </div>
 
-      <div className="card blue">
-        <h3>🧺 Ingrédients</h3>
-        {recette.ingredients.map((ing) => (
-          <div className="list-row" key={ing.nom}>
-            <span style={{ fontSize: '1.05rem' }}>{ing.nom}</span>
-            <span style={{ fontSize: '1.05rem', fontWeight: 800 }}>{ing.quantite}</span>
-          </div>
-        ))}
+      <div className="card blue" style={{ padding: '10px 12px', marginBottom: 8 }}>
+        <h3 style={{ fontSize: '0.88rem', marginBottom: 4 }}>🧺 Ingrédients</h3>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 10, rowGap: 1 }}>
+          {recette.ingredients.map((ing) => (
+            <div
+              key={ing.nom}
+              className="row-between"
+              style={{ fontSize: '0.74rem', padding: '2px 0', gap: 4 }}
+            >
+              <span>{ing.nom}</span>
+              <span style={{ fontWeight: 800, whiteSpace: 'nowrap' }}>{ing.quantite}</span>
+            </div>
+          ))}
+        </div>
       </div>
 
-      <div className="card yellow">
+      <div className="card yellow" style={{ padding: '10px 12px', marginBottom: 8 }}>
         {recette.sectionsEtapes.map((section, iSection) => (
-          <div key={section.titre} className={iSection > 0 ? 'mt-16' : undefined}>
-            <h3>{section.emoji} {section.titre}</h3>
-            <ol style={{ paddingLeft: 22, margin: 0 }}>
+          <div key={section.titre} style={iSection > 0 ? { marginTop: 6 } : undefined}>
+            <h3 style={{ fontSize: '0.84rem', marginBottom: 2 }}>{section.emoji} {section.titre}</h3>
+            <ol style={{ paddingLeft: 16, margin: 0 }}>
               {section.etapes.map((etape, i) => (
-                <li key={i} style={{ fontSize: '1.05rem', lineHeight: 1.6, marginBottom: 10 }}>
+                <li key={i} style={{ fontSize: '0.74rem', lineHeight: 1.25, marginBottom: 1 }}>
                   {etape}
                 </li>
               ))}
@@ -51,21 +57,13 @@ export default function DetailRecette() {
         ))}
       </div>
 
-      <div className="card">
-        <h3>📊 Valeurs nutritionnelles</h3>
-        <p className="muted mb-0" style={{ fontSize: '1rem' }}>
-          {recette.portions > 1 ? `Par tranche, pour ${recette.portions} tranches` : 'Pour 1 portion'}
+      <div className="card" style={{ padding: '8px 12px', marginBottom: 8 }}>
+        <p className="mb-0" style={{ fontSize: '0.8rem', fontWeight: 800 }}>
+          📊 {recette.parPortion.calories} kcal · {recette.parPortion.proteines_g}g protéines
+          <span className="muted" style={{ fontWeight: 400 }}>
+            {' '}{recette.portions > 1 ? `· par tranche (${recette.portions})` : '· par portion'}
+          </span>
         </p>
-        <div className="row gap-12 mt-8" style={{ justifyContent: 'space-around' }}>
-          <div className="center">
-            <div style={{ fontSize: '2rem', fontWeight: 900 }}>{recette.parPortion.calories}</div>
-            <div className="muted" style={{ fontSize: '1rem' }}>kcal</div>
-          </div>
-          <div className="center">
-            <div style={{ fontSize: '2rem', fontWeight: 900 }}>{recette.parPortion.proteines_g}g</div>
-            <div className="muted" style={{ fontSize: '1rem' }}>protéines</div>
-          </div>
-        </div>
       </div>
     </div>
   )

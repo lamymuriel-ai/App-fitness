@@ -343,23 +343,33 @@ export default function Entrainement() {
                               const detailOuvert = seancesOuvertes.has(log.id)
                               return (
                                 <div key={log.id} style={{ background: '#fbf6f8', borderRadius: 12, padding: 10 }}>
-                                  <button
-                                    className="row-between"
-                                    style={{ width: '100%', textAlign: 'left', background: 'none', border: 'none', padding: 0 }}
-                                    onClick={() => toggleSeance(log.id)}
-                                  >
-                                    <span>
-                                      <strong>
-                                        {log.seanceTemplateId === 'autre' ? `🏊 ${log.nomActivite}` : template?.nom || log.seanceTemplateId}
-                                      </strong>{' '}
-                                      <span className="muted small">{formatDateCourt(log.date)}</span>
-                                    </span>
-                                    {log.seanceTemplateId === 'autre' ? (
-                                      log.duree_min && <span className="pill green">{log.duree_min} min</span>
-                                    ) : (
-                                      <span className="pill green">{setsFaits}/{setsTotal} séries</span>
-                                    )}
-                                  </button>
+                                  <div className="row-between" style={{ gap: 6 }}>
+                                    <button
+                                      className="row-between"
+                                      style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'none', border: 'none', padding: 0 }}
+                                      onClick={() => toggleSeance(log.id)}
+                                    >
+                                      <span style={{ minWidth: 0 }}>
+                                        <strong>
+                                          {log.seanceTemplateId === 'autre' ? `🏊 ${log.nomActivite}` : template?.nom || log.seanceTemplateId}
+                                        </strong>{' '}
+                                        <span className="muted small">{formatDateCourt(log.date)}</span>
+                                      </span>
+                                      {log.seanceTemplateId === 'autre' ? (
+                                        log.duree_min && <span className="pill green">{log.duree_min} min</span>
+                                      ) : (
+                                        <span className="pill green">{setsFaits}/{setsTotal} séries</span>
+                                      )}
+                                    </button>
+                                    <button
+                                      className="btn-ghost btn-sm"
+                                      style={{ padding: '4px 6px', flexShrink: 0 }}
+                                      onClick={() => supprimerSeanceLog(log.id)}
+                                      aria-label="Supprimer cette séance"
+                                    >
+                                      🗑️
+                                    </button>
+                                  </div>
 
                                   {detailOuvert && (
                                     <div style={{ marginTop: 8 }}>
