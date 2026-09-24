@@ -7,6 +7,7 @@ import Onboarding from './pages/Onboarding'
 import Dashboard from './pages/Dashboard'
 import Journal from './pages/Journal'
 import Recette from './pages/Recette'
+import DetailRecette from './pages/DetailRecette'
 import DetailRepas from './pages/DetailRepas'
 import Tendances from './pages/Tendances'
 import SuggestionsAlimentaires from './pages/SuggestionsAlimentaires'
@@ -56,6 +57,7 @@ function RoutesApp() {
         <Route path="/" element={<Dashboard />} />
         <Route path="/journal" element={<Journal />} />
         <Route path="/recette" element={<Recette />} />
+        <Route path="/recette/:id" element={<DetailRecette />} />
         <Route path="/journal/repas/:id" element={<DetailRepas />} />
         <Route path="/journal/tendances" element={<Tendances />} />
         <Route path="/journal/suggestions" element={<SuggestionsAlimentaires />} />
