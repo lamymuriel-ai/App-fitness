@@ -30,6 +30,7 @@ export const RECETTES: Recette[] = [
       { nom: 'Œufs', quantite: '3' },
       { nom: "Flocons d'avoine", quantite: '80 g' },
       { nom: 'Farine de blé', quantite: '60 g' },
+      { nom: 'Whey isolat native', quantite: '20 g' },
       { nom: 'Levure', quantite: '11 g' },
       { nom: 'Sel', quantite: '4 g' },
       { nom: 'Graines de chia', quantite: '15 g' },
@@ -39,12 +40,12 @@ export const RECETTES: Recette[] = [
     etapesThermomix: [
       'Moudre les graines de lin seules : 20 sec / vitesse 10. Réserver.',
       'Mettre le skyr et les œufs dans le bol : 10 sec / vitesse 4 pour mélanger.',
-      "Ajouter les flocons d'avoine, la farine, la levure, le sel, le lin moulu, le chia et les graines de courge : 20 sec / vitesse 4, jusqu'à obtenir une pâte homogène.",
+      "Ajouter les flocons d'avoine, la farine, la whey, la levure, le sel, le lin moulu, le chia et les graines de courge : 20 sec / vitesse 4, jusqu'à obtenir une pâte homogène.",
       'Verser la pâte dans un moule à cake beurré ou chemisé, adapté à ton Air Fryer.',
     ],
     etapesAirFryer: [
-      'Cuire 35 à 40 min à 155-160°C.',
-      "Vérifier la cuisson avec la pointe d'un couteau : elle doit ressortir sèche.",
+      'Cuire 55 à 60 min à 155-160°C.',
+      "Vérifier la cuisson à la lame dès 40 min, puis régulièrement ensuite : elle doit ressortir sèche.",
       "Laisser tiédir dans le moule avant de démouler, puis couper en 8 tranches.",
     ],
     parPortion: { calories: 130, proteines_g: 9.5 },
