@@ -32,6 +32,7 @@ export const RECETTES: Recette[] = [
     description: "Un pain riche en protéines, à tartiner ou à manger tel quel au petit-déjeuner.",
     portions: 8,
     ingredients: [
+      { nom: 'Graines de lin (à moudre)', quantite: '15 g' },
       { nom: 'Skyr', quantite: '330 g' },
       { nom: 'Œufs', quantite: '3' },
       { nom: "Flocons d'avoine", quantite: '80 g' },
@@ -40,7 +41,6 @@ export const RECETTES: Recette[] = [
       { nom: 'Levure', quantite: '11 g' },
       { nom: 'Sel', quantite: '4 g' },
       { nom: 'Graines de chia', quantite: '15 g' },
-      { nom: 'Graines de lin (à moudre)', quantite: '15 g' },
       { nom: 'Graines de courge', quantite: '20 g' },
     ],
     sectionsEtapes: [
