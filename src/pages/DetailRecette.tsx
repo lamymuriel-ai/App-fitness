@@ -28,15 +28,22 @@ export default function DetailRecette() {
 
       <div className="card blue" style={{ padding: '10px 12px', marginBottom: 8 }}>
         <h3 style={{ fontSize: '0.88rem', marginBottom: 4 }}>🧺 Ingrédients</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: 10, rowGap: 1 }}>
-          {recette.ingredients.map((ing) => (
-            <div
-              key={ing.nom}
-              className="row-between"
-              style={{ fontSize: '0.74rem', padding: '2px 0', gap: 4 }}
-            >
-              <span>{ing.nom}</span>
-              <span style={{ fontWeight: 800, whiteSpace: 'nowrap' }}>{ing.quantite}</span>
+        <div style={{ display: 'flex', gap: 10 }}>
+          {[
+            recette.ingredients.slice(0, Math.ceil(recette.ingredients.length / 2)),
+            recette.ingredients.slice(Math.ceil(recette.ingredients.length / 2)),
+          ].map((colonne, iColonne) => (
+            <div key={iColonne} style={{ flex: 1, minWidth: 0 }}>
+              {colonne.map((ing) => (
+                <div
+                  key={ing.nom}
+                  className="row-between"
+                  style={{ fontSize: '0.74rem', padding: '2px 0', gap: 4 }}
+                >
+                  <span>{ing.nom}</span>
+                  <span style={{ fontWeight: 800, whiteSpace: 'nowrap' }}>{ing.quantite}</span>
+                </div>
+              ))}
             </div>
           ))}
         </div>
