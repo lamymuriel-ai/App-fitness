@@ -58,8 +58,7 @@ export const RECETTES: Recette[] = [
         titre: "À l'Air Fryer",
         emoji: '🔥',
         etapes: [
-          'Cuire 55 à 60 min à 155-160°C.',
-          "Vérifier la cuisson à la lame dès 40 min, puis régulièrement ensuite : elle doit ressortir sèche.",
+          "Préchauffer 3 min, couvrir le moule d'aluminium dès le début, cuire 55 à 60 min à 155-160°C, vérifier à la lame dès 40 min.",
           "Laisser tiédir dans le moule avant de démouler, puis couper en 8 tranches.",
         ],
       },
