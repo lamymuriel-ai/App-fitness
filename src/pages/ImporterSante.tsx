@@ -5,9 +5,10 @@ import {
   analyserExportSante,
   type ResultatImportSante,
   type EntreeAlimentaire,
+  type EntreeEntrainement,
 } from '../utils/appleHealthImport'
 import { typeRepasSuggere, ajouterJours, dateDuJourISO, versDateHeureLocaleISO } from '../utils/date'
-import type { Repas, SuiviJournalier } from '../types'
+import type { Repas, SeanceLog, SuiviJournalier } from '../types'
 
 type Etat = 'attente' | 'analyse' | 'import' | 'termine' | 'erreur'
 
@@ -25,6 +26,7 @@ function filtrerJoursRecents(resultat: ResultatImportSante): ResultatImportSante
     poids: filtrer(resultat.poids),
     sommeil: filtrer(resultat.sommeil),
     nutrition: new Map([...resultat.nutrition].filter(([horodatage]) => horodatage.slice(0, 10) >= seuil)),
+    entrainements: new Map([...resultat.entrainements].filter(([horodatage]) => horodatage.slice(0, 10) >= seuil)),
     premiereDate: resultat.premiereDate,
     derniereDate: resultat.derniereDate,
   }
@@ -64,6 +66,27 @@ function construireRepasImport(nutrition: Map<string, EntreeAlimentaire>): Repas
   return resultats
 }
 
+function construireSeancesImport(entrainements: Map<string, EntreeEntrainement>): SeanceLog[] {
+  const resultats: SeanceLog[] = []
+  for (const [horodatage, { nom, duree_min }] of entrainements) {
+    const m = REGEX_JOUR_HEURE_LOCALE.exec(horodatage)
+    if (!m) continue
+    const [, jour, heureStr, minuteStr] = m
+    const d = new Date(`${jour}T00:00:00`)
+    d.setHours(Number(heureStr), Number(minuteStr), 0, 0)
+    resultats.push({
+      id: `sante-import-${horodatage}`,
+      seanceTemplateId: 'autre',
+      date: jour,
+      termineeA: versDateHeureLocaleISO(d),
+      exercices: [],
+      nomActivite: nom,
+      duree_min,
+    })
+  }
+  return resultats
+}
+
 function construireSuiviJours(resultat: ResultatImportSante): SuiviJournalier[] {
   const jours = new Set<string>([...resultat.pas.keys(), ...resultat.poids.keys(), ...resultat.sommeil.keys()])
   return Array.from(jours).map((jour) => ({
@@ -76,12 +99,12 @@ function construireSuiviJours(resultat: ResultatImportSante): SuiviJournalier[] 
 
 export default function ImporterSante() {
   const navigate = useNavigate()
-  const { enregistrerSuiviJourEnMasse, ajouterRepasEnMasse } = useAppData()
+  const { enregistrerSuiviJourEnMasse, ajouterRepasEnMasse, enregistrerSeanceLogEnMasse } = useAppData()
   const inputRef = useRef<HTMLInputElement>(null)
 
   const [etat, setEtat] = useState<Etat>('attente')
   const [erreur, setErreur] = useState<string | null>(null)
-  const [resume, setResume] = useState({ jours: 0, repas: 0 })
+  const [resume, setResume] = useState({ jours: 0, repas: 0, seances: 0 })
   const [progression, setProgression] = useState(0)
   const [tailleFichierMo, setTailleFichierMo] = useState<number | null>(null)
 
@@ -100,10 +123,11 @@ export default function ImporterSante() {
         ...res.poids.keys(),
         ...res.sommeil.keys(),
         ...res.nutrition.keys(),
+        ...res.entrainements.keys(),
       ]).size
       if (totalJours === 0) {
         setErreur(
-          `Aucune donnée exploitable (pas, poids, sommeil ou alimentation) n'a été trouvée dans les ${JOURS_A_IMPORTER} derniers jours de ce fichier.`
+          `Aucune donnée exploitable (pas, poids, sommeil, alimentation ou entraînement) n'a été trouvée dans les ${JOURS_A_IMPORTER} derniers jours de ce fichier.`
         )
         setEtat('erreur')
         return
@@ -121,9 +145,11 @@ export default function ImporterSante() {
     setEtat('import')
     const suivi = construireSuiviJours(resultat)
     const repasImportes = construireRepasImport(resultat.nutrition)
+    const seancesImportees = construireSeancesImport(resultat.entrainements)
     if (suivi.length > 0) await enregistrerSuiviJourEnMasse(suivi)
     if (repasImportes.length > 0) await ajouterRepasEnMasse(repasImportes)
-    setResume({ jours: suivi.length, repas: repasImportes.length })
+    if (seancesImportees.length > 0) await enregistrerSeanceLogEnMasse(seancesImportees)
+    setResume({ jours: suivi.length, repas: repasImportes.length, seances: seancesImportees.length })
     setEtat('termine')
   }
 
@@ -183,11 +209,12 @@ export default function ImporterSante() {
             <h3>Ce qui sera importé</h3>
             <p className="small muted mb-0">
               👣 Pas · ⚖️ Poids · 😴 Sommeil · 🍽️ Alimentation (calories, macros et certains
-              micronutriments) — uniquement si ces données existent dans Santé (ex. l'alimentation
+              micronutriments) · 🏋️ Entraînements (nom de l'activité et durée, ajoutés comme
+              "autre activité") — uniquement si ces données existent dans Santé (ex. l'alimentation
               n'y est présente que si une autre app y écrivait déjà tes repas). Les autres
-              catégories (fréquence cardiaque, distance, entraînements…) ne sont pas importées, ce
-              ne sont pas des données suivies par cette appli. Seuls les {JOURS_A_IMPORTER} derniers
-              jours sont pris en compte (le reste de l'historique est supposé déjà importé).
+              catégories (fréquence cardiaque, distance…) ne sont pas importées, ce ne sont pas des
+              données suivies par cette appli. Seuls les {JOURS_A_IMPORTER} derniers jours sont pris
+              en compte (le reste de l'historique est supposé déjà importé).
             </p>
           </div>
         </>
@@ -206,7 +233,14 @@ export default function ImporterSante() {
             {resume.jours} jour{resume.jours !== 1 ? 's' : ''} de suivi (pas/poids/sommeil) mis à jour
             {resume.repas > 0 && (
               <> et {resume.repas} repas ajouté{resume.repas !== 1 ? 's' : ''} au journal</>
-            )}.
+            )}
+            {resume.seances > 0 && (
+              <>
+                {' '}et {resume.seances} séance{resume.seances !== 1 ? 's' : ''} ajoutée
+                {resume.seances !== 1 ? 's' : ''} à l'entraînement
+              </>
+            )}
+            .
           </p>
           <div className="btn-row">
             <button className="btn btn-outline" onClick={() => navigate('/journal')}>

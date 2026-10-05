@@ -129,6 +129,13 @@ export async function supprimerSeanceLog(id: string) {
   await db.delete('seancesLog', id)
 }
 
+/** Écrit plusieurs séances en une seule transaction (utilisé pour l'import en masse). */
+export async function sauvegarderSeancesLogEnMasse(seancesArray: SeanceLog[]) {
+  const db = await getDb()
+  const tx = db.transaction('seancesLog', 'readwrite')
+  await Promise.all([...seancesArray.map((s) => tx.store.put(s)), tx.done])
+}
+
 export async function chargerPoidsParExercice(): Promise<PoidsExercice> {
   const db = await getDb()
   const all = await db.getAll('poidsParExercice')

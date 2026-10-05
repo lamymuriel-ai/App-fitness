@@ -10,11 +10,18 @@ export interface EntreeAlimentaire {
   micros: Micronutriments
 }
 
+export interface EntreeEntrainement {
+  horodatage: string // startDate brut Apple Santé
+  nom: string
+  duree_min: number
+}
+
 export interface ResultatImportSante {
   pas: Map<string, number> // clé = jour (YYYY-MM-DD)
   poids: Map<string, number> // clé = jour, valeur en kg
   sommeil: Map<string, number> // clé = jour (nuit attribuée au jour du réveil), valeur en heures
   nutrition: Map<string, EntreeAlimentaire> // clé = horodatage exact (un repas = une entrée)
+  entrainements: Map<string, EntreeEntrainement> // clé = horodatage exact (un entraînement = une entrée)
   premiereDate: string | null
   derniereDate: string | null
 }
@@ -112,12 +119,81 @@ function convertirPoidsEnKg(valeur: number, uniteSource: string): number | null 
   return null
 }
 
+function convertirDureeEnMinutes(valeur: number, uniteSource: string): number | null {
+  const u = uniteSource.trim().toLowerCase()
+  if (u === 'min') return valeur
+  if (u === 's' || u === 'sec') return valeur / 60
+  if (u === 'hr' || u === 'h') return valeur * 60
+  return null
+}
+
+/** Noms français des types d'entraînement HealthKit les plus courants (clé = suffixe après "HKWorkoutActivityType"). */
+const NOMS_ACTIVITES: Record<string, string> = {
+  Running: 'Course à pied',
+  Walking: 'Marche',
+  Cycling: 'Vélo',
+  Swimming: 'Natation',
+  FunctionalStrengthTraining: 'Musculation (fonctionnelle)',
+  TraditionalStrengthTraining: 'Musculation',
+  CoreTraining: 'Gainage',
+  Yoga: 'Yoga',
+  Pilates: 'Pilates',
+  HighIntensityIntervalTraining: 'HIIT',
+  Elliptical: 'Vélo elliptique',
+  Rowing: 'Rameur',
+  StairClimbing: 'Escaliers',
+  Hiking: 'Randonnée',
+  Boxing: 'Boxe',
+  Kickboxing: 'Kickboxing',
+  MartialArts: 'Arts martiaux',
+  Dance: 'Danse',
+  CardioDance: 'Danse cardio',
+  SocialDance: 'Danse',
+  Golf: 'Golf',
+  Tennis: 'Tennis',
+  Basketball: 'Basketball',
+  Soccer: 'Football',
+  Badminton: 'Badminton',
+  TableTennis: 'Tennis de table',
+  Climbing: 'Escalade',
+  CrossTraining: 'Cross-training',
+  MixedCardio: 'Cardio mixte',
+  JumpRope: 'Corde à sauter',
+  Barre: 'Barre',
+  StepTraining: 'Step',
+  WaterFitness: 'Aquagym',
+  Volleyball: 'Volleyball',
+  Handball: 'Handball',
+  Baseball: 'Baseball',
+  AmericanFootball: 'Football américain',
+  Fencing: 'Escrime',
+  Skiing: 'Ski',
+  Snowboarding: 'Snowboard',
+  Surfing: 'Surf',
+  PaddleSports: 'Paddle',
+  Sailing: 'Voile',
+  Equestrian: 'Équitation',
+  SkatingSports: 'Patinage',
+  Wrestling: 'Lutte',
+  Other: 'Autre activité',
+}
+
+/** Déduit un nom d'activité lisible à partir du type HealthKit brut (ex. "HKWorkoutActivityTypeKickboxing"). */
+function nomActiviteDepuisType(type: string): string {
+  const suffixe = type.replace(/^HKWorkoutActivityType/, '')
+  if (NOMS_ACTIVITES[suffixe]) return NOMS_ACTIVITES[suffixe]
+  const espace = suffixe.replace(/([a-z])([A-Z])/g, '$1 $2')
+  return espace || 'Activité'
+}
+
 const REGEX_RECORD = new RegExp(
   `<Record type="(${TOUS_LES_TYPES_SUIVIS.join('|')})"[^>]*?(?:/>|>[\\s\\S]*?</Record>)`,
   'g'
 )
 const REGEX_CORRELATION_ALIMENT = /<Correlation type="HKCorrelationTypeIdentifierFood"[^>]*?>[\s\S]*?<\/Correlation>/g
+const REGEX_WORKOUT = /<Workout\b[^>]*?(?:\/>|>[\s\S]*?<\/Workout>)/g
 const REGEX_OUVERTURE = /^<Record\b[^>]*?(?:\/>|>)/
+const REGEX_OUVERTURE_WORKOUT = /^<Workout\b[^>]*?(?:\/>|>)/
 const REGEX_START = /startDate="([^"]+)"/
 const REGEX_END = /endDate="([^"]+)"/
 const REGEX_VALEUR = /value="([^"]+)"/
@@ -125,6 +201,9 @@ const REGEX_UNITE = /unit="([^"]+)"/
 const REGEX_SOURCE = /sourceName="([^"]*)"/
 const REGEX_NOM = /<MetadataEntry key="HKFoodType" value="([^"]*)"/
 const REGEX_STARTDATES_IMBRIQUEES = /<Record\b[^>]*?startDate="([^"]+)"/g
+const REGEX_TYPE_ACTIVITE = /workoutActivityType="([^"]+)"/
+const REGEX_DUREE = /duration="([^"]+)"/
+const REGEX_DUREE_UNITE = /durationUnit="([^"]+)"/
 
 /**
  * Un « scanner » incrémental générique : on lui pousse du texte au fil de l'eau (par
@@ -189,11 +268,13 @@ export class AnalyseurSanteIncremental {
   private readonly sommeilIntervalles = new Map<string, Array<{ debut: number; fin: number }>>()
   private readonly nutrition = new Map<string, EntreeAlimentaire>()
   private readonly nomsAliments = new Map<string, string>()
+  private readonly entrainements = new Map<string, EntreeEntrainement>()
 
   private readonly scannerRecord = new ScannerIncremental(REGEX_RECORD, (m) => this.traiterRecord(m))
   private readonly scannerCorrelation = new ScannerIncremental(REGEX_CORRELATION_ALIMENT, (m) =>
     this.traiterCorrelationAliment(m[0])
   )
+  private readonly scannerWorkout = new ScannerIncremental(REGEX_WORKOUT, (m) => this.traiterWorkout(m[0]))
 
   private traiterCorrelationAliment(bloc: string) {
     const nomMatch = REGEX_NOM.exec(bloc)
@@ -300,15 +381,52 @@ export class AnalyseurSanteIncremental {
     }
   }
 
+  private traiterWorkout(bloc: string) {
+    const ouvertureMatch = REGEX_OUVERTURE_WORKOUT.exec(bloc)
+    const ouverture = ouvertureMatch ? ouvertureMatch[0] : bloc
+
+    const startMatch = REGEX_START.exec(ouverture)
+    const typeMatch = REGEX_TYPE_ACTIVITE.exec(ouverture)
+    if (!startMatch || !typeMatch) return
+
+    let dureeMin: number | null = null
+    const dureeMatch = REGEX_DUREE.exec(ouverture)
+    const dureeUniteMatch = REGEX_DUREE_UNITE.exec(ouverture)
+    if (dureeMatch && dureeUniteMatch) {
+      const valeurBrute = Number(dureeMatch[1])
+      if (Number.isFinite(valeurBrute)) dureeMin = convertirDureeEnMinutes(valeurBrute, dureeUniteMatch[1])
+    }
+    if (dureeMin === null) {
+      // Secours si `duration`/`durationUnit` sont absents : on calcule depuis start/end.
+      const endMatch = REGEX_END.exec(ouverture)
+      if (endMatch) {
+        const debut = parserHorodatageApple(startMatch[1])
+        const fin = parserHorodatageApple(endMatch[1])
+        if (debut !== null && fin !== null && fin > debut) {
+          dureeMin = (fin - debut) / 60000
+        }
+      }
+    }
+    if (dureeMin === null || dureeMin <= 0) return
+
+    const horodatage = startMatch[1]
+    this.entrainements.set(horodatage, {
+      horodatage,
+      nom: nomActiviteDepuisType(typeMatch[1]),
+      duree_min: Math.round(dureeMin),
+    })
+  }
+
   /** Pousse un morceau de texte décompressé. Peut être appelé autant de fois que nécessaire. */
   pousser(texte: string) {
     this.scannerCorrelation.pousser(texte)
     this.scannerRecord.pousser(texte)
+    this.scannerWorkout.pousser(texte)
   }
 
   /** Reliquat total actuellement gardé en mémoire (pour surveillance/tests uniquement). */
   reliquatOctets() {
-    return this.scannerCorrelation.tailleReliquat() + this.scannerRecord.tailleReliquat()
+    return this.scannerCorrelation.tailleReliquat() + this.scannerRecord.tailleReliquat() + this.scannerWorkout.tailleReliquat()
   }
 
   /** À appeler une fois tout le contenu poussé, pour obtenir le résultat final agrégé. */
@@ -333,6 +451,7 @@ export class AnalyseurSanteIncremental {
       ...poids.keys(),
       ...sommeil.keys(),
       ...Array.from(this.nutrition.keys()).map((h) => h.slice(0, 10)),
+      ...Array.from(this.entrainements.keys()).map((h) => h.slice(0, 10)),
     ])
     const joursTries = Array.from(tousLesJours).sort()
 
@@ -341,6 +460,7 @@ export class AnalyseurSanteIncremental {
       poids,
       sommeil,
       nutrition: this.nutrition,
+      entrainements: this.entrainements,
       premiereDate: joursTries[0] || null,
       derniereDate: joursTries[joursTries.length - 1] || null,
     }
