@@ -36,7 +36,7 @@ export const RECETTES: Recette[] = [
       { nom: 'Skyr', quantite: '330 g' },
       { nom: 'Œufs', quantite: '3' },
       { nom: "Flocons d'avoine", quantite: '80 g' },
-      { nom: 'Farine de blé', quantite: '60 g' },
+      { nom: 'Farine de blé', quantite: '120 g' },
       { nom: 'Whey isolat native', quantite: '20 g' },
       { nom: 'Levure', quantite: '11 g' },
       { nom: 'Sel', quantite: '4 g' },
@@ -58,7 +58,7 @@ export const RECETTES: Recette[] = [
         titre: "À l'Air Fryer",
         emoji: '🔥',
         etapes: [
-          "Préchauffer 3 min, couvrir le moule d'aluminium dès le début, cuire 55 à 60 min à 155-160°C, vérifier à la lame dès 40 min.",
+          "Préchauffer 3 min, couvrir le moule d'aluminium du début à la fin de la cuisson, cuire à 180°C pendant 40 à [à confirmer] min, vérifier à la lame à partir de 40-45 min.",
           "Laisser tiédir dans le moule avant de démouler, puis couper en 8 tranches.",
         ],
       },
