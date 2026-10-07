@@ -263,7 +263,7 @@ class ScannerIncremental {
  * centaines de Mo, du fait de la forte répétitivité des données).
  */
 export class AnalyseurSanteIncremental {
-  private readonly pasParJourEtSource = new Map<string, Map<string, number>>()
+  private readonly pasParJourSourceHeure = new Map<string, Map<string, Map<number, number>>>()
   private readonly poidsSommeCompte = new Map<string, { somme: number; compte: number }>()
   private readonly sommeilIntervalles = new Map<string, Array<{ debut: number; fin: number }>>()
   private readonly nutrition = new Map<string, EntreeAlimentaire>()
@@ -309,18 +309,25 @@ export class AnalyseurSanteIncremental {
     if (type === TYPE_PAS) {
       const valeur = Number(valeurMatch[1])
       if (!Number.isFinite(valeur)) return
-      // On somme par source (iPhone, Apple Watch, une autre appli...) plutôt que
-      // globalement : chaque source enregistre ses propres échantillons tout au long de
-      // la journée (souvent nombreux et légitimement additifs pour une même source), mais
-      // deux sources DIFFÉRENTES couvrent en général la même portion de journée en
-      // parallèle — les additionner compte deux fois les mêmes pas (ex. une montre à 1523
-      // pas remontant à 2330 après import). Le total du jour retenu est le maximum parmi
-      // les sources plutôt que leur somme — voir `finaliser()`.
+      // On somme par source ET par heure locale plutôt que globalement par jour : deux
+      // sources (iPhone, Apple Watch, une autre appli...) couvrent souvent la même portion
+      // de journée en parallèle, et les additionner compterait deux fois les mêmes pas (ex.
+      // une montre à 1523 pas remontant à 2330 après import). Mais une seule source peut
+      // aussi ne couvrir qu'une PARTIE de la journée (ex. montre portée le matin, téléphone
+      // seul l'après-midi) — un simple maximum par jour entre sources sous-compte alors les
+      // pas réels, puisqu'aucune source prise isolément n'a la journée complète. Le détail
+      // par heure permet de prendre, pour chaque heure, le maximum entre sources (évite le
+      // double-compte sur une plage couverte par plusieurs sources) puis de sommer ces
+      // maximums horaires (récupère les plages couvertes par une seule source) — voir
+      // `finaliser()`.
       const sourceMatch = REGEX_SOURCE.exec(ouverture)
       const source = sourceMatch ? sourceMatch[1] : ''
-      const parSource = this.pasParJourEtSource.get(jourDebut) || new Map<string, number>()
-      parSource.set(source, (parSource.get(source) || 0) + valeur)
-      this.pasParJourEtSource.set(jourDebut, parSource)
+      const heure = Number(horodatage.slice(11, 13))
+      const parSource = this.pasParJourSourceHeure.get(jourDebut) || new Map<string, Map<number, number>>()
+      const parHeure = parSource.get(source) || new Map<number, number>()
+      parHeure.set(heure, (parHeure.get(heure) || 0) + valeur)
+      parSource.set(source, parHeure)
+      this.pasParJourSourceHeure.set(jourDebut, parSource)
       return
     }
 
@@ -442,8 +449,17 @@ export class AnalyseurSanteIncremental {
     }
 
     const pas = new Map<string, number>()
-    for (const [jour, parSource] of this.pasParJourEtSource) {
-      pas.set(jour, Math.round(Math.max(...parSource.values())))
+    for (const [jour, parSource] of this.pasParJourSourceHeure) {
+      let total = 0
+      for (let heure = 0; heure < 24; heure++) {
+        let maxHeure = 0
+        for (const parHeure of parSource.values()) {
+          const v = parHeure.get(heure) || 0
+          if (v > maxHeure) maxHeure = v
+        }
+        total += maxHeure
+      }
+      pas.set(jour, Math.round(total))
     }
 
     const tousLesJours = new Set<string>([
