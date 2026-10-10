@@ -6,7 +6,7 @@ import type {
   SuiviHebdomadaire,
   Micronutriments,
 } from '../types'
-import { PLANNING_SEMAINE } from '../data/defaults'
+import { NB_SEANCES_PAR_SEMAINE } from '../data/defaults'
 import { totauxRepas, ajouterSupplements, analyserMicronutriments, type AnalyseNutriment } from './nutrition'
 import { ajouterJours } from './date'
 import { moyenneMobile7Jours } from './stagnation'
@@ -106,7 +106,7 @@ export function genererRapportHebdomadaire(
       : null
 
   const seancesFaites = seancesLog.filter((s) => dansLaSemaine(s.date) && seanceEstReussie(s)).length
-  const planifiees = Object.values(PLANNING_SEMAINE).filter((v) => v !== null).length
+  const planifiees = NB_SEANCES_PAR_SEMAINE
 
   return {
     semaineDebut,

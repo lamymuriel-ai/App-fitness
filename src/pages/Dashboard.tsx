@@ -5,7 +5,7 @@ import { BarreProgression, BarreMacros } from '../components/ui'
 import { totauxRepas, calculerMoyenneMicrosSemaine, ajouterSupplements } from '../utils/nutrition'
 import { calculerBudgetRestant, genererSuggestions } from '../utils/suggestionsAlimentaires'
 import { ajouterJours, dateDuJourISO, debutSemaineISO, estAujourdhui, formatDateLong, numeroSemaine } from '../utils/date'
-import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
+import { SEANCES_TEMPLATES, PLANNING_SEMAINE, ACTIVITES_RECURRENTES } from '../data/defaults'
 import { detecterStagnation } from '../utils/stagnation'
 import { phraseDuJour } from '../data/phrasesEncouragement'
 import { calculerStreakSemaines } from '../utils/streak'
@@ -49,6 +49,7 @@ export default function Dashboard() {
   const estLundi = jourSemaine === 1
   const idSeanceDuJour = PLANNING_SEMAINE[jourSemaine]
   const seanceDuJour = idSeanceDuJour ? SEANCES_TEMPLATES.find((s) => s.id === idSeanceDuJour) : null
+  const activiteRecurrenteDuJour = ACTIVITES_RECURRENTES[jourSemaine]
   const seanceLogDuJour = seancesLog.find(
     (s) => s.date === aujourdHui && s.seanceTemplateId === idSeanceDuJour
   )
@@ -218,6 +219,17 @@ export default function Dashboard() {
               {seanceLogDuJour?.termineeA ? 'Revoir la séance' : 'Commencer la séance'}
             </button>
           </div>
+        ) : activiteRecurrenteDuJour ? (
+          !autreActiviteDuJour && (
+            <div className="card yellow" style={{ padding: 14 }}>
+              <p className="small" style={{ fontWeight: 700, marginBottom: 8 }}>
+                🥊 {activiteRecurrenteDuJour.nom} prévue aujourd'hui <span className="muted">· {activiteRecurrenteDuJour.duree_min} min</span>
+              </p>
+              <button className="btn btn-yellow btn-sm" style={{ width: '100%' }} onClick={() => navigate('/entrainement')}>
+                Enregistrer la séance
+              </button>
+            </div>
+          )
         ) : (
           <div className="card" style={{ padding: 14 }}>
             <p className="small" style={{ fontWeight: 700, marginBottom: 0 }}>

@@ -160,13 +160,36 @@ export const SEANCES_TEMPLATES: SeanceTemplate[] = [
 
 // Programme hebdomadaire indicatif : jours où chaque séance est prévue.
 // 0 = dimanche ... 6 = samedi
-// Lundi et samedi en salle (séances A et B), mercredi à la maison (séance C).
+// Lundi et samedi en salle (séances A et B). Le mercredi n'a plus de séance de muscu
+// fixe, remplacé par la boxe le jeudi (voir ACTIVITES_RECURRENTES ci-dessous).
 export const PLANNING_SEMAINE: Record<number, 'A' | 'B' | 'C' | null> = {
   0: null,
   1: 'A',
   2: null,
-  3: 'C',
+  3: null,
   4: null,
   5: null,
   6: 'B',
 }
+
+export interface ActiviteRecurrente {
+  nom: string
+  duree_min: number
+}
+
+// Activités hors programme de muscu, mais tout aussi fixes chaque semaine (loggées
+// comme "autre activité" plutôt que via un SeanceTemplate A/B/C).
+export const ACTIVITES_RECURRENTES: Record<number, ActiviteRecurrente | null> = {
+  0: null,
+  1: null,
+  2: null,
+  3: null,
+  4: { nom: 'Boxe', duree_min: 60 },
+  5: null,
+  6: null,
+}
+
+// Nombre de séances (muscu + activités récurrentes) attendues par semaine.
+export const NB_SEANCES_PAR_SEMAINE =
+  Object.values(PLANNING_SEMAINE).filter(Boolean).length +
+  Object.values(ACTIVITES_RECURRENTES).filter(Boolean).length

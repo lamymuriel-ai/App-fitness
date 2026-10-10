@@ -1,9 +1,7 @@
 import type { SeanceLog } from '../types'
-import { PLANNING_SEMAINE } from '../data/defaults'
+import { NB_SEANCES_PAR_SEMAINE } from '../data/defaults'
 import { ajouterJours, dateDuJourISO, debutSemaineISO } from './date'
 import { seanceEstReussie } from './seance'
-
-const NB_SEANCES_PAR_SEMAINE = Object.values(PLANNING_SEMAINE).filter(Boolean).length
 
 /**
  * Nombre de semaines calendaires consécutives où l'objectif hebdomadaire de séances a été

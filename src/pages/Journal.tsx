@@ -7,7 +7,7 @@ import { calculerBudgetRestant } from '../utils/suggestionsAlimentaires'
 import { BarreProgression, BarreMacros, EtatVide } from '../components/ui'
 import GrilleMicronutriments from '../components/GrilleMicronutriments'
 import AlertesNutriments from '../components/AlertesNutriments'
-import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
+import { SEANCES_TEMPLATES, PLANNING_SEMAINE, ACTIVITES_RECURRENTES } from '../data/defaults'
 import { seanceEstReussie } from '../utils/seance'
 import type { Repas } from '../types'
 
@@ -94,6 +94,7 @@ export default function Journal() {
     ? SEANCES_TEMPLATES.find((s) => s.id === seanceFaiteCeJour.seanceTemplateId)
     : null
   const idSeancePrevueCeJour = PLANNING_SEMAINE[new Date(`${dateAffichee}T00:00:00`).getDay()]
+  const activitePrevueCeJour = ACTIVITES_RECURRENTES[new Date(`${dateAffichee}T00:00:00`).getDay()]
 
   return (
     <div>
@@ -164,6 +165,11 @@ export default function Journal() {
               ) : idSeancePrevueCeJour ? (
                 <p className="small" style={{ fontWeight: 700, margin: 0 }}>
                   🏋️ Séance {idSeancePrevueCeJour} prévue
+                  <span className="muted"> · pas encore faite</span>
+                </p>
+              ) : activitePrevueCeJour ? (
+                <p className="small" style={{ fontWeight: 700, margin: 0 }}>
+                  🥊 {activitePrevueCeJour.nom} prévue
                   <span className="muted"> · pas encore faite</span>
                 </p>
               ) : (
