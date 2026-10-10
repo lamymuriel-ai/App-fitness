@@ -5,7 +5,13 @@ import { BarreProgression, BarreMacros } from '../components/ui'
 import { totauxRepas, calculerMoyenneMicrosSemaine, ajouterSupplements } from '../utils/nutrition'
 import { calculerBudgetRestant, genererSuggestions } from '../utils/suggestionsAlimentaires'
 import { ajouterJours, dateDuJourISO, debutSemaineISO, estAujourdhui, formatDateLong, numeroSemaine } from '../utils/date'
-import { SEANCES_TEMPLATES, PLANNING_SEMAINE, ACTIVITES_RECURRENTES } from '../data/defaults'
+import {
+  SEANCES_TEMPLATES,
+  SEANCES_TEMPLATES_PLANIFIEES,
+  ACTIVITES_RECURRENTES_UNIQUES,
+  PLANNING_SEMAINE,
+  ACTIVITES_RECURRENTES,
+} from '../data/defaults'
 import { detecterStagnation } from '../utils/stagnation'
 import { phraseDuJour } from '../data/phrasesEncouragement'
 import { calculerStreakSemaines } from '../utils/streak'
@@ -60,16 +66,27 @@ export default function Dashboard() {
   const streakSemaines = useMemo(() => calculerStreakSemaines(seancesLog, aujourdHui), [seancesLog, aujourdHui])
 
   const debutSemaine = useMemo(() => debutSemaineISO(aujourdHui), [aujourdHui])
-  const seancesCetteSemaine = useMemo(
-    () =>
-      SEANCES_TEMPLATES.map((s) => ({
-        seance: s,
-        faite: seancesLog.some(
-          (log) => log.seanceTemplateId === s.id && log.date >= debutSemaine && seanceEstReussie(log)
-        ),
-      })),
-    [seancesLog, debutSemaine]
-  )
+  const seancesCetteSemaine = useMemo(() => {
+    const structurees = SEANCES_TEMPLATES_PLANIFIEES.map((s) => ({
+      cle: s.id,
+      label: `Séance ${s.id}`,
+      faite: seancesLog.some(
+        (log) => log.seanceTemplateId === s.id && log.date >= debutSemaine && seanceEstReussie(log)
+      ),
+    }))
+    const recurrentes = ACTIVITES_RECURRENTES_UNIQUES.map((a) => ({
+      cle: a.nom,
+      label: a.nom,
+      faite: seancesLog.some(
+        (log) =>
+          log.seanceTemplateId === 'autre' &&
+          log.nomActivite === a.nom &&
+          log.date >= debutSemaine &&
+          seanceEstReussie(log)
+      ),
+    }))
+    return [...structurees, ...recurrentes]
+  }, [seancesLog, debutSemaine])
   const nbSeancesFaites = seancesCetteSemaine.filter((s) => s.faite).length
 
   const stagnationActive = useMemo(() => {
@@ -258,14 +275,14 @@ export default function Dashboard() {
             </p>
           )}
           <div style={{ display: 'flex', gap: 12 }}>
-            {seancesCetteSemaine.map(({ seance, faite }) => (
+            {seancesCetteSemaine.map(({ cle, label, faite }) => (
               <div
-                key={seance.id}
+                key={cle}
                 className="small"
                 style={{ display: 'flex', alignItems: 'center', gap: 4, fontWeight: 600, whiteSpace: 'nowrap' }}
               >
                 <span>{faite ? '✅' : '⬜️'}</span>
-                <span>Séance {seance.id}</span>
+                <span>{label}</span>
               </div>
             ))}
           </div>

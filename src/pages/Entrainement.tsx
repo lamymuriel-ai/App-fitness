@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts'
 import { useAppData } from '../context/AppDataContext'
-import { SEANCES_TEMPLATES, PLANNING_SEMAINE } from '../data/defaults'
+import { SEANCES_TEMPLATES, SEANCES_TEMPLATES_PLANIFIEES, PLANNING_SEMAINE } from '../data/defaults'
 import { dateDuJourISO, debutSemaineISO, formatDateCourt, formatDateLong, genererId, joursEntre } from '../utils/date'
 import { EtatVide } from '../components/ui'
 import { seanceEstReussie } from '../utils/seance'
@@ -197,7 +197,7 @@ export default function Entrainement() {
         )}
 
         {onglet === 'seances' &&
-          SEANCES_TEMPLATES.map((seance) => {
+          SEANCES_TEMPLATES_PLANIFIEES.map((seance) => {
             // Faite un autre jour cette semaine (pas seulement aujourd'hui) : ça reste "Revoir"
             // tant qu'on n'est pas reparti sur une nouvelle semaine calendaire. "Faite" exige
             // que toutes les séries soient cochées (seanceEstReussie) — sinon une séance

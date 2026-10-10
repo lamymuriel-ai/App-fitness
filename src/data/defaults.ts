@@ -193,3 +193,18 @@ export const ACTIVITES_RECURRENTES: Record<number, ActiviteRecurrente | null> = 
 export const NB_SEANCES_PAR_SEMAINE =
   Object.values(PLANNING_SEMAINE).filter(Boolean).length +
   Object.values(ACTIVITES_RECURRENTES).filter(Boolean).length
+
+// Modèles de séance de muscu réellement programmés cette semaine (ex. exclut une séance
+// retirée du planning comme la C, même si son contenu reste disponible pour l'historique).
+const IDS_SEANCES_PLANIFIEES = new Set(Object.values(PLANNING_SEMAINE).filter(Boolean))
+export const SEANCES_TEMPLATES_PLANIFIEES = SEANCES_TEMPLATES.filter((s) => IDS_SEANCES_PLANIFIEES.has(s.id))
+
+// Activités récurrentes uniques (par nom) actuellement programmées, toutes fréquences
+// confondues — sert à les lister une seule fois (ex. pour un récapitulatif hebdomadaire).
+export const ACTIVITES_RECURRENTES_UNIQUES = Array.from(
+  new Map(
+    Object.values(ACTIVITES_RECURRENTES)
+      .filter((a): a is ActiviteRecurrente => a !== null)
+      .map((a) => [a.nom, a])
+  ).values()
+)
