@@ -1,5 +1,5 @@
 import type { Micronutriments, ObjectifsNutritionnels } from '../types'
-import { ALIMENTS_REFERENCE, type AlimentReference, type MomentRepas } from '../data/alimentsReference'
+import { ALIMENTS_REFERENCE, estDeSaison, type AlimentReference, type MomentRepas } from '../data/alimentsReference'
 import { MICRO_REFERENCE } from '../data/defaults'
 import { analyserMicronutriments } from './nutrition'
 
@@ -69,7 +69,8 @@ export function genererSuggestions(
   moyenneMicrosSemaine: Micronutriments,
   reference: Micronutriments,
   limite = 5,
-  filtreMoment?: MomentRepas
+  filtreMoment?: MomentRepas,
+  mois: number = new Date().getMonth() + 1
 ): SuggestionAliment[] {
   if (budgetRestant.calories < PORTION_MINIMALE_G) return [] // quasi plus de marge, rien à proposer
 
@@ -80,6 +81,9 @@ export function genererSuggestions(
 
   for (const aliment of ALIMENTS_REFERENCE) {
     if (filtreMoment && !aliment.moments.includes(filtreMoment)) continue
+    // Jamais un fruit/légume hors saison : les viandes, poissons, laitiers, céréales...
+    // n'ont pas de `saisons` et restent donc toujours proposables.
+    if (!estDeSaison(aliment, mois)) continue
 
     // On part de la portion de référence, réduite si besoin pour tenir dans les
     // calories restantes (jamais l'inverse : on ne propose jamais plus que ce qui reste).

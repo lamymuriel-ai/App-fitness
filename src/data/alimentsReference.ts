@@ -25,6 +25,9 @@ export interface AlimentReference {
   portionReference_g: number
   /** À quel(s) moment(s) de la journée cet aliment se prête naturellement (filtre rapide). */
   moments: MomentRepas[]
+  /** Mois (1-12) où cet aliment est de saison en France (fruits/légumes frais). Omis = disponible
+   * toute l'année (viandes, poissons, laitiers, céréales, légumineuses, oléagineux, conserves...). */
+  saisons?: number[]
   /** Valeurs nutritionnelles pour 100 g de cet aliment (repères généraux, pas une base précise type CIQUAL). */
   pour100g: {
     calories: number
@@ -33,6 +36,11 @@ export interface AlimentReference {
     glucides_g: number
     micros: Partial<Micronutriments>
   }
+}
+
+/** Un aliment sans `saisons` défini est disponible toute l'année. */
+export function estDeSaison(aliment: AlimentReference, mois: number): boolean {
+  return !aliment.saisons || aliment.saisons.includes(mois)
 }
 
 // Repères nutritionnels généraux pour 100 g — à titre informatif (comme le reste de
@@ -70,6 +78,7 @@ export const ALIMENTS_REFERENCE: AlimentReference[] = [
   { id: 'brocoli', categorie: 'legume', nom: 'Brocoli cuit', emoji: '🥦', portionReference_g: 150, moments: ['repas'],
     pour100g: { calories: 35, proteines_g: 2.4, lipides_g: 0.4, glucides_g: 7, micros: { vitamineC_mg: 65, fibres_g: 3.3, calcium_mg: 47 } } },
   { id: 'poivron', categorie: 'legume', nom: 'Poivron rouge', emoji: '🫑', portionReference_g: 100, moments: ['repas'],
+    saisons: [7, 8, 9, 10],
     pour100g: { calories: 31, proteines_g: 1, lipides_g: 0.3, glucides_g: 6, micros: { vitamineC_mg: 128, vitamineA_ug: 157, fibres_g: 2.1 } } },
   { id: 'patate_douce', categorie: 'feculent', nom: 'Patate douce cuite', emoji: '🍠', portionReference_g: 200, moments: ['repas'],
     pour100g: { calories: 86, proteines_g: 1.6, lipides_g: 0.1, glucides_g: 20, micros: { vitamineA_ug: 700, fibres_g: 3, vitamineC_mg: 2.4 } } },
@@ -82,8 +91,10 @@ export const ALIMENTS_REFERENCE: AlimentReference[] = [
   { id: 'banane', categorie: 'fruit', nom: 'Banane', emoji: '🍌', portionReference_g: 120, moments: ['petit_dejeuner', 'collation'],
     pour100g: { calories: 89, proteines_g: 1.1, lipides_g: 0.3, glucides_g: 23, micros: { magnesium_mg: 27, fibres_g: 2.6, vitamineB6_mg: 0.4 } } },
   { id: 'orange', categorie: 'fruit', nom: 'Orange', emoji: '🍊', portionReference_g: 150, moments: ['petit_dejeuner', 'collation'],
+    saisons: [11, 12, 1, 2, 3],
     pour100g: { calories: 47, proteines_g: 0.9, lipides_g: 0.1, glucides_g: 12, micros: { vitamineC_mg: 53, fibres_g: 2.4 } } },
   { id: 'kiwi', categorie: 'fruit', nom: 'Kiwi', emoji: '🥝', portionReference_g: 100, moments: ['petit_dejeuner', 'collation'],
+    saisons: [11, 12, 1, 2, 3, 4],
     pour100g: { calories: 61, proteines_g: 1.1, lipides_g: 0.5, glucides_g: 15, micros: { vitamineC_mg: 93, fibres_g: 3 } } },
   { id: 'avocat', categorie: 'oleagineux', nom: 'Avocat', emoji: '🥑', portionReference_g: 100, moments: ['petit_dejeuner', 'repas'],
     pour100g: { calories: 160, proteines_g: 2, lipides_g: 15, glucides_g: 9, micros: { fibres_g: 6.7, vitamineE_mg: 2.1, magnesium_mg: 29 } } },
@@ -122,38 +133,50 @@ export const ALIMENTS_REFERENCE: AlimentReference[] = [
   { id: 'carotte', categorie: 'legume', nom: 'Carotte cuite', emoji: '🥕', portionReference_g: 100, moments: ['repas'],
     pour100g: { calories: 35, proteines_g: 0.8, lipides_g: 0.2, glucides_g: 8, micros: { vitamineA_ug: 850, fibres_g: 3 } } },
   { id: 'courgette', categorie: 'legume', nom: 'Courgette cuite', emoji: '🥒', portionReference_g: 150, moments: ['repas'],
+    saisons: [6, 7, 8, 9],
     pour100g: { calories: 17, proteines_g: 1.2, lipides_g: 0.3, glucides_g: 3, micros: { vitamineC_mg: 10, fibres_g: 1 } } },
   { id: 'tomate', categorie: 'legume', nom: 'Tomate', emoji: '🍅', portionReference_g: 100, moments: ['repas'],
+    saisons: [6, 7, 8, 9],
     pour100g: { calories: 18, proteines_g: 0.9, lipides_g: 0.2, glucides_g: 3.9, micros: { vitamineC_mg: 14, fibres_g: 1.2 } } },
   { id: 'champignon', categorie: 'legume', nom: 'Champignons cuits', emoji: '🍄', portionReference_g: 100, moments: ['repas'],
     pour100g: { calories: 22, proteines_g: 3, lipides_g: 0.3, glucides_g: 2, micros: { vitamineD_ug: 0.2, fibres_g: 1.5 } } },
   { id: 'chou_fleur', categorie: 'legume', nom: 'Chou-fleur cuit', emoji: '🥦', portionReference_g: 150, moments: ['repas'],
+    saisons: [9, 10, 11, 12, 1, 2, 3, 4],
     pour100g: { calories: 25, proteines_g: 2, lipides_g: 0.3, glucides_g: 4, micros: { vitamineC_mg: 44, fibres_g: 2 } } },
   { id: 'haricots_verts', categorie: 'legume', nom: 'Haricots verts cuits', emoji: '🌱', portionReference_g: 150, moments: ['repas'],
+    saisons: [6, 7, 8, 9],
     pour100g: { calories: 31, proteines_g: 1.8, lipides_g: 0.2, glucides_g: 7, micros: { fibres_g: 3.4, vitamineC_mg: 12 } } },
   { id: 'salade_verte', categorie: 'legume', nom: 'Salade verte', emoji: '🥗', portionReference_g: 50, moments: ['repas'],
     pour100g: { calories: 15, proteines_g: 1.4, lipides_g: 0.2, glucides_g: 2, micros: { vitamineA_ug: 150, fibres_g: 1.3 } } },
   { id: 'concombre', categorie: 'legume', nom: 'Concombre', emoji: '🥒', portionReference_g: 100, moments: ['repas'],
+    saisons: [5, 6, 7, 8, 9],
     pour100g: { calories: 15, proteines_g: 0.7, lipides_g: 0.1, glucides_g: 3.6, micros: { vitamineC_mg: 3 } } },
   { id: 'aubergine', categorie: 'legume', nom: 'Aubergine cuite', emoji: '🍆', portionReference_g: 150, moments: ['repas'],
+    saisons: [7, 8, 9, 10],
     pour100g: { calories: 25, proteines_g: 1, lipides_g: 0.2, glucides_g: 6, micros: { fibres_g: 3 } } },
   { id: 'betterave', categorie: 'legume', nom: 'Betterave cuite', emoji: '🟣', portionReference_g: 100, moments: ['repas'],
     pour100g: { calories: 44, proteines_g: 1.7, lipides_g: 0.2, glucides_g: 10, micros: { fibres_g: 2.8, fer_mg: 0.8 } } },
 
   // Fruits supplémentaires
   { id: 'pomme', categorie: 'fruit', nom: 'Pomme', emoji: '🍎', portionReference_g: 150, moments: ['petit_dejeuner', 'collation'],
+    saisons: [9, 10, 11, 12, 1, 2, 3, 4],
     pour100g: { calories: 52, proteines_g: 0.3, lipides_g: 0.2, glucides_g: 14, micros: { fibres_g: 2.4, vitamineC_mg: 4.6 } } },
   { id: 'poire', categorie: 'fruit', nom: 'Poire', emoji: '🍐', portionReference_g: 150, moments: ['petit_dejeuner', 'collation'],
+    saisons: [8, 9, 10, 11, 12, 1],
     pour100g: { calories: 57, proteines_g: 0.4, lipides_g: 0.1, glucides_g: 15, micros: { fibres_g: 3.1, vitamineC_mg: 4.3 } } },
   { id: 'fraises', categorie: 'fruit', nom: 'Fraises', emoji: '🍓', portionReference_g: 150, moments: ['petit_dejeuner', 'collation'],
+    saisons: [4, 5, 6, 7],
     pour100g: { calories: 32, proteines_g: 0.7, lipides_g: 0.3, glucides_g: 7.7, micros: { vitamineC_mg: 59, fibres_g: 2 } } },
   { id: 'myrtilles', categorie: 'fruit', nom: 'Myrtilles', emoji: '🫐', portionReference_g: 100, moments: ['petit_dejeuner', 'collation'],
+    saisons: [6, 7, 8, 9],
     pour100g: { calories: 57, proteines_g: 0.7, lipides_g: 0.3, glucides_g: 14, micros: { vitamineC_mg: 9.7, fibres_g: 2.4 } } },
   { id: 'pamplemousse', categorie: 'fruit', nom: 'Pamplemousse', emoji: '🍊', portionReference_g: 150, moments: ['petit_dejeuner', 'collation'],
+    saisons: [12, 1, 2, 3, 4],
     pour100g: { calories: 42, proteines_g: 0.8, lipides_g: 0.1, glucides_g: 11, micros: { vitamineC_mg: 31, fibres_g: 1.6 } } },
   { id: 'mangue', categorie: 'fruit', nom: 'Mangue', emoji: '🥭', portionReference_g: 120, moments: ['petit_dejeuner', 'collation'],
     pour100g: { calories: 60, proteines_g: 0.8, lipides_g: 0.4, glucides_g: 15, micros: { vitamineC_mg: 36, vitamineA_ug: 54, fibres_g: 1.6 } } },
   { id: 'raisin', categorie: 'fruit', nom: 'Raisin', emoji: '🍇', portionReference_g: 100, moments: ['petit_dejeuner', 'collation'],
+    saisons: [8, 9, 10],
     pour100g: { calories: 69, proteines_g: 0.7, lipides_g: 0.2, glucides_g: 18, micros: { vitamineC_mg: 3.2, fibres_g: 0.9 } } },
 
   // Féculents supplémentaires
@@ -226,38 +249,53 @@ export const ALIMENTS_REFERENCE: AlimentReference[] = [
 
   // Légumes — deuxième vague
   { id: 'poireau', categorie: 'legume', nom: 'Poireau cuit', emoji: '🥬', portionReference_g: 150, moments: ['repas'],
+    saisons: [9, 10, 11, 12, 1, 2, 3, 4],
     pour100g: { calories: 22, proteines_g: 1.2, lipides_g: 0.3, glucides_g: 4, micros: { vitamineC_mg: 8, fibres_g: 1.8 } } },
   { id: 'celeri', categorie: 'legume', nom: 'Céleri', emoji: '🥬', portionReference_g: 100, moments: ['repas'],
+    saisons: [9, 10, 11, 12, 1, 2, 3],
     pour100g: { calories: 16, proteines_g: 0.7, lipides_g: 0.2, glucides_g: 3, micros: { fibres_g: 1.6, vitamineC_mg: 3 } } },
   { id: 'radis', categorie: 'legume', nom: 'Radis', emoji: '🌶️', portionReference_g: 80, moments: ['repas'],
+    saisons: [4, 5, 6, 7, 8, 9],
     pour100g: { calories: 16, proteines_g: 0.7, lipides_g: 0.1, glucides_g: 3.4, micros: { vitamineC_mg: 15, fibres_g: 1.6 } } },
   { id: 'navet', categorie: 'legume', nom: 'Navet cuit', emoji: '🥔', portionReference_g: 150, moments: ['repas'],
+    saisons: [9, 10, 11, 12, 1, 2, 3],
     pour100g: { calories: 22, proteines_g: 0.9, lipides_g: 0.1, glucides_g: 5, micros: { vitamineC_mg: 12, fibres_g: 2 } } },
   { id: 'artichaut', categorie: 'legume', nom: 'Artichaut cuit', emoji: '🌿', portionReference_g: 120, moments: ['repas'],
+    saisons: [5, 6, 7],
     pour100g: { calories: 47, proteines_g: 3.3, lipides_g: 0.2, glucides_g: 10, micros: { fibres_g: 5.4, magnesium_mg: 60 } } },
   { id: 'asperges', categorie: 'legume', nom: 'Asperges cuites', emoji: '🥬', portionReference_g: 120, moments: ['repas'],
+    saisons: [4, 5, 6],
     pour100g: { calories: 20, proteines_g: 2.2, lipides_g: 0.2, glucides_g: 3.9, micros: { fibres_g: 2, vitamineC_mg: 5.6, fer_mg: 0.9 } } },
   { id: 'choux_bruxelles', categorie: 'legume', nom: 'Choux de Bruxelles cuits', emoji: '🥬', portionReference_g: 150, moments: ['repas'],
+    saisons: [10, 11, 12, 1, 2],
     pour100g: { calories: 36, proteines_g: 2.6, lipides_g: 0.3, glucides_g: 7, micros: { vitamineC_mg: 62, fibres_g: 3.8 } } },
   { id: 'fenouil', categorie: 'legume', nom: 'Fenouil', emoji: '🌿', portionReference_g: 120, moments: ['repas'],
+    saisons: [6, 7, 8, 9, 10, 11],
     pour100g: { calories: 31, proteines_g: 1.2, lipides_g: 0.2, glucides_g: 7, micros: { vitamineC_mg: 12, fibres_g: 3.1 } } },
 
   // Fruits — deuxième vague
   { id: 'ananas', categorie: 'fruit', nom: 'Ananas', emoji: '🍍', portionReference_g: 130, moments: ['petit_dejeuner', 'collation'],
     pour100g: { calories: 50, proteines_g: 0.5, lipides_g: 0.1, glucides_g: 13, micros: { vitamineC_mg: 48, fibres_g: 1.4 } } },
   { id: 'melon', categorie: 'fruit', nom: 'Melon', emoji: '🍈', portionReference_g: 150, moments: ['petit_dejeuner', 'collation'],
+    saisons: [6, 7, 8, 9],
     pour100g: { calories: 34, proteines_g: 0.8, lipides_g: 0.2, glucides_g: 8, micros: { vitamineC_mg: 18, vitamineA_ug: 169 } } },
   { id: 'pasteque', categorie: 'fruit', nom: 'Pastèque', emoji: '🍉', portionReference_g: 200, moments: ['petit_dejeuner', 'collation'],
+    saisons: [6, 7, 8, 9],
     pour100g: { calories: 30, proteines_g: 0.6, lipides_g: 0.2, glucides_g: 8, micros: { vitamineC_mg: 8 } } },
   { id: 'cerises', categorie: 'fruit', nom: 'Cerises', emoji: '🍒', portionReference_g: 120, moments: ['petit_dejeuner', 'collation'],
+    saisons: [5, 6, 7, 8],
     pour100g: { calories: 63, proteines_g: 1.1, lipides_g: 0.2, glucides_g: 16, micros: { vitamineC_mg: 7, fibres_g: 2.1 } } },
   { id: 'abricot', categorie: 'fruit', nom: 'Abricot', emoji: '🍑', portionReference_g: 120, moments: ['petit_dejeuner', 'collation'],
+    saisons: [6, 7, 8],
     pour100g: { calories: 48, proteines_g: 1.4, lipides_g: 0.4, glucides_g: 11, micros: { vitamineA_ug: 96, vitamineC_mg: 10, fibres_g: 2 } } },
   { id: 'figue', categorie: 'fruit', nom: 'Figue', emoji: '🟣', portionReference_g: 100, moments: ['petit_dejeuner', 'collation'],
+    saisons: [6, 7, 8, 9, 10],
     pour100g: { calories: 74, proteines_g: 0.8, lipides_g: 0.3, glucides_g: 19, micros: { fibres_g: 2.9, calcium_mg: 35 } } },
   { id: 'prune', categorie: 'fruit', nom: 'Prune', emoji: '🟣', portionReference_g: 100, moments: ['petit_dejeuner', 'collation'],
+    saisons: [7, 8, 9],
     pour100g: { calories: 46, proteines_g: 0.7, lipides_g: 0.3, glucides_g: 11, micros: { vitamineC_mg: 9.5, fibres_g: 1.4 } } },
   { id: 'clementine', categorie: 'fruit', nom: 'Clémentine', emoji: '🍊', portionReference_g: 100, moments: ['petit_dejeuner', 'collation'],
+    saisons: [11, 12, 1],
     pour100g: { calories: 47, proteines_g: 0.9, lipides_g: 0.2, glucides_g: 12, micros: { vitamineC_mg: 49, fibres_g: 1.7 } } },
 
   // Oléagineux et graines — deuxième vague
