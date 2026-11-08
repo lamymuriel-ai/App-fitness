@@ -351,6 +351,10 @@ function SeanceActiveInner() {
             <h3 style={{ marginTop: 0 }}>{template.exercices[infoOuverte].nom}</h3>
             <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>Comment faire</p>
             <p className="small muted">{template.exercices[infoOuverte].description}</p>
+            <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>Muscles sollicités</p>
+            <p className="small muted">{template.exercices[infoOuverte].muscles}</p>
+            <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>Intérêt de l'exercice</p>
+            <p className="small muted">{template.exercices[infoOuverte].interet}</p>
             <p className="small" style={{ fontWeight: 700, marginBottom: 4 }}>Si pas de machine / trop dur</p>
             <p className="small muted mb-0">{template.exercices[infoOuverte].alternative}</p>
           </div>

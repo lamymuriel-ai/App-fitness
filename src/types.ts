@@ -102,6 +102,10 @@ export interface ExerciceTemplate {
   description: string
   /** Solution de repli si la machine n'existe pas dans la salle (ou variante plus facile/dure pour un exercice à la maison). */
   alternative: string
+  /** Muscles principalement sollicités par l'exercice. */
+  muscles: string
+  /** Pourquoi cet exercice est dans le programme (bénéfice, complémentarité avec les autres). */
+  interet: string
 }
 
 export interface SeanceTemplate {
