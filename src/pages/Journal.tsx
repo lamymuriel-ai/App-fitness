@@ -9,6 +9,7 @@ import GrilleMicronutriments from '../components/GrilleMicronutriments'
 import AlertesNutriments from '../components/AlertesNutriments'
 import { SEANCES_TEMPLATES, PLANNING_SEMAINE, ACTIVITES_RECURRENTES } from '../data/defaults'
 import { seanceEstReussie } from '../utils/seance'
+import { statutSport } from '../utils/recapJournalier'
 import type { Repas } from '../types'
 
 const LABEL_TYPE: Record<Repas['type'], string> = {
@@ -95,6 +96,11 @@ export default function Journal() {
     : null
   const idSeancePrevueCeJour = PLANNING_SEMAINE[new Date(`${dateAffichee}T00:00:00`).getDay()]
   const activitePrevueCeJour = ACTIVITES_RECURRENTES[new Date(`${dateAffichee}T00:00:00`).getDay()]
+  // Si l'objectif hebdomadaire de séances est déjà atteint (même décalé par rapport au
+  // planning habituel — ex. séance du samedi faite le dimanche), le reste de la semaine
+  // est du repos : pas la peine de continuer à réclamer "prévue, pas encore faite" pour un
+  // jour dont la séance a simplement été faite un autre jour.
+  const semaineDejaComplete = statutSport(dateAffichee, seancesLog) === 'repos'
 
   return (
     <div>
@@ -162,6 +168,8 @@ export default function Journal() {
                   💪 Séance {seanceTemplateFaite.id} faite
                   <span className="muted"> · {seanceTemplateFaite.lieu === 'salle' ? 'en salle' : 'à la maison'}</span>
                 </p>
+              ) : semaineDejaComplete ? (
+                <p className="small" style={{ fontWeight: 700, margin: 0 }}>😌 Jour de repos</p>
               ) : idSeancePrevueCeJour ? (
                 <p className="small" style={{ fontWeight: 700, margin: 0 }}>
                   🏋️ Séance {idSeancePrevueCeJour} prévue
