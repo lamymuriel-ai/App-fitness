@@ -83,27 +83,29 @@ export const SEANCES_TEMPLATES: SeanceTemplate[] = [
     nom: 'Séance A — Salle (bas du corps + poussée)',
     lieu: 'salle',
     moment: 'Midi',
-    // Ordre pensé pour le corps : le mouvement composé le plus exigeant (presse à cuisses)
-    // en premier pendant que tu es fraîche, puis isolation du même groupe (jambes) tant
-    // qu'on y est, ensuite le haut du corps (poussée composée puis isolation des épaules),
-    // et le gainage toujours en dernier — le fatiguer plus tôt nuirait à la stabilité de
-    // tous les exercices qui suivent.
+    // Ordre pensé pour le corps, ET pour une entrée sans échauffement formel : on ne commence
+    // jamais par le mouvement le plus chargé à froid. Les adducteurs puis l'extension des
+    // jambes (charges plus légères, amplitude contrôlée) servent de mise en route aux
+    // genoux/hanches avant la presse à cuisses, la plus lourde, une fois les articulations
+    // activées. Ensuite le haut du corps (poussée composée puis isolation des épaules), et
+    // le gainage toujours en dernier — le fatiguer plus tôt nuirait à la stabilité de tous
+    // les exercices qui suivent.
     exercices: [
-      { nom: 'Presse à cuisses', series: 5, repsMin: 10, repsMax: 12, poidsDuCorps: false,
-        description: "Machine inclinée ou horizontale : dos calé contre le dossier, pieds à plat sur la plateforme devant toi. Pousse en tendant les jambes (sans verrouiller les genoux), puis reviens en pliant à ~90°. Cherche \"leg press\" dans la zone jambes.",
-        alternative: 'Squats à poids du corps (ou avec un haltère tenu contre la poitrine), 5×15-20.',
-        muscles: 'Quadriceps (avant des cuisses) en premier, avec fessiers et ischio-jambiers en soutien.',
-        interet: "Renforce tout le bas du corps en sécurité (dos calé, pas de charge sur la colonne) — idéal pour construire de la force sur les jambes sans le risque technique du squat libre." },
-      { nom: 'Extension des jambes', series: 5, repsMin: 10, repsMax: 12, poidsDuCorps: false,
-        description: "Assise, dos droit, un rouleau rembourré posé sur le devant des tibias. Tends les jambes pour lever le rouleau, puis redescends lentement. Cherche \"leg extension\", souvent à côté du leg curl.",
-        alternative: 'Fentes alternées ou squats bulgares (pied arrière surélevé), 5×12-15 par jambe.',
-        muscles: 'Quadriceps, de façon isolée (pas d\'autre muscle qui prend le relais).',
-        interet: "Cible précisément l'avant des cuisses, complète la presse à cuisses en isolant le quadriceps pour renforcer le genou et affiner le haut des jambes." },
       { nom: 'Adducteurs (machine)', series: 5, repsMin: 12, repsMax: 15, poidsDuCorps: false,
         description: "Assise, jambes écartées posées sur des coussinets latéraux. Rapproche les jambes en poussant les coussinets vers l'intérieur. Ne pas confondre avec la machine \"abducteurs\" (l'inverse), souvent juste à côté.",
         alternative: 'Squat sumo (pieds très écartés, pointes vers l\'extérieur) à poids du corps ou avec un haltère, 5×15.',
         muscles: 'Adducteurs (intérieur des cuisses).',
         interet: "Renforce une zone souvent négligée par les mouvements classiques, utile pour la stabilité du bassin et le tonus de l'intérieur des cuisses." },
+      { nom: 'Extension des jambes', series: 5, repsMin: 10, repsMax: 12, poidsDuCorps: false,
+        description: "Assise, dos droit, un rouleau rembourré posé sur le devant des tibias. Tends les jambes pour lever le rouleau, puis redescends lentement. Cherche \"leg extension\", souvent à côté du leg curl.",
+        alternative: 'Fentes alternées ou squats bulgares (pied arrière surélevé), 5×12-15 par jambe.',
+        muscles: 'Quadriceps, de façon isolée (pas d\'autre muscle qui prend le relais).',
+        interet: "Cible précisément l'avant des cuisses, complète la presse à cuisses en isolant le quadriceps pour renforcer le genou et affiner le haut des jambes." },
+      { nom: 'Presse à cuisses', series: 5, repsMin: 10, repsMax: 12, poidsDuCorps: false,
+        description: "Machine inclinée ou horizontale : dos calé contre le dossier, pieds à plat sur la plateforme devant toi. Pousse en tendant les jambes (sans verrouiller les genoux), puis reviens en pliant à ~90°. Cherche \"leg press\" dans la zone jambes.",
+        alternative: 'Squats à poids du corps (ou avec un haltère tenu contre la poitrine), 5×15-20.',
+        muscles: 'Quadriceps (avant des cuisses) en premier, avec fessiers et ischio-jambiers en soutien.',
+        interet: "Renforce tout le bas du corps en sécurité (dos calé, pas de charge sur la colonne) — idéal pour construire de la force sur les jambes sans le risque technique du squat libre." },
       { nom: 'Développé couché (machine)', series: 5, repsMin: 10, repsMax: 12, poidsDuCorps: false,
         description: "Version guidée du développé couché : assise, dos plaqué contre un dossier incliné, tu pousses deux poignées vers l'avant/le haut. Cherche \"chest press\".",
         alternative: 'Pompes (sur les genoux si besoin), 5×10-15.',
@@ -126,22 +128,24 @@ export const SEANCES_TEMPLATES: SeanceTemplate[] = [
     nom: 'Séance B — Salle (haut du corps + tirage)',
     lieu: 'salle',
     moment: 'Midi',
-    // Même logique que la séance A : le dos (tirage puis rowing, même groupe musculaire)
-    // d'abord pendant que tu es fraîche, puis les épaules (poussée), et le leg curl — seul
-    // exercice de jambes de cette séance — passe après le haut du corps puisqu'il n'y a pas
-    // d'autre exercice de jambes à enchaîner avec lui ici. Les abdos (crunch puis gainage)
-    // toujours en dernier.
+    // Même logique que la séance A, adaptée à l'absence d'échauffement : le rowing d'abord
+    // (mouvement horizontal, amplitude d'épaule limitée, moins exigeant à froid), puis le
+    // tirage vertical qui demande une épaule tendue au-dessus de la tête — plus confortable
+    // une fois les épaules déjà sollicitées une première fois. Puis les épaules (poussée), et
+    // le leg curl — seul exercice de jambes de cette séance — passe après le haut du corps
+    // puisqu'il n'y a pas d'autre exercice de jambes à enchaîner avec lui ici. Les abdos
+    // (crunch puis gainage) toujours en dernier.
     exercices: [
-      { nom: 'Tirage vertical', series: 5, repsMin: 10, repsMax: 12, poidsDuCorps: false,
-        description: "Assise face à la machine, cuisses calées sous les rouleaux, tu tires une barre au-dessus de la tête vers le haut de la poitrine, coudes vers le bas. Cherche \"lat pulldown\".",
-        alternative: 'Tirage avec une bande élastique fixée en hauteur, ou rowing buste penché avec des haltères, 5×10-12.',
-        muscles: 'Grand dorsal (le large muscle du dos), avec biceps et trapèzes en soutien.',
-        interet: "Construit la largeur et la force du dos, en reproduisant le mouvement d'une traction (pull-up) sans avoir besoin de soulever tout son poids de corps." },
       { nom: 'Rowing (machine assise)', series: 5, repsMin: 10, repsMax: 12, poidsDuCorps: false,
         description: "Assise, pieds calés, tu tires deux poignées vers toi en ramenant les coudes en arrière, dos droit. Cherche \"seated row\" ou \"low row\" (même machine, souvent le même nom chez Technogym).",
         alternative: 'Rowing buste penché à l\'haltère (un genou et une main posés sur un banc, tire l\'haltère vers la hanche), 5×10-12 par bras.',
         muscles: 'Grand dorsal et trapèzes (milieu du dos), avec biceps en soutien.',
         interet: "Travaille l'épaisseur du dos et corrige la posture (contrebalance le temps passé penchée devant un écran) en rapprochant les omoplates." },
+      { nom: 'Tirage vertical', series: 5, repsMin: 10, repsMax: 12, poidsDuCorps: false,
+        description: "Assise face à la machine, cuisses calées sous les rouleaux, tu tires une barre au-dessus de la tête vers le haut de la poitrine, coudes vers le bas. Cherche \"lat pulldown\".",
+        alternative: 'Tirage avec une bande élastique fixée en hauteur, ou rowing buste penché avec des haltères, 5×10-12.',
+        muscles: 'Grand dorsal (le large muscle du dos), avec biceps et trapèzes en soutien.',
+        interet: "Construit la largeur et la force du dos, en reproduisant le mouvement d'une traction (pull-up) sans avoir besoin de soulever tout son poids de corps." },
       { nom: 'Développé épaules (machine)', series: 5, repsMin: 10, repsMax: 12, poidsDuCorps: false,
         description: "Assise, dos droit contre le dossier, tu pousses deux poignées vers le haut au-dessus de la tête. Cherche \"shoulder press\".",
         alternative: 'Développé épaules à l\'haltère assise ou debout, ou pompes pike (fesses hautes, tête vers le sol), 5×10-12.',
@@ -172,7 +176,9 @@ export const SEANCES_TEMPLATES: SeanceTemplate[] = [
     // Jambes d'abord (squats puis fentes, pendant que l'équilibre et la fraîcheur sont là),
     // puis le haut du corps (pompes), puis dos/gainage ensemble (superman prépare le bas du
     // dos avant la planche), et mountain climbers en finisher cardio — pas besoin d'être
-    // fraîche pour ce mouvement répétitif, et ça termine la séance sur un pic cardio.
+    // fraîche pour ce mouvement répétitif, et ça termine la séance sur un pic cardio. Pas de
+    // souci d'échauffement ici : poids du corps uniquement, et squats/fentes en ouverture
+    // sont eux-mêmes des mouvements de mise en route classiques, même démarrés à froid.
     exercices: [
       { nom: 'Squats', series: 3, repsMin: 15, repsMax: 20, poidsDuCorps: true,
         description: "Pieds largeur épaules, descends comme pour t'asseoir sur une chaise, dos droit, genoux qui suivent la direction des pieds, puis remonte.",

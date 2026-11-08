@@ -214,6 +214,12 @@ function SeanceActiveInner() {
         On fait toutes les séries d'un exercice à la suite (avec repos entre chaque série), puis
         on passe au suivant — ce n'est pas un circuit.
       </p>
+      {template.lieu === 'salle' && (
+        <p className="small muted" style={{ marginTop: -8 }}>
+          💡 Pas d'échauffement avant ? Les premiers exercices sont placés exprès pour démarrer
+          en douceur — n'hésite pas à faire la première série plus légère si besoin.
+        </p>
+      )}
 
       <div className="field" style={{ maxWidth: 180 }}>
         <label>Date de la séance</label>
