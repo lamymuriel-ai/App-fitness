@@ -138,6 +138,17 @@ function SeanceActiveInner() {
     await enregistrerSeanceLog(copie)
   }
 
+  // Pour un exercice tenu en temps (ex. gainage) où la même durée est systématiquement
+  // reprise sur toutes les séries, une seule saisie remplit les sets.length cases d'un coup
+  // au lieu de forcer à retaper la même valeur plusieurs fois.
+  async function majRepsGroupe(iEx: number, valeur: number) {
+    const copie = structuredClone(log)
+    const reps = Number.isFinite(valeur) && valeur > 0 ? valeur : undefined
+    copie.exercices[iEx].sets = copie.exercices[iEx].sets.map(() => ({ fait: reps !== undefined, reps }))
+    setLog(copie)
+    await enregistrerSeanceLog(copie)
+  }
+
   async function majPoids(iEx: number, poids: number | undefined) {
     const copie = structuredClone(log)
     copie.exercices[iEx].poidsUtilise_kg = poids
@@ -309,31 +320,48 @@ function SeanceActiveInner() {
                   )}
                 </div>
                 <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-                  {exLog?.sets.map((set, iSet) => (
+                  {ex.note === 'en secondes' ? (
                     <input
-                      key={iSet}
                       type="number"
-                      value={set.reps ?? ''}
-                      onChange={(e) => majReps(iEx, iSet, Number(e.target.value))}
+                      value={exLog?.sets[0]?.reps ?? ''}
+                      onChange={(e) => majRepsGroupe(iEx, Number(e.target.value))}
                       onFocus={(e) => e.target.select()}
                       placeholder={cibleReps}
-                      title={
-                        ex.note === 'en secondes'
-                          ? `Temps tenu (secondes), série ${iSet + 1}`
-                          : `Répétitions faites, série ${iSet + 1}`
-                      }
+                      title={`Temps tenu (secondes) — remplit les ${ex.series} séries d'un coup`}
                       style={{
                         flex: 1,
                         minWidth: 0,
                         textAlign: 'center',
                         padding: '8px 4px',
                         borderRadius: 10,
-                        border: `2px solid ${set.fait ? 'var(--success)' : 'var(--border)'}`,
-                        background: set.fait ? '#eafaf0' : '#fff',
+                        border: `2px solid ${exLog?.sets.every((s) => s.fait) ? 'var(--success)' : 'var(--border)'}`,
+                        background: exLog?.sets.every((s) => s.fait) ? '#eafaf0' : '#fff',
                         fontWeight: 700,
                       }}
                     />
-                  ))}
+                  ) : (
+                    exLog?.sets.map((set, iSet) => (
+                      <input
+                        key={iSet}
+                        type="number"
+                        value={set.reps ?? ''}
+                        onChange={(e) => majReps(iEx, iSet, Number(e.target.value))}
+                        onFocus={(e) => e.target.select()}
+                        placeholder={cibleReps}
+                        title={`Répétitions faites, série ${iSet + 1}`}
+                        style={{
+                          flex: 1,
+                          minWidth: 0,
+                          textAlign: 'center',
+                          padding: '8px 4px',
+                          borderRadius: 10,
+                          border: `2px solid ${set.fait ? 'var(--success)' : 'var(--border)'}`,
+                          background: set.fait ? '#eafaf0' : '#fff',
+                          fontWeight: 700,
+                        }}
+                      />
+                    ))
+                  )}
                 </div>
               </div>
             )
